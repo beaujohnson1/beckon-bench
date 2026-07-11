@@ -24,3 +24,5 @@ site/dist/
 .DS_Store
 *.log
 .env
+.vercel
+.env*

@@ -1,20 +1,20 @@
 {
-  "generated": "2026-07-11T19:23:48.823Z",
+  "generated": "2026-07-11T21:58:14.771Z",
   "season": "v1",
   "includes_dry_runs": false,
-  "matches": 3,
+  "matches": 5,
   "ladder": [
     {
       "model": "claude-fable-5-max",
-      "elo": 1013,
-      "w": 2,
-      "l": 1
+      "elo": 1012,
+      "w": 3,
+      "l": 2
     },
     {
       "model": "gpt-5-6-sol-ultra",
-      "elo": 987,
-      "w": 1,
-      "l": 2
+      "elo": 988,
+      "w": 2,
+      "l": 3
     }
   ]
 }

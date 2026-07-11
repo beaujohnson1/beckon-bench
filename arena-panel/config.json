@@ -11,18 +11,28 @@
     { "name": "glm-5-2", "model_id": "z-ai/glm-5.2", "vendor": "zhipu", "vision": false },
     { "name": "kimi-k2-7-code", "model_id": "moonshotai/kimi-k2.7-code", "vendor": "moonshot", "vision": false },
     { "name": "minimax-m3", "model_id": "minimax/minimax-m3", "vendor": "minimax", "vision": false },
-    { "name": "deepseek-v4-pro", "model_id": "deepseek/deepseek-v4-pro", "vendor": "deepseek", "vision": false }
+    { "name": "deepseek-v4-pro", "model_id": "deepseek/deepseek-v4-pro", "vendor": "deepseek", "vision": false },
+    { "name": "qwen3-vl-235b", "model_id": "qwen/qwen3-vl-235b-a22b-instruct", "vendor": "alibaba", "vision": true },
+    { "name": "llama-4-maverick", "model_id": "meta-llama/llama-4-maverick", "vendor": "meta", "vision": true }
   ],
   "judgeable_tests": [
     "01-haunted-horror-game",
     "02-lava-lamp",
     "03-landing-page",
     "04-svg-self-portrait",
-    "05-ui-recreation"
+    "05-ui-recreation",
+    "06-remotion-video",
+    "08-blender-build"
+  ],
+  "visual_tests": [
+    "06-remotion-video",
+    "08-blender-build"
   ],
   "tests": {
     "04-svg-self-portrait": { "weak_blinding": true },
-    "05-ui-recreation": { "reference_image": "prompts/assets/reference-ui.png" }
+    "05-ui-recreation": { "reference_image": "prompts/assets/reference-ui.png" },
+    "06-remotion-video": { "visual_note": "Each submission is a 2x2 grid of frames sampled from the model's rendered 20s launch video, in chronological order." },
+    "08-blender-build": { "visual_note": "Each submission is the model's final 1920x1080 render of the requested Blender scene." }
   },
   "redact_terms": [
     "claude", "anthropic", "fable", "opus", "sonnet", "haiku",

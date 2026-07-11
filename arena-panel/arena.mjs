@@ -58,6 +58,19 @@ function screenshot(model, testId) {
   return existsSync(p) ? p : null;
 }
 
+// Visual tests (06/08) are judged from images, not artifact text. A derived
+// judging image (e.g. a frame grid distilled from an MP4) takes priority over
+// the raw screenshot.
+function isVisualTest(testId) {
+  return (CONFIG.visual_tests || []).includes(testId);
+}
+
+function visualImage(model, testId) {
+  const derived = join(HERE, 'derived', `${testId}-${model}.png`);
+  if (existsSync(derived)) return derived;
+  return screenshot(model, testId);
+}
+
 function taskPrompt(testId) {
   const p = join(BENCH, 'prompts', 'paste', `${testId}.txt`);
   if (!existsSync(p)) throw new Error(`no paste prompt for ${testId}`);
@@ -82,11 +95,12 @@ function anonymize(text) {
 
 // ---------- judges ----------
 
-function pickPanel(vendorA, vendorB) {
+function pickPanel(vendorA, vendorB, visual = false) {
   const eligible = CONFIG.judges.filter(
-    (j) => j.vendor !== vendorA && j.vendor !== vendorB
+    (j) => j.vendor !== vendorA && j.vendor !== vendorB && (!visual || j.vision)
   );
-  if (eligible.length < 3) throw new Error('fewer than 3 non-conflicted judges in config');
+  if (eligible.length < 3)
+    throw new Error(`fewer than 3 non-conflicted${visual ? ' vision-capable' : ''} judges in config`);
   return { panel: eligible.slice(0, 3), alternates: eligible.slice(3) };
 }
 
@@ -106,6 +120,28 @@ function imagePart(path) {
 }
 
 function buildMessages(judge, testId, prompt, artA, artB, shotA, shotB) {
+  if (isVisualTest(testId)) {
+    const note = CONFIG.tests?.[testId]?.visual_note || '';
+    return [
+      { role: 'system', content: JUDGE_SYSTEM },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text:
+              `TASK GIVEN TO BOTH MODELS:\n${prompt}\n\n` +
+              `This is a VISUAL match: the two submissions are shown as images below. ${note}\n` +
+              `Judge only what you can see. Pick the winner. JSON only.`,
+          },
+          { type: 'text', text: 'MODEL A SUBMISSION:' },
+          imagePart(shotA),
+          { type: 'text', text: 'MODEL B SUBMISSION:' },
+          imagePart(shotB),
+        ],
+      },
+    ];
+  }
   const content = [
     {
       type: 'text',
@@ -214,16 +250,28 @@ async function runMatch(testId, modelA, modelB) {
   if (!DRY && !process.env.OPENROUTER_API_KEY && !process.env.openrouter)
     throw new Error('OPENROUTER_API_KEY is not set. Export it, or use --dry-run.');
   if (!CONFIG.judgeable_tests.includes(testId)) throw new Error(`${testId} is not arena-judgeable (see config)`);
-  const pathA = mainArtifact(modelA, testId);
-  const pathB = mainArtifact(modelB, testId);
-  if (!pathA || !pathB) throw new Error(`missing output artifact for ${!pathA ? modelA : modelB} on ${testId}`);
+  const visual = isVisualTest(testId);
 
-  const canonical = {
-    a: { model: modelA, text: anonymize(readFileSync(pathA, 'utf8')), shot: screenshot(modelA, testId) },
-    b: { model: modelB, text: anonymize(readFileSync(pathB, 'utf8')), shot: screenshot(modelB, testId) },
-  };
+  let canonical;
+  if (visual) {
+    const imgA = visualImage(modelA, testId);
+    const imgB = visualImage(modelB, testId);
+    if (!imgA || !imgB) throw new Error(`missing judging image for ${!imgA ? modelA : modelB} on ${testId}`);
+    canonical = {
+      a: { model: modelA, text: '(visual submission)', shot: imgA },
+      b: { model: modelB, text: '(visual submission)', shot: imgB },
+    };
+  } else {
+    const pathA = mainArtifact(modelA, testId);
+    const pathB = mainArtifact(modelB, testId);
+    if (!pathA || !pathB) throw new Error(`missing output artifact for ${!pathA ? modelA : modelB} on ${testId}`);
+    canonical = {
+      a: { model: modelA, text: anonymize(readFileSync(pathA, 'utf8')), shot: screenshot(modelA, testId) },
+      b: { model: modelB, text: anonymize(readFileSync(pathB, 'utf8')), shot: screenshot(modelB, testId) },
+    };
+  }
   const prompt = taskPrompt(testId);
-  const { panel, alternates } = pickPanel(vendorOf(modelA), vendorOf(modelB));
+  const { panel, alternates } = pickPanel(vendorOf(modelA), vendorOf(modelB), visual);
   const bench = [...alternates];
 
   log(`\n⚔  ${testId}: ${modelA} vs ${modelB}`);
@@ -300,7 +348,9 @@ async function runSeason() {
   );
   let played = 0;
   for (const test of CONFIG.judgeable_tests) {
-    const ready = models.filter((m) => mainArtifact(m, test));
+    const ready = models.filter((m) =>
+      isVisualTest(test) ? visualImage(m, test) : mainArtifact(m, test)
+    );
     for (let i = 0; i < ready.length; i++) {
       for (let j = i + 1; j < ready.length; j++) {
         const pairKey = `${test}|${[ready[i], ready[j]].sort().join('|')}`;
