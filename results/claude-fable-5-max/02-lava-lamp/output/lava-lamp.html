@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Lava Lamp</title>
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(120% 85% at 50% 40%, #12121c 0%, #0a0a11 52%, #040407 100%);
+    overflow: hidden;
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(80% 70% at 50% 46%, transparent 55%, rgba(0,0,0,.55) 100%);
+  }
+  .lamp { position: relative; height: min(94vh, 250vw); aspect-ratio: 0.34; }
+  .halo {
+    position: absolute; left: 50%; top: 46%; width: 340%; height: 105%;
+    transform: translate(-50%,-50%); pointer-events: none;
+    background: radial-gradient(45% 42% at 50% 55%, rgba(255,120,35,.13), rgba(255,90,25,.05) 55%, transparent 75%);
+  }
+  .floorGlow {
+    position: absolute; left: 50%; bottom: -3.5%; width: 240%; height: 9%;
+    transform: translateX(-50%); pointer-events: none; filter: blur(6px);
+    background: radial-gradient(50% 55% at 50% 45%, rgba(255,130,40,.16), transparent 70%);
+  }
+  .cap, .base, .seam, canvas { position: absolute; }
+  .cap {
+    top: 0; left: 15%; width: 70%; height: 7.8%; z-index: 4;
+    clip-path: polygon(30% 0%, 70% 0%, 89% 100%, 11% 100%);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.10), transparent 26%, rgba(0,0,0,.55) 88%),
+      linear-gradient(90deg, #0d0d12 0%, #2e2e37 18%, #83838f 37%, #35353f 52%, #63636e 70%, #1b1b22 88%, #0a0a0e 100%);
+  }
+  canvas { top: 6.9%; left: 0; width: 100%; height: 74.5%; z-index: 3; display: block; }
+  .seam {
+    top: 79.4%; left: 20%; width: 60%; height: 3.4%; z-index: 2; filter: blur(3px);
+    background: radial-gradient(50% 50% at 50% 42%, rgba(255,160,50,.60), rgba(255,110,25,.18) 55%, transparent 75%);
+  }
+  .base {
+    top: 80.6%; left: 0; width: 100%; height: 19.4%; z-index: 1;
+    clip-path: polygon(3.5% 0%, 96.5% 0%, 84% 16%, 72% 40%, 67.5% 62%, 71% 82%, 78% 94%, 76% 100%, 24% 100%, 22% 94%, 29% 82%, 32.5% 62%, 28% 40%, 16% 16%);
+    background:
+      radial-gradient(60% 22% at 50% 0%, rgba(255,145,45,.38), rgba(255,110,25,.10) 60%, transparent 80%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,.5) 96%),
+      linear-gradient(90deg, #0c0c10 0%, #2b2b33 16%, #7d7d89 36%, #30303a 52%, #5d5d68 70%, #191920 88%, #08080c 100%);
+  }
+</style>
+</head>
+<body>
+<div class="lamp">
+  <div class="halo"></div>
+  <canvas id="c" aria-label="Animated lava lamp simulation" role="img"></canvas>
+  <div class="cap"></div>
+  <div class="seam"></div>
+  <div class="base"></div>
+  <div class="floorGlow"></div>
+</div>
+<script>
+'use strict';
+/* ==== PHYS-START ==== */
+// Units: lamp fluid height = 1. y: 0 bottom -> 1 top. x centered on the axis.
+const SIM = (() => {
+  const NFREE = 8, NTOT = 10;
+  const P = {
+    G: 0.17,          // buoyancy strength
+    DRAG: 1.25,       // viscous drag (scaled by blob size)
+    STICK: 0.045,     // adhesion between touching blobs (melts away as the colder one heats)
+    REP: 1.6,         // overlap repulsion
+    NOISE: 0.005,     // wander forces
+    HEAT: 0.14,       // heat pickup in the bulb zone
+    CONDUCT: 0.12,    // heat exchange between overlapping blobs
+    COOL_AMB: 0.0065,
+    COOL_TOP: 0.055,
+    TN0: 0.46,        // neutral-buoyancy temperature at the bottom...
+    TNSLOPE: 0.06,    // ...rising with height (cooler liquid up top)
+    VMAX: 0.12,
+  };
+  function hw(y) { // vessel inner half-width
+    const t = Math.min(Math.max(y, 0), 1);
+    return 0.212 - 0.086 * Math.pow(t, 1.15) + 0.010 * Math.sin(Math.PI * t);
+  }
+  function smooth01(u) { u = Math.min(Math.max(u, 0), 1); return u * u * (3 - 2 * u); }
+  // evenly spaced values in shuffled order: every lamp gets the full spectrum
+  // of each trait, so no random draw can produce an all-sluggish population
+  function spread(lo, hi, n, rnd) {
+    const a = [];
+    for (let i = 0; i < n; i++) a.push(lo + (hi - lo) * (i + 0.5 + (rnd() - 0.5) * 0.6) / n);
+    for (let i = n - 1; i > 0; i--) { const j = (rnd() * (i + 1)) | 0; const s = a[i]; a[i] = a[j]; a[j] = s; }
+    return a;
+  }
+  function make(rnd) {
+    const B = [];
+    // two kinematic anchors form the molten pool over the bulb
+    B.push({ pool: 1, x0: -0.050, y0: -0.028, x: -0.050, y: -0.028, vx: 0, vy: 0, r0: 0.115, r: 0.115, T: 0.86, ph: rnd() * 6.283 });
+    B.push({ pool: 1, x0: 0.055, y0: -0.048, x: 0.055, y: -0.048, vx: 0, vy: 0, r0: 0.095, r: 0.095, T: 0.86, ph: rnd() * 6.283 });
+    const heats = spread(0.64, 1.36, NFREE, rnd);
+    const tns = spread(P.TN0 - 0.028, P.TN0 + 0.032, NFREE, rnd);
+    const sms = spread(0.6, 1.8, NFREE, rnd);
+    const cools = spread(0.78, 1.42, NFREE, rnd);
+    const sinks = spread(1.25, 2.05, NFREE, rnd);
+    const lanes = spread(-0.6, 0.6, NFREE, rnd);
+    const rads = spread(0.046, 0.074, 5, rnd).concat(spread(0.030, 0.038, 3, rnd));
+    for (let i = 0; i < NFREE; i++) {
+      const r = rads[i];
+      B.push({
+        pool: 0, x: (rnd() * 2 - 1) * 0.10, y: 0.08 + 0.82 * rnd(),
+        vx: 0, vy: 0, r0: r, r,
+        T: 0.30 + 0.35 * rnd(),
+        heat: P.HEAT * heats[i],
+        tn: tns[i],
+        sm: sms[i],
+        cool: cools[i],
+        sink: sinks[i],
+        // slow parameter wander on incommensurate periods keeps the
+        // population from phase-locking like coupled relaxation oscillators
+        wtn: 6.283 / (80 + 140 * rnd()), ptn: rnd() * 6.283,
+        wht: 6.283 / (70 + 160 * rnd()), pht: rnd() * 6.283,
+        ph: rnd() * 6.283, ph2: rnd() * 6.283,
+        w1: 0.30 + 0.35 * rnd(), w2: 0.22 + 0.30 * rnd(),
+        lane: lanes[i],
+        ax: 0, ay: 0,
+      });
+    }
+    return B;
+  }
+  function step(B, dt, t) {
+    const xb = 0.05 * Math.sin(t * 0.011 + 1) + 0.03 * Math.sin(t * 0.023); // the hot spot drifts
+    for (const b of B) { if (!b.pool) { b.ax = 0; b.ay = 0; } }
+    for (let i = 0; i < B.length; i++) {
+      const a = B[i];
+      for (let j = i + 1; j < B.length; j++) {
+        const c = B[j];
+        const dx = c.x - a.x, dy = c.y - a.y;
+        const d = Math.hypot(dx, dy) + 1e-6;
+        const sr = a.r + c.r;
+        if (d > sr * 1.3) continue;
+        const ux = dx / d, uy = dy / d;
+        const ov = Math.max(0, 1 - d / sr);
+        const ma = a.r * a.r, mc = c.r * c.r, mm = ma + mc;
+        // conduction reaches through the contact film: blobs parked at the
+        // stick equilibrium (d ~ sr, zero overlap) must still pick up heat
+        const cd = Math.max(0, 1.15 - d / sr);
+        if (cd > 0) {
+          // the pool conducts hardest right over the bulb, so the queue of
+          // landed blobs cooks one at a time instead of all at once
+          // the bottom acts as one molten mass (strong conduction through the
+          // stack), but in-flight contact exchanges little — merged rafts that
+          // equalize their heat phase-lock the whole lamp
+          const boost = (a.pool || c.pool) ? 3 : 1; // the pool sits on the bulb: it conducts hard
+          const q = Math.min(0.45, P.CONDUCT * boost * cd * dt);
+          const dT = c.T - a.T;
+          if (!a.pool) a.T += q * dT * (mc / mm) * 2;
+          if (!c.pool) c.T -= q * dT * (ma / mm) * 2;
+        }
+        if (ov > 0) {
+          const k = Math.min(0.5, 0.5 * ov * dt);
+          const dvx = c.vx - a.vx, dvy = c.vy - a.vy;
+          if (!a.pool) { a.vx += k * dvx * (mc / mm); a.vy += k * dvy * (mc / mm); }
+          if (!c.pool) { c.vx -= k * dvx * (ma / mm); c.vy -= k * dvy * (ma / mm); }
+        }
+        let f = 0, stick = 0;
+        if (d < sr * 0.62) f = -P.REP * (sr * 0.62 - d) / sr;
+        else if (d > sr * 0.92) {
+          const u = Math.min(1, (d - sr * 0.92) / (sr * 0.38));
+          // blobs cling hard to the pool but only loosely to each other,
+          // so in-flight rafts can be pulled apart by buoyancy differences
+          stick = P.STICK * ((a.pool || c.pool) ? 1 : 0.35) * Math.sin(Math.PI * u);
+        }
+        if (f !== 0 || stick !== 0) {
+          // adhesion releases each blob as ITS OWN wax melts, so a heated blob
+          // slips out of a cold cluster while cold blobs still clump
+          const meltA = Math.min(1, Math.max(0.1, (0.72 - a.T) / 0.27)) * (a.sm || 1);
+          const meltC = Math.min(1, Math.max(0.1, (0.72 - c.T) / 0.27)) * (c.sm || 1);
+          const fa = f + stick * meltA, fc = f + stick * meltC;
+          if (!a.pool) { a.ax += fa * ux * (mc / mm) * 2; a.ay += fa * uy * (mc / mm) * 2; }
+          if (!c.pool) { c.ax -= fc * ux * (ma / mm) * 2; c.ay -= fc * uy * (ma / mm) * 2; }
+        }
+      }
+    }
+    for (const b of B) {
+      if (b.pool) {
+        b.x = b.x0 + 0.010 * Math.sin(t * 0.33 + b.ph);
+        b.y = b.y0 + 0.006 * Math.sin(t * 0.21 + b.ph * 1.7);
+        b.r = b.r0 * (1 + 0.025 * Math.sin(t * 0.17 + b.ph));
+        b.T += (0.88 - b.T) * Math.min(1, 0.25 * dt);
+        continue;
+      }
+      // the bulb is a point source: full heat only right above it, so
+      // departures serialize — one blob launches while the next queues up
+      const bx = b.x - xb;
+      const hx = 0.15 + 0.85 * Math.exp(-(bx * bx) / 0.006);
+      const heatZone = Math.exp(-(b.y * b.y) / 0.011) * hx;
+      const heatNow = b.heat * (1 + 0.25 * Math.sin(t * b.wht + b.pht));
+      b.T += (1 - b.T) * heatNow * heatZone * dt;
+      const coolZone = smooth01((b.y - 0.70) / 0.25);
+      b.T -= b.T * (P.COOL_AMB + P.COOL_TOP * coolZone) * b.cool * dt;
+      b.T = Math.min(b.T, 0.98);
+      const tn = b.tn + 0.03 * Math.sin(t * b.wtn + b.ptn) + P.TNSLOPE * b.y;
+      const dTb = b.T - tn;
+      b.ay += P.G * dTb * (dTb < 0 ? b.sink : 1); // cooled wax densifies: sink readily
+      // each blob rises in its own lane (fakes the depth axis, so blobs
+      // don't all share one column and phase-lock by constant merging)
+      const wq = hw(b.y) * 0.6;
+      const lx = b.vy > 0 ? b.lane * wq : Math.sign(b.x || 1) * wq * 1.1;
+      b.ax += (lx - b.x) * 0.02 * Math.min(1, Math.abs(b.vy) / 0.02);
+      b.ax += -b.x * 0.025 * smooth01((0.2 - b.y) / 0.2); // landed blobs creep toward the bulb queue
+      b.ax += P.NOISE * (Math.sin(t * b.w1 + b.ph) + 0.6 * Math.sin(t * b.w2 * 1.7 + b.ph2));
+      b.ay += P.NOISE * 0.5 * Math.cos(t * b.w2 + b.ph2);
+      const wy = hw(b.y) - b.r * 0.55;
+      if (Math.abs(b.x) > wy) b.ax -= Math.sign(b.x) * (Math.abs(b.x) - wy) * 8;
+      const fl = b.r * 0.45;
+      if (b.y < fl) b.ay += (fl - b.y) * 6;
+      // cold wax grips the glass floor until it melts
+      if (b.y < fl * 1.5) b.ay -= 0.03 * Math.max(0, Math.min(1, (0.70 - b.T) / 0.25));
+      const ce = 1 - b.r * 0.50 - 0.01;
+      if (b.y > ce) b.ay -= (b.y - ce) * 6;
+      // wax clings under the dome until properly cold; per-blob grip spreads
+      // out when each one lets go and starts its descent
+      if (b.y > ce - 0.12) b.ay += 0.022 * (b.sm || 1) * smooth01((b.y - ce + 0.12) / 0.10);
+      const damp = Math.exp(-P.DRAG * Math.sqrt(0.075 / b.r) * dt);
+      b.vx = (b.vx + b.ax * dt) * damp;
+      b.vy = (b.vy + b.ay * dt) * damp;
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > P.VMAX) { b.vx *= P.VMAX / sp; b.vy *= P.VMAX / sp; }
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      b.r = b.r0 * (1 + 0.05 * (b.T - 0.5) + 0.02 * Math.sin(t * 0.5 + b.ph2));
+      if (!(isFinite(b.x) && isFinite(b.y) && isFinite(b.T))) {
+        b.x = 0; b.y = 0.1; b.vx = 0; b.vy = 0; b.T = 0.5;
+      }
+    }
+  }
+  return { make, step, hw, NTOT, P };
+})();
+/* ==== PHYS-END ==== */
+const VERT = 'attribute vec2 aP;void main(){gl_Position=vec4(aP,0.0,1.0);}';
+const FRAG = [
+'#ifdef GL_FRAGMENT_PRECISION_HIGH',
+'precision highp float;',
+'#else',
+'precision mediump float;',
+'#endif',
+'uniform vec2 uRes;',
+'uniform float uTime;',
+'uniform vec4 uB[10];', // x, y, radius, temperature
+'uniform vec4 uV[10];', // vx, vy, -, -
+'const float PI = 3.141592653589793;',
+'float hw(float y){',
+'  float t = clamp(y, 0.0, 1.0);',
+'  return 0.212 - 0.086*pow(t, 1.15) + 0.010*sin(PI*t);',
+'}',
+'float hash(vec2 q){ return fract(sin(dot(q, vec2(12.9898, 78.233)))*43758.5453); }',
+'float sq(float x){ return x*x; }',
+'void main(){',
+'  float px = 1.0/uRes.y;',
+'  vec2 uv = gl_FragCoord.xy/uRes;',
+'  vec2 p = vec2((uv.x - 0.5)*(uRes.x/uRes.y), uv.y);',
+'  float w = hw(p.y);',
+'  float axd = abs(p.x);',
+   // metaball field, its gradient, and field-weighted temperature
+'  float F = 0.0; vec2 gF = vec2(0.0); float Tw = 0.0;',
+'  for (int i = 0; i < 10; i++) {',
+'    vec2 c = uB[i].xy;',
+'    float r = uB[i].z; float T = uB[i].w;',
+'    vec2 v = uV[i].xy;',
+'    float spd = length(v);',
+'    vec2 e = spd > 1e-4 ? v/spd : vec2(0.0, 1.0);',
+'    float s = 1.0 + min(0.55, spd*9.0);', // moving blobs stretch along their velocity
+'    vec2 d = p - c;',
+'    float a = dot(d, e);',
+'    vec2 pe = vec2(-e.y, e.x);',
+'    float b = dot(d, pe);',
+'    float dd = a*a/(s*s) + b*b*s + 1e-5;',
+'    float g = r*r/dd;',
+'    F += g;',
+'    gF -= (g/dd)*(2.0*a/(s*s)*e + 2.0*b*s*pe);',
+'    Tw += g*T;',
+'  }',
+'  Tw /= max(F, 1e-4);',
+   // liquid
+'  vec3 liq = mix(vec3(0.150, 0.045, 0.190), vec3(0.020, 0.014, 0.060), smoothstep(0.0, 1.0, p.y));',
+'  float bulb = exp(-p.y*4.5);',
+'  liq += vec3(0.95, 0.42, 0.10)*bulb*max(0.0, 0.34 - 0.20*axd/w);',
+'  liq *= 1.0 + 0.035*sin(p.y*7.0 - uTime*0.22 + 1.2*sin(p.x*12.0 + uTime*0.15));',
+'  liq *= 1.0 - 0.50*pow(min(axd/w, 1.0), 3.5);',
+   // wax surface
+'  float aa = length(gF)*px*1.7 + 1e-4;',
+'  float m = smoothstep(1.0 - aa, 1.0 + aa, F);',
+'  float hot = smoothstep(0.15, 0.95, Tw);',
+'  vec3 waxBase = mix(vec3(0.46, 0.05, 0.11), vec3(1.0, 0.42, 0.06), hot);',
+'  waxBase = mix(waxBase, vec3(1.0, 0.72, 0.26), smoothstep(0.82, 1.0, Tw)*0.55);',
+'  float edgeW = 1.0 - smoothstep(1.02, 1.7, F);', // interior of merged masses shades flat
+'  vec3 n = normalize(vec3(-gF*0.09*edgeW, max(F, 1.3)));',
+'  vec3 L = normalize(vec3(0.20, -0.75, 0.62));', // key light is the bulb below
+'  float dif = 0.72 + 0.28*max(dot(n, L), 0.0);',
+'  float spe = pow(max(dot(normalize(L + vec3(0.0, 0.0, 1.0)), n), 0.0), 36.0)*edgeW;',
+'  vec3 wax = waxBase*dif + vec3(1.0, 0.85, 0.65)*spe*0.28;',
+'  wax += vec3(1.0, 0.50, 0.12)*exp(-p.y*3.5)*0.30;',
+'  wax += waxBase*smoothstep(1.0, 1.7, F)*0.20;',
+'  wax += vec3(0.30, 0.22, 0.50)*pow(max(dot(n, normalize(vec3(-0.25, 0.85, 0.35))), 0.0), 3.0)*0.15;',
+'  liq += waxBase*smoothstep(0.35, 1.0, F)*(1.0 - m)*0.12;',
+'  vec3 col = mix(liq, wax, m);',
+   // vessel mask, cap/base shading, glass
+'  float dE = w - axd;',
+'  float mask = smoothstep(0.0, px*2.0, dE);',
+'  mask *= smoothstep(0.0, 0.005, p.y);',
+'  mask *= 1.0 - smoothstep(0.996, 1.0, p.y);',
+'  col *= 1.0 - 0.45*smoothstep(0.90, 1.0, p.y);',
+'  col *= 0.62 + 0.38*smoothstep(0.0, 0.018, p.y);',
+'  float rim = exp(-max(dE, 0.0)*70.0);',
+'  col += mix(vec3(1.0, 0.55, 0.25), vec3(0.55, 0.60, 0.90), p.y)*rim*0.30;',
+'  float sx = p.x/w;',
+'  float streak = exp(-sq((sx + 0.45)*3.4))*0.13 + exp(-sq((sx + 0.62)*9.0))*0.10 + exp(-sq((sx - 0.55)*7.0))*0.05;',
+'  col += vec3(0.85, 0.90, 1.0)*streak*(0.30 + 0.45*p.y);',
+'  col += (hash(gl_FragCoord.xy) - 0.5)*(2.0/255.0);',
+'  col = max(col, vec3(0.0));',
+'  gl_FragColor = vec4(col*mask, mask);',
+'}',
+].join('\n');
+function makeGL(el) {
+  let gl = null;
+  try { gl = el.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true }); } catch (e) {}
+  if (!gl) return null;
+  function sh(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    return gl.getShaderParameter(s, gl.COMPILE_STATUS) ? s : null;
+  }
+  const vs = sh(gl.VERTEX_SHADER, VERT), fs = sh(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) return null;
+  const pr = gl.createProgram();
+  gl.attachShader(pr, vs); gl.attachShader(pr, fs); gl.linkProgram(pr);
+  if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+  gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'aP');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const uRes = gl.getUniformLocation(pr, 'uRes'), uTime = gl.getUniformLocation(pr, 'uTime');
+  const uB = gl.getUniformLocation(pr, 'uB'), uV = gl.getUniformLocation(pr, 'uV');
+  const fb = new Float32Array(40), fv = new Float32Array(40);
+  return {
+    el,
+    fit(w, h) { gl.viewport(0, 0, w, h); },
+    draw(B, t) {
+      for (let i = 0; i < 10; i++) {
+        const b = B[i];
+        fb[i * 4] = b.x; fb[i * 4 + 1] = b.y; fb[i * 4 + 2] = b.r; fb[i * 4 + 3] = b.T;
+        fv[i * 4] = b.vx; fv[i * 4 + 1] = b.vy; fv[i * 4 + 2] = 0; fv[i * 4 + 3] = 0;
+      }
+      gl.uniform2f(uRes, el.width, el.height);
+      gl.uniform1f(uTime, t);
+      gl.uniform4fv(uB, fb); gl.uniform4fv(uV, fv);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    },
+  };
+}
+
+// soft-glow Canvas2D fallback for machines without WebGL
+function makeFallback(old) {
+  const el = document.createElement('canvas');
+  el.id = 'c'; el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', old.getAttribute('aria-label'));
+  old.parentNode.replaceChild(el, old);
+  const ctx = el.getContext('2d');
+  return {
+    el,
+    fit() {},
+    draw(B, t) {
+      const W = el.width, H = el.height;
+      if (!W || !H) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.clearRect(0, 0, W, H);
+      ctx.save();
+      ctx.beginPath();
+      const S = 28;
+      for (let i = 0; i <= S; i++) { const sy = i / S, x = W / 2 - SIM.hw(sy) * H, y = H * (1 - sy); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+      for (let i = S; i >= 0; i--) { const sy = i / S; ctx.lineTo(W / 2 + SIM.hw(sy) * H, H * (1 - sy)); }
+      ctx.closePath(); ctx.clip();
+      let g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, '#0b0716'); g.addColorStop(0.6, '#241030'); g.addColorStop(1, '#3d1a2e');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      g = ctx.createRadialGradient(W / 2, H * 1.02, 0, W / 2, H * 1.02, H * 0.35);
+      g.addColorStop(0, 'rgba(255,140,40,.55)'); g.addColorStop(1, 'rgba(255,120,30,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      for (const b of B) {
+        const x = W / 2 + b.x * H, y = H * (1 - b.y), r = Math.max(1, b.r * H * 1.25);
+        const hot = Math.max(0, Math.min(1, (b.T - 0.15) / 0.8));
+        const c = 'rgba(255,' + Math.round(40 + 180 * hot) + ',' + Math.round(20 + 40 * hot);
+        g = ctx.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, c + ',0.95)'); g.addColorStop(0.55, c + ',0.8)');
+        g.addColorStop(0.8, c + ',0.25)'); g.addColorStop(1, c + ',0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+      }
+      ctx.restore();
+    },
+  };
+}
+
+const balls = SIM.make(Math.random);
+let renderer = makeGL(document.getElementById('c'));
+if (!renderer) renderer = makeFallback(document.getElementById('c'));
+
+function fit() {
+  const el = renderer.el;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const r = el.getBoundingClientRect();
+  const w = Math.max(2, Math.round(r.width * dpr)), h = Math.max(2, Math.round(r.height * dpr));
+  if (el.width !== w || el.height !== h) { el.width = w; el.height = h; renderer.fit(w, h); }
+}
+window.addEventListener('resize', fit);
+fit();
+
+// gentle stir on click/tap
+renderer.el.addEventListener('pointerdown', (e) => {
+  const r = renderer.el.getBoundingClientRect();
+  const px = ((e.clientX - r.left) / r.width - 0.5) * (r.width / r.height);
+  const py = 1 - (e.clientY - r.top) / r.height;
+  for (const b of balls) {
+    if (b.pool) continue;
+    const d = Math.hypot(b.x - px, b.y - py);
+    const k = Math.exp(-d * d / 0.02);
+    b.vx += (b.x - px) * 0.25 * k;
+    b.vy += 0.02 * k;
+    b.T = Math.min(0.98, b.T + 0.04 * k);
+  }
+});
+
+// warm-up: fast-forward at least 60 s, then keep going (up to 2 more minutes)
+// until blobs are mid-flight, so the lamp always opens on action
+let simT = 0;
+for (let i = 0; i < 1800; i++) { simT += 1 / 30; SIM.step(balls, 1 / 30, simT); }
+for (let i = 0; i < 3600; i++) {
+  const flying = balls.filter((b) => !b.pool && b.y > 0.3 && b.y < 0.7 && Math.abs(b.vy) > 0.008).length;
+  if (flying >= 2) break;
+  simT += 1 / 30; SIM.step(balls, 1 / 30, simT);
+}
+
+let last = performance.now();
+function frame(now) {
+  let dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+  last = now;
+  const n = Math.max(1, Math.ceil(dt / (1 / 60)));
+  const h = dt / n;
+  for (let k = 0; k < n; k++) { simT += h; SIM.step(balls, h, simT); }
+  renderer.draw(balls, simT);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

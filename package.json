@@ -1,0 +1,8 @@
+{
+  "name": "beckon-bench",
+  "private": true,
+  "description": "The vibe-coder's benchmark — one-shot tests, human-scored, receipts included.",
+  "scripts": {
+    "build": "node site/build.mjs"
+  }
+}

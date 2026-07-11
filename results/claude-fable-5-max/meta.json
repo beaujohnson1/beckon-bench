@@ -1,0 +1,9 @@
+{
+  "model": "claude-fable-5-max",
+  "model_id": "claude-fable-5 (Max effort)",
+  "provider": "Anthropic",
+  "harness": "Claude Code in a Beckon terminal pane (per Ruling #1: native flagship harness, shared Beckon environment)",
+  "run_date": "2026-07-10",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}

@@ -1,0 +1,23 @@
+{
+  "model": "model-slug-here",
+  "model_id": "exact-api-or-product-model-id",
+  "provider": "",
+  "test": "01-haunted-horror-game",
+  "gauntlet_version": "v1",
+  "date": "YYYY-MM-DD",
+  "harness": "tool name + version used to run the prompt",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 0,
+    "polish": 0,
+    "prompt_adherence": 0,
+    "wow_factor": 0
+  },
+  "total": 0,
+  "stats": {
+    "time_seconds": null,
+    "output_tokens": null,
+    "cost_usd": null
+  },
+  "notes": "one or two sentences on what happened, for the leaderboard page and video script"
+}

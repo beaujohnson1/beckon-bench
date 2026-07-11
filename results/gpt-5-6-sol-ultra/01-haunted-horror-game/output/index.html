@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>THE HOUSE THAT LISTENS</title>
+<style>
+  *{box-sizing:border-box}html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#020304;color:#d8d0bb;font-family:Georgia,serif}
+  body{display:grid;place-items:center}canvas{width:100vw;height:100vh;display:block;image-rendering:pixelated;cursor:crosshair}
+  #veil{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 42%,rgba(20,23,22,.82),#010202 65%);z-index:8;padding:24px;text-align:center;transition:opacity .8s}
+  #panel{max-width:650px;padding:34px 40px;border:1px solid #4d493f;background:rgba(2,4,4,.9);box-shadow:0 0 90px #000,inset 0 0 45px #080b0b}
+  h1{font-weight:400;letter-spacing:.22em;font-size:clamp(25px,5vw,50px);margin:0 0 5px;color:#e3dcc7;text-shadow:0 0 18px #8e9786}
+  .subtitle{font-style:italic;color:#7c7b70;margin:0 0 28px}.rules{line-height:1.65;font-size:15px;color:#aaa69a}.keys{font:12px system-ui,sans-serif;letter-spacing:.09em;color:#777;margin:24px 0}
+  button{font:14px Georgia,serif;letter-spacing:.18em;color:#d8d0bb;background:#0a0d0d;border:1px solid #615e54;padding:13px 24px;cursor:pointer}button:hover{background:#171b19;color:white}
+  #hud{pointer-events:none;position:fixed;inset:0;z-index:3;text-shadow:0 1px 3px #000;opacity:0;transition:opacity 1s}
+  #objective{position:absolute;left:22px;top:18px;font:11px system-ui,sans-serif;letter-spacing:.15em;color:#b8b29f}
+  #stamina{position:absolute;left:22px;bottom:25px;width:135px;height:3px;background:#292b28}#stamina i{display:block;width:100%;height:100%;background:#b4b7a5;box-shadow:0 0 5px #888}
+  #prompt{position:absolute;left:50%;bottom:14%;transform:translateX(-50%);font-size:16px;letter-spacing:.08em;text-align:center;opacity:0;transition:opacity .15s}
+  #message{position:absolute;top:23%;left:50%;transform:translateX(-50%);width:min(700px,90vw);text-align:center;font-size:18px;font-style:italic;letter-spacing:.08em;opacity:0;transition:opacity .8s}
+  #cross{position:absolute;left:50%;top:50%;width:3px;height:3px;border-radius:50%;background:#aaa8;transform:translate(-50%,-50%)}
+  #grain{pointer-events:none;position:fixed;inset:-40%;z-index:5;opacity:.055;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");animation:grain .16s steps(2) infinite}
+  #vignette{pointer-events:none;position:fixed;inset:0;z-index:4;box-shadow:inset 0 0 18vw 7vw #000,inset 0 0 3vw #000;background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.35) 68%,rgba(0,0,0,.92) 100%)}
+  @keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(3%,-2%)}50%{transform:translate(-2%,3%)}75%{transform:translate(2%,2%)}100%{transform:translate(-3%,-1%)}}
+  .hidden{opacity:0!important;pointer-events:none!important}
+</style>
+</head>
+<body>
+<canvas id="game" width="480" height="270"></canvas>
+<div id="hud"><div id="objective">SEALS RECOVERED: 0 / 3</div><div id="stamina"><i></i></div><div id="message"></div><div id="prompt"></div><div id="cross"></div></div>
+<div id="vignette"></div><div id="grain"></div>
+<div id="veil"><div id="panel"><h1>THE HOUSE THAT LISTENS</h1><p class="subtitle">It has been waiting for you.</p><p class="rules">Three binding seals were left inside Blackthorn House.<br>Find them. Bring them to the front door.<br><b>Do not let what lives here touch you.</b></p><p class="keys">WASD / ARROWS — MOVE &nbsp; · &nbsp; MOUSE — LOOK<br>SHIFT — RUN &nbsp; · &nbsp; E — INTERACT &nbsp; · &nbsp; M — FLOOR PLAN</p><button id="begin">ENTER THE HOUSE</button></div></div>
+<script>
+(()=>{
+'use strict';
+const C=document.querySelector('#game'),X=C.getContext('2d'),W=C.width,H=C.height;
+const veil=document.querySelector('#veil'),panel=document.querySelector('#panel'),hud=document.querySelector('#hud');
+const obj=document.querySelector('#objective'),prompt=document.querySelector('#prompt'),msg=document.querySelector('#message'),stamEl=document.querySelector('#stamina i');
+const RAW=[
+'#####################',
+'#P....#.......#...E.#',
+'#.###.#.#####.#.###.#',
+'#...#.#...#...#.....#',
+'###.#.###.#.#######.#',
+'#...#.....#...#.....#',
+'#.#######.###.#.###.#',
+'#.#.....#.....#...#.#',
+'#.#.###.#######.#.#.#',
+'#...#S#.....#...#...#',
+'#####.#####.#.#####.#',
+'#.....#...#.#.....#.#',
+'#.#####.#.#.#####.#.#',
+'#.#.....#.#...S.#...#',
+'#.#.#####.#####.###.#',
+'#.#.....#.....#...#.#',
+'#.#####.#####.###.#.#',
+'#S..........#.....M.#',
+'#####################'];
+const map=RAW.map(r=>r.split('')), items=[], discovered=new Set();
+let player={x:1.5,y:1.5,a:0,stamina:1,bob:0}, monster={x:18.5,y:17.5,path:[],repath:0,seen:false}, exit={x:18.5,y:1.5};
+for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){let q=map[y][x];if(q==='S')items.push({x:x+.5,y:y+.5,taken:false,phase:Math.random()*6});if(q!=='#')map[y][x]='.'}
+let state='title', seals=0, keys={}, mouseDX=0, last=0, time=0, showMap=false, foot=0, flicker=1, messageTimer=0, danger=0, firstMove=false;
+let AC=null, master=null, ambience=null, heartTimer=0;
+const FOV=Math.PI/3, zbuf=new Float32Array(W);
+
+function wall(x,y){return y<0||y>=map.length||x<0||x>=map[0].length||map[y][x]==='#'}
+function canMove(x,y){const r=.19;return !wall(Math.floor(x-r),Math.floor(y-r))&&!wall(Math.floor(x+r),Math.floor(y-r))&&!wall(Math.floor(x-r),Math.floor(y+r))&&!wall(Math.floor(x+r),Math.floor(y+r))}
+function audioStart(){
+  AC=new (window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=.38;master.connect(AC.destination);
+  const drone=AC.createOscillator(),dg=AC.createGain(),lp=AC.createBiquadFilter();drone.type='sawtooth';drone.frequency.value=43;dg.gain.value=.025;lp.type='lowpass';lp.frequency.value=160;drone.connect(lp).connect(dg).connect(master);drone.start();
+  const drone2=AC.createOscillator(),d2g=AC.createGain();drone2.type='sine';drone2.frequency.value=57.4;d2g.gain.value=.035;drone2.connect(d2g).connect(master);drone2.start();
+  const n=AC.createBuffer(1,AC.sampleRate*3,AC.sampleRate),d=n.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(.25+.75*Math.sin(i/9000)**2);
+  const ns=AC.createBufferSource(),nf=AC.createBiquadFilter(),ng=AC.createGain();ns.buffer=n;ns.loop=true;nf.type='bandpass';nf.frequency.value=280;nf.Q.value=.7;ng.gain.value=.045;ns.connect(nf).connect(ng).connect(master);ns.start();ambience={drone,dg,ng};
+}
+function tone(freq,dur,vol=.1,type='sine',slide=0){if(!AC)return;let o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(freq,AC.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,freq+slide),AC.currentTime+dur);g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+dur);o.connect(g).connect(master);o.start();o.stop(AC.currentTime+dur)}
+function noise(dur=.15,vol=.08,freq=500){if(!AC)return;let b=AC.createBuffer(1,AC.sampleRate*dur,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;let s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;f.type='lowpass';f.frequency.value=freq;g.gain.setValueAtTime(vol,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+dur);s.connect(f).connect(g).connect(master);s.start()}
+function heartbeat(power){if(!AC)return;tone(52,.14,.09+power*.13,'sine',-20);setTimeout(()=>tone(46,.18,.07+power*.1,'sine',-18),115)}
+function say(s,d=3){msg.textContent=s;msg.style.opacity=1;messageTimer=d}
+
+function begin(){audioStart();state='playing';veil.classList.add('hidden');hud.style.opacity=1;C.requestPointerLock?.();say('Find the three seals. The front door is east of the entrance.',4)}
+document.querySelector('#begin').onclick=begin;
+addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();if(e.code==='KeyM'&&state==='playing')showMap=!showMap;if(e.code==='KeyE')interact();if((state==='dead'||state==='won')&&e.code==='KeyR')location.reload()});
+addEventListener('keyup',e=>keys[e.code]=false);addEventListener('mousemove',e=>{if(document.pointerLockElement===C)mouseDX+=e.movementX});C.addEventListener('click',()=>{if(state==='playing'&&document.pointerLockElement!==C)C.requestPointerLock?.()});
+
+function interact(){if(state!=='playing')return;let de=Math.hypot(player.x-exit.x,player.y-exit.y);if(de<1.15){if(seals===3)win();else{say('The door has no handle. Three empty hollows mark its frame.',3);tone(85,.6,.09,'sawtooth',-45)}}}
+function update(dt){
+ time+=dt;if(messageTimer>0&&(messageTimer-=dt)<=0)msg.style.opacity=0;
+ if(state!=='playing')return;
+ let turn=(keys.ArrowLeft||keys.KeyQ?-1:0)+(keys.ArrowRight?1:0);player.a+=turn*dt*1.8+mouseDX*.0023;mouseDX=0;
+ let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0),s=(keys.KeyD?1:0)-(keys.KeyA?1:0),moving=f||s,run=keys.ShiftLeft&&player.stamina>.04&&f>0;
+ let speed=(run?2.65:1.45)*dt, len=Math.hypot(f,s)||1,dx=(Math.cos(player.a)*f+Math.cos(player.a+Math.PI/2)*s)/len*speed,dy=(Math.sin(player.a)*f+Math.sin(player.a+Math.PI/2)*s)/len*speed;
+ if(canMove(player.x+dx,player.y))player.x+=dx;if(canMove(player.x,player.y+dy))player.y+=dy;
+ if(moving){firstMove=true;player.bob+=dt*(run?12:8);foot-=dt;if(foot<=0){noise(.055,run?.06:.035,180);foot=run?.31:.48}} else foot=0;
+ player.stamina=Math.max(0,Math.min(1,player.stamina+(run?-dt*.23:dt*.13)));stamEl.style.width=player.stamina*100+'%';
+ discovered.add(Math.floor(player.x)+','+Math.floor(player.y));
+ for(const it of items)if(!it.taken&&Math.hypot(player.x-it.x,player.y-it.y)<.55)takeSeal(it);
+ let de=Math.hypot(player.x-exit.x,player.y-exit.y);prompt.textContent=de<1.15?(seals===3?'[ E ]  OPEN THE FRONT DOOR':'[ E ]  EXAMINE THE DOOR'):'';prompt.style.opacity=de<1.15?1:0;
+ if(firstMove)updateMonster(dt,run);
+ let md=Math.hypot(player.x-monster.x,player.y-monster.y);danger=Math.max(0,Math.min(1,1-md/7));
+ heartTimer-=dt;if(heartTimer<=0&&danger>.05){heartbeat(danger);heartTimer=1.25-danger*.75}
+ flicker=.92+Math.random()*.08;if(Math.random()<dt*.07)flicker=.15;
+}
+function takeSeal(it){it.taken=true;seals++;obj.textContent='SEALS RECOVERED: '+seals+' / 3';tone(310,.8,.13,'sine',-210);tone(620,1,.06,'sine',-400);noise(.7,.07,900);say(seals===3?'The front door is awake. RUN.':['Something stirred beneath the floor.','It knows where you are now.'][seals-1],3.5);monster.repath=0}
+
+function bfs(sx,sy,tx,ty){
+ let q=[[sx,sy]],head=0,prev=new Map(),key=(x,y)=>x+','+y;prev.set(key(sx,sy),null);
+ while(head<q.length){let [x,y]=q[head++];if(x===tx&&y===ty)break;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+dx,ny=y+dy,k=key(nx,ny);if(!wall(nx,ny)&&!prev.has(k)){prev.set(k,[x,y]);q.push([nx,ny])}}}
+ let cur=[tx,ty],path=[];if(!prev.has(key(tx,ty)))return path;while(cur&&(cur[0]!==sx||cur[1]!==sy)){path.push(cur);cur=prev.get(key(cur[0],cur[1]))}return path.reverse();
+}
+function lineSight(ax,ay,bx,by){let d=Math.hypot(bx-ax,by-ay),n=Math.ceil(d*8);for(let i=1;i<n;i++){let t=i/n;if(wall(Math.floor(ax+(bx-ax)*t),Math.floor(ay+(by-ay)*t)))return false}return true}
+function updateMonster(dt,running){
+ let dist=Math.hypot(player.x-monster.x,player.y-monster.y),los=lineSight(monster.x,monster.y,player.x,player.y);
+ if(los&&dist<8&&!monster.seen){monster.seen=true;say('It has seen you.',2);noise(.9,.14,1400);tone(170,.8,.13,'sawtooth',-130)}if(!los)monster.seen=false;
+ monster.repath-=dt;if(monster.repath<=0){monster.path=bfs(Math.floor(monster.x),Math.floor(monster.y),Math.floor(player.x),Math.floor(player.y));monster.repath=los?.22:(running?.65:1.2)}
+ if(monster.path.length){let [tx,ty]=monster.path[0],gx=tx+.5,gy=ty+.5,dd=Math.hypot(gx-monster.x,gy-monster.y);if(dd<.1)monster.path.shift();else{let sp=(.53+seals*.13+(los?.16:0))*dt;monster.x+=(gx-monster.x)/dd*sp;monster.y+=(gy-monster.y)/dd*sp}}
+ if(dist<.42)die();
+}
+function die(){state='dead';document.exitPointerLock?.();noise(2,.3,1800);tone(90,2,.25,'sawtooth',-65);setTimeout(()=>endScreen(false),800)}
+function win(){state='won';document.exitPointerLock?.();tone(110,.8,.12,'sine',110);tone(220,2,.08,'sine',220);setTimeout(()=>endScreen(true),500)}
+function endScreen(won){veil.classList.remove('hidden');veil.style.opacity=1;panel.innerHTML=won?'<h1>DAWN</h1><p class="subtitle">The house closes its eyes behind you.</p><p class="rules">You carried the seals beyond its walls.<br>For tonight, it is bound.</p><p class="keys">PRESS R TO ENTER AGAIN</p>':'<h1>FOUND</h1><p class="subtitle">The house keeps what it is given.</p><p class="rules">Something wears your footsteps now.</p><p class="keys">PRESS R TO TRY AGAIN</p>'}
+
+function cast(angle){
+ let ox=player.x,oy=player.y,dx=Math.cos(angle),dy=Math.sin(angle),mx=Math.floor(ox),my=Math.floor(oy),ddx=Math.abs(1/dx),ddy=Math.abs(1/dy),sx=dx<0?-1:1,sy=dy<0?-1:1;
+ let sdx=dx<0?(ox-mx)*ddx:(mx+1-ox)*ddx,sdy=dy<0?(oy-my)*ddy:(my+1-oy)*ddy,side=0;
+ for(let i=0;i<50;i++){if(sdx<sdy){sdx+=ddx;mx+=sx;side=0}else{sdy+=ddy;my+=sy;side=1}if(wall(mx,my))break}
+ let d=side===0?(mx-ox+(1-sx)/2)/dx:(my-oy+(1-sy)/2)/dy,hit=side===0?oy+d*dy:ox+d*dx;return {d:Math.max(.001,d),side,tex:hit-Math.floor(hit),mx,my};
+}
+function render(){
+ let bob=(state==='playing'&&(keys.KeyW||keys.KeyS||keys.KeyA||keys.KeyD||keys.ArrowUp||keys.ArrowDown))?Math.sin(player.bob)*1.7:0;
+ let sky=X.createLinearGradient(0,0,0,H/2);sky.addColorStop(0,'#020304');sky.addColorStop(1,'#101313');X.fillStyle=sky;X.fillRect(0,0,W,H/2+bob);
+ let floor=X.createLinearGradient(0,H/2,0,H);floor.addColorStop(0,'#111210');floor.addColorStop(1,'#020303');X.fillStyle=floor;X.fillRect(0,H/2+bob,W,H);
+ for(let x=0;x<W;x+=2){let ra=player.a-FOV/2+(x/W)*FOV,r=cast(ra),d=r.d*Math.cos(ra-player.a);zbuf[x]=zbuf[x+1]=d;let wh=Math.min(H*2,H/d),top=(H-wh)/2+bob,center=Math.abs(x-W/2)/(W/2),flash=Math.max(.08,1-center*center*1.35)*flicker,atten=Math.max(.06,1-d/11)*flash;
+   let mortar=(Math.floor(r.tex*10)%5===0||Math.floor((top+wh*.5)/9)%7===0)?.72:1,base=(r.side?.72:1)*atten*mortar,rr=Math.floor(72*base),gg=Math.floor(76*base),bb=Math.floor(69*base);X.fillStyle=`rgb(${rr},${gg},${bb})`;X.fillRect(x,top,2,wh);
+   if(d<3&&Math.floor(r.tex*18)%9===0){X.fillStyle=`rgba(5,4,3,${.22*atten})`;X.fillRect(x,top,2,wh)}
+ }
+ drawSprites(bob);drawDoorHint(bob);
+ if(danger>.15){X.fillStyle=`rgba(70,0,0,${danger*.055*(.7+.3*Math.sin(time*8))})`;X.fillRect(0,0,W,H)}
+ if(showMap&&state==='playing')drawMap();
+ if(Math.random()<.025){X.fillStyle='rgba(255,255,255,.018)';X.fillRect(0,Math.random()*H,W,1)}
+}
+function project(wx,wy,bob){let dx=wx-player.x,dy=wy-player.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-player.a;while(a>Math.PI)a-=Math.PI*2;while(a<-Math.PI)a+=Math.PI*2;if(Math.abs(a)>FOV*.65)return null;let sx=W/2+(a/FOV)*W,scale=H/d;return {sx,scale,d,y:H/2+bob}}
+function drawSprites(bob){
+ let sprites=items.filter(i=>!i.taken).map(i=>({...i,type:'seal',d:Math.hypot(i.x-player.x,i.y-player.y)}));sprites.push({x:monster.x,y:monster.y,type:'monster',d:Math.hypot(monster.x-player.x,monster.y-player.y)});sprites.sort((a,b)=>b.d-a.d);
+ for(const s of sprites){let p=project(s.x,s.y,bob);if(!p||p.d>15)continue;let cx=Math.max(0,Math.min(W-1,Math.floor(p.sx)));if(p.d>zbuf[cx]+.2)continue;
+   if(s.type==='seal'){let size=Math.min(58,p.scale*.34),yy=p.y+Math.sin(time*2+s.phase)*3;X.save();X.translate(p.sx,yy);X.shadowBlur=10;X.shadowColor='#b9c5a3';X.strokeStyle=`rgba(202,211,177,${Math.max(.2,1-p.d/13)})`;X.lineWidth=Math.max(1,size/18);X.beginPath();for(let i=0;i<6;i++){let a=-Math.PI/2+i*Math.PI*2/6,r=i%2?size*.28:size*.45,lx=Math.cos(a)*r,ly=Math.sin(a)*r;i?X.lineTo(lx,ly):X.moveTo(lx,ly)}X.closePath();X.stroke();X.beginPath();X.arc(0,0,size*.14,0,7);X.stroke();X.restore()
+   }else{let h=Math.min(H*1.7,p.scale*1.25),w=h*.43,alpha=Math.min(1,(15-p.d)/5);X.save();X.translate(p.sx,p.y+h*.08);X.globalAlpha=alpha;let g=X.createRadialGradient(0,-h*.24,1,0,-h*.1,h*.55);g.addColorStop(0,'#171b18');g.addColorStop(.55,'#060707');g.addColorStop(1,'rgba(0,0,0,0)');X.fillStyle=g;X.beginPath();X.ellipse(0,0,w*.58,h*.58,0,0,7);X.fill();X.fillStyle='#050606';X.beginPath();X.ellipse(0,-h*.33,w*.3,h*.18,0,0,7);X.fill();X.strokeStyle='#080908';X.lineWidth=Math.max(2,w*.08);X.beginPath();X.moveTo(-w*.2,h*.1);X.lineTo(-w*.42,h*.57);X.moveTo(w*.2,h*.1);X.lineTo(w*.42,h*.57);X.stroke();let eye=Math.max(.4,1-p.d/10);X.fillStyle=`rgba(210,215,184,${eye})`;X.shadowBlur=8;X.shadowColor='#dfe6ca';X.fillRect(-w*.13,-h*.36,Math.max(1,w*.045),Math.max(1,h*.018));X.fillRect(w*.085,-h*.36,Math.max(1,w*.045),Math.max(1,h*.018));X.restore()}
+ }
+}
+function drawDoorHint(bob){let p=project(exit.x,exit.y,bob);if(!p||p.d>12||p.d>zbuf[Math.max(0,Math.min(W-1,p.sx|0))]+.3)return;let h=Math.min(H,p.scale*.7);X.fillStyle=`rgba(${seals===3?'145,155,122':'70,65,58'},${Math.max(0,1-p.d/12)*.25})`;X.fillRect(p.sx-h*.18,p.y-h*.45,h*.36,h*.9)}
+function drawMap(){let scale=5.6,mw=map[0].length*scale,mh=map.length*scale,ox=W-mw-10,oy=10;X.fillStyle='rgba(3,5,5,.88)';X.fillRect(ox-6,oy-6,mw+12,mh+12);X.strokeStyle='#62665c';X.strokeRect(ox-6,oy-6,mw+12,mh+12);
+ for(let y=0;y<map.length;y++)for(let x=0;x<map[y].length;x++){let known=discovered.has(x+','+y)||Math.hypot(x+.5-player.x,y+.5-player.y)<2.3;if(!known)continue;X.fillStyle=map[y][x]==='#'?'#3b3e38':'#151815';X.fillRect(ox+x*scale,oy+y*scale,scale+.2,scale+.2)}
+ X.fillStyle='#d8d4bf';X.beginPath();X.arc(ox+player.x*scale,oy+player.y*scale,2,0,7);X.fill();X.strokeStyle='#d8d4bf';X.beginPath();X.moveTo(ox+player.x*scale,oy+player.y*scale);X.lineTo(ox+(player.x+Math.cos(player.a))*scale,oy+(player.y+Math.sin(player.a))*scale);X.stroke();X.fillStyle='#978e6c';for(const i of items)if(!i.taken&&discovered.has(Math.floor(i.x)+','+Math.floor(i.y)))X.fillRect(ox+i.x*scale-1.5,oy+i.y*scale-1.5,3,3)}
+function loop(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;update(dt);render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Draw a self-portrait of yourself as an AI, as a single SVG file. Output only the SVG code — no explanation. Be ambitious: composition, color, lighting, detail. It should feel like *you*, not a generic robot.

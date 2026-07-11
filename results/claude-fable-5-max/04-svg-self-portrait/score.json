@@ -1,0 +1,23 @@
+{
+  "model": "claude-fable-5-max",
+  "model_id": "claude-fable-5 (max effort)",
+  "provider": "Anthropic",
+  "test": "04-svg-self-portrait",
+  "gauntlet_version": "v1",
+  "date": "2026-07-10",
+  "harness": "Claude Code v2.1.206 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 1,
+    "polish": 1,
+    "prompt_adherence": 1,
+    "wow_factor": 1
+  },
+  "total": 4,
+  "stats": {
+    "time_seconds": 1063,
+    "output_tokens": 190436,
+    "cost_usd": null
+  },
+  "notes": "Judge scored 1 on every dimension. Profile portrait (960x1280) titled 'a library, dreaming it is a reader', written to self-portrait.svg rather than output-only. Took 17m 43s and 190k output tokens at max effort."
+}

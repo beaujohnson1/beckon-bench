@@ -1,0 +1,23 @@
+{
+  "model": "claude-fable-5-max",
+  "model_id": "claude-fable-5 (high effort, per Ruling #3)",
+  "provider": "Anthropic",
+  "test": "08-blender-build",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Claude Code v2.1.206 + Blender 5.1.2 via blender-mcp, in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 638,
+    "output_tokens": 51247,
+    "cost_usd": null
+  },
+  "notes": "Perfect score. Photoreal soft-focus donut — dripping icing with drip edges, subsurface dough, depth of field, 139 objects with individually scattered sprinkles. Caught its own overexposed first render and re-lit within the one shot. 10m 38s."
+}

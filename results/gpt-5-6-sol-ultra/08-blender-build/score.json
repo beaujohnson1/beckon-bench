@@ -1,0 +1,23 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6-sol (high reasoning, per Ruling #3)",
+  "provider": "OpenAI",
+  "test": "08-blender-build",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Codex CLI 0.144.1 + Blender 5.1.2 via blender-mcp, in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 263,
+    "output_tokens": 10393,
+    "cost_usd": null
+  },
+  "notes": "Perfect score. Stylized saturated donut — pink icing, scattered sprinkles, ceramic plate, orange wood planks — built live via MCP step by step, rendered 1920x1080 and self-verified, .blend saved. 4m 23s."
+}

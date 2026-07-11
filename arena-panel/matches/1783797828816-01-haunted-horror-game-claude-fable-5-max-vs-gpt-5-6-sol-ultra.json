@@ -1,0 +1,44 @@
+{
+  "id": "1783797828816-01-haunted-horror-game-claude-fable-5-max-vs-gpt-5-6-sol-ultra",
+  "date": "2026-07-11T19:23:48.816Z",
+  "gauntlet_version": "v1",
+  "test": "01-haunted-horror-game",
+  "model_a": "claude-fable-5-max",
+  "model_b": "gpt-5-6-sol-ultra",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": true,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "Model A delivers an incredibly impressive first-person 3D raycasting engine entirely from scratch, which elevates the horror immersion and tension far beyond a top-down perspective. The procedural textures, atmospheric lighting, and spatial audio create a phenomenal 'wow' factor while perfectly adhering to all constraints.",
+      "cost_usd": 0.062766,
+      "latency_ms": 12376
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model B delivers denser atmosphere via a full torch-and-darkness system, battery management, multi-state AI hunter, richer Web Audio (drones, whispers, presence, stings), and stronger visual polish with grain, vignettes, and scare/win sequences. Both meet the single-file playable horror brief, but B's layered tension and lighting create a clearer wow factor.",
+      "cost_usd": 0.047392,
+      "latency_ms": 2347
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more complete and atmospheric experience with richer audio design (whispers, creaks, heartbeats, growls), deeper gameplay (6 sigils, battery management, torch-slowed monster, multi-state AI), and polished visual effects like raycast lighting, screen shake, and a death scare. Model B's raycasting 3D is technically impressive but the game is simpler with fewer mechanics and less audio depth.",
+      "cost_usd": 0.008848896,
+      "latency_ms": 11180
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 2,
+    "gpt-5-6-sol-ultra": 1
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.119
+}

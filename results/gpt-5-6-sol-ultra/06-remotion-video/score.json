@@ -1,0 +1,23 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6-sol (high reasoning, per Ruling #3)",
+  "provider": "OpenAI",
+  "test": "06-remotion-video",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Codex CLI 0.144.1 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 300,
+    "output_tokens": 9786,
+    "cost_usd": null
+  },
+  "notes": "Perfect score. Lime-on-black Nightjar identity: 'Speak freely. Nightjar listens.' — animated waveform, choreographed task cards, rendered 1920x1080/30fps/20.00s exactly to spec in five minutes flat."
+}

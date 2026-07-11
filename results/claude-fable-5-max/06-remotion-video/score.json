@@ -1,0 +1,23 @@
+{
+  "model": "claude-fable-5-max",
+  "model_id": "claude-fable-5 (high effort, per Ruling #3)",
+  "provider": "Anthropic",
+  "test": "06-remotion-video",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Claude Code v2.1.206 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 497,
+    "output_tokens": 85417,
+    "cost_usd": null
+  },
+  "notes": "Perfect score — Fable's first 10 of the season. Navy/orange Nightjar spot: 'Listens. Transcribes. Organizes.' — note-card motion over a starfield, rendered 1920x1080/30fps/20.00s exactly to spec."
+}

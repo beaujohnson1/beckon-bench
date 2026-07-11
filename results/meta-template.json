@@ -1,0 +1,9 @@
+{
+  "model": "model-slug-here",
+  "model_id": "exact-api-or-product-model-id",
+  "provider": "",
+  "harness": "tool name + version used for the season",
+  "run_date": "YYYY-MM-DD",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}

@@ -1,0 +1,23 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6-sol (high reasoning, per Ruling #3)",
+  "provider": "OpenAI",
+  "test": "01-haunted-horror-game",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Codex CLI 0.144.1 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 2,
+    "polish": 2,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 8,
+  "stats": {
+    "time_seconds": 212,
+    "output_tokens": 9921,
+    "cost_usd": null
+  },
+  "notes": "First-person raycaster mansion crawl built from scratch: flashlight falloff, film grain, Web Audio ambience, pathfinding hunter, three seals, win/death paths. Very dark by design. 3m 32s at high effort (Ruling #3). Arena panel gave this match to Fable 2-1; the human judge saw it the other way."
+}

@@ -1,0 +1,19 @@
+# Beckon Bench — Rulings Log (Gauntlet v1)
+
+Judgment calls the rules didn't cover, logged with date and reasoning. Each ruling is precedent for the rest of the season.
+
+## Ruling #1 — 2026-07-10 — "Same harness" means same environment, native CLI per model
+
+RULES.md says all models run through the same tool. GPT models can't run in Claude Code and Claude models can't run in Codex, so a literal reading is impossible for cross-vendor matchups. **Ruling:** every run happens inside the same Beckon canvas on the same machine, with each model driven by its vendor's own flagship CLI (Codex for OpenAI models, Claude Code for Anthropic models) at default settings plus whatever MCP servers the test requires (identical MCP servers for all models). Rationale: vibe coders use each model through its native tool — the model+harness pair IS the product being benchmarked. Record the exact CLI in each `meta.json`.
+
+## Ruling #3 — 2026-07-11 — Effort tier dropped to "high" for day 2 onward
+
+Day 1 ran Sol at ultra and Fable at max reasoning effort; runtimes (up to ~69 min for a single test) proved impractical to film. **Ruling (Beau):** from day 2 (tests 01, 06, 08) onward, both contestants run at **high** reasoning effort — applied identically to both per Ruling #1. Scores still count toward the same season leaderboard. Caveat on the record: day-1 scores (tests 02, 04) were earned under ultra/max configs; each affected score.json records the actual effort used, and the site's efficiency table shows time/tokens per test so the change is transparent. Prompts remain frozen — this is a harness setting, not a test change.
+
+## Ruling #4 — 2026-07-11 — Fable's test-01 MCP exposure counts as-is
+
+During test 01, Fable's session had the buildos MCP server enabled (the project consent dialog was answered "use" instead of "continue without"), breaking Ruling #1 parity with Sol, and the model read the shared `rules` memory note before building — learning that outputs are rendered into comparison videos with time and output-token stats. It did not read scores, the handoff, or judge preferences. **Ruling (Beau):** the run counts as-is; the breach is disclosed here and on the test-01 scorecard rather than voided. Producer action going forward: buildos MCP will be disabled for contestant arena projects after this session so the dialog cannot recur.
+
+## Ruling #2 — 2026-07-10 — The judge is human
+
+Scoring is done by Beau on camera, per the rubric. AI assistants may transcribe scores into `score.json` and organize results, but never assign or suggest scores for Gauntlet runs — especially not a model from a vendor that's competing (which, for Claude models, includes the assistant running the bench). The AI judge panel is a separate, clearly-labeled Arena Score (see ARENA.md) and never touches the Human Score leaderboard.

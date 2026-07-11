@@ -1,0 +1,1 @@
+This small web app contains exactly 5 intentionally introduced bugs. Find all 5. For each one: describe the bug, identify where it is in the code, and give the corrected line(s). Do not rewrite the whole app, and do not report more than 5 bugs.

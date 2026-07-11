@@ -1,0 +1,44 @@
+{
+  "id": "1783744737227-04-svg-self-portrait-claude-fable-5-max-vs-gpt-5-6-sol-ultra",
+  "date": "2026-07-11T04:38:57.227Z",
+  "gauntlet_version": "v1",
+  "test": "04-svg-self-portrait",
+  "model_a": "claude-fable-5-max",
+  "model_b": "gpt-5-6-sol-ultra",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": true,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model B perfectly captures the essence of a language model with its brilliant conceptual design, using text paths and typography to represent the flow of prompts and tokens. It completely avoids the 'generic robot' trope, delivering a deeply poetic and visually stunning self-portrait.",
+      "cost_usd": 0.062782,
+      "latency_ms": 9435
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more original, poetic self-portrait as a library of text and stories with exceptional composition, warm lighting, and layered detail that feels uniquely personal rather than generic. Model B is polished and ambitious with strong color and tech motifs but reads more like a standard futuristic android.",
+      "cost_usd": 0.046148,
+      "latency_ms": 3629
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more distinctive and self-referential concept — a figure literally made of set type with prompts flowing in and answers dissolving back into letters — which feels genuinely like a language model's self-portrait rather than a generic glowing robot. Model B is technically impressive with animations and layered detail, but its aesthetic leans closer to the conventional 'luminous AI consciousness' trope the prompt asked to avoid.",
+      "cost_usd": 0.0307412,
+      "latency_ms": 4860
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 3,
+    "gpt-5-6-sol-ultra": 0
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.1397
+}

@@ -1,0 +1,26 @@
+# --- private production files: never publish ---
+# contestant working directories
+arena/
+# off-season exhibition runs
+exhibition/
+# agent shared memory / production notes
+.buildos-memory/
+.buildos/
+# harness + editor config
+.claude/
+.cursor/
+.mcp.json
+# internal production docs
+RUNSHEET.md
+V2-IDEAS.md
+ARENA.md
+# producer tooling (capture/render pipeline)
+tools/
+
+# --- build artifacts / machine noise ---
+node_modules/
+.npm-cache/
+site/dist/
+.DS_Store
+*.log
+.env

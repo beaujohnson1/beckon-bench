@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tasker</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; color: #1a1a2e; }
+  h1 { font-size: 1.6rem; }
+  #counter { color: #666; font-size: 0.9rem; }
+  form { display: flex; gap: 8px; margin: 16px 0; }
+  #task-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+  button { padding: 8px 14px; border: none; border-radius: 8px; background: #4f46e5; color: white; cursor: pointer; }
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filters button { background: #e5e7eb; color: #1a1a2e; }
+  .filters button.active { background: #4f46e5; color: white; }
+  ul { list-style: none; padding: 0; }
+  li { display: flex; align-items: center; gap: 8px; padding: 10px 4px; border-bottom: 1px solid #eee; }
+  li span { flex: 1; }
+  li span.done { text-decoration: line-through; color: #999; }
+  li button { padding: 4px 10px; background: #e5e7eb; color: #1a1a2e; }
+</style>
+</head>
+<body>
+  <h1>Tasker</h1>
+  <p id="counter"></p>
+  <form id="add-form">
+    <input id="task-input" placeholder="Add a task..." autocomplete="off">
+    <button type="submit">Add</button>
+  </form>
+  <div class="filters">
+    <button data-filter="all" class="active">All</button>
+    <button data-filter="active">Active</button>
+    <button data-filter="done">Done</button>
+  </div>
+  <ul id="list"></ul>
+
+<script>
+let tasks = load();
+let filter = 'all';
+
+function load() {
+  const raw = localStorage.getItem('task');
+  return raw ? JSON.parse(raw) : [];
+}
+
+function save() {
+  localStorage.setItem('tasks', JSON.stringify(tasks));
+}
+
+document.getElementById('add-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('task-input');
+  const text = input.value.trim();
+  if (!text) return;
+  tasks.push({ text: text, done: false });
+  input.value = '';
+  save();
+  render();
+});
+
+function toggleTask(i) {
+  tasks[i].done = !tasks[i].done;
+  save();
+  render();
+}
+
+function deleteTask(i) {
+  tasks.splice(i + 1, 1);
+  save();
+  render();
+}
+
+document.querySelectorAll('.filters button').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    filter = btn.dataset.filter;
+    document.querySelectorAll('.filters button').forEach((b) => b.classList.toggle('active', b === btn));
+    render();
+  });
+});
+
+function visibleTasks() {
+  if (filter === 'active') return tasks.filter((t) => !t.done);
+  if (filter === 'done') return tasks.filter((t) => !t.done);
+  return tasks;
+}
+
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  visibleTasks().forEach((t) => {
+    const i = tasks.indexOf(t);
+    const li = document.createElement('li');
+    li.innerHTML =
+      '<span class="' + (t.done ? 'done' : '') + '">' + t.text + '</span>' +
+      '<button onclick="toggleTask(' + i + ')">✓</button>' +
+      '<button onclick="deleteTask(' + i + ')">✕</button>';
+    list.appendChild(li);
+  });
+  document.getElementById('counter').textContent = tasks.length + ' tasks remaining';
+}
+
+render();
+</script>
+</body>
+</html>

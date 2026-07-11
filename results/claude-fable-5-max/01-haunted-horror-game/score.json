@@ -1,0 +1,23 @@
+{
+  "model": "claude-fable-5-max",
+  "model_id": "claude-fable-5 (high effort, per Ruling #3)",
+  "provider": "Anthropic",
+  "test": "01-haunted-horror-game",
+  "gauntlet_version": "v1",
+  "date": "2026-07-11",
+  "harness": "Claude Code v2.1.206 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 1,
+    "polish": 1,
+    "prompt_adherence": 1,
+    "wow_factor": 1
+  },
+  "total": 4,
+  "stats": {
+    "time_seconds": 1176,
+    "output_tokens": 182907,
+    "cost_usd": null
+  },
+  "notes": "Judge's call: the game didn't work in his play-through — scored 1 on every dimension. Top-down torch-and-sigils stealth design (torch/battery meters, multi-state hunter, six sigils, layered Web Audio) that the arena panel preferred 2-1 from the code and artifacts, making this the season's starkest human-vs-panel split. Run counted under Ruling #4 (buildos MCP enabled; model read the producer rules note; stats include its post-game producer-work detour)."
+}

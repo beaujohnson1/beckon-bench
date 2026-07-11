@@ -1,0 +1,9 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6 (Sol Ultra)",
+  "provider": "OpenAI",
+  "harness": "Codex CLI in a Beckon terminal pane (per Ruling #1: native flagship harness, shared Beckon environment)",
+  "run_date": "2026-07-10",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}

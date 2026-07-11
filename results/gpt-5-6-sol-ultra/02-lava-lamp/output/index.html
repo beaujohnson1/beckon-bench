@@ -1,0 +1,800 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07040b">
+  <title>Lava Lamp</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      background: #07040b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 43%, #21101c 0%, #0c0710 42%, #040307 100%);
+    }
+
+    body {
+      min-height: 100svh;
+      height: 100dvh;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+      cursor: default;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .webgl-note {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+      color: rgba(255, 235, 220, 0.72);
+      font: 400 0.9rem/1.6 system-ui, sans-serif;
+      text-align: center;
+      background: radial-gradient(circle, #29131e, #07040b 65%);
+    }
+  </style>
+</head>
+<body>
+  <canvas
+    id="lava"
+    role="img"
+    aria-label="A slowly flowing lava lamp with warm wax rising and falling inside its glass vessel."
+  >
+    A slowly flowing lava lamp.
+  </canvas>
+
+  <script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+in vec2 a_position;
+out vec2 v_uv;
+
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+  </script>
+
+  <script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+precision highp float;
+
+in vec2 v_uv;
+out vec4 out_color;
+
+const int MAX_BALLS = 28;
+const float PI = 3.141592653589793;
+const float GLASS_BOTTOM = -0.69;
+const float GLASS_TOP = 0.70;
+const float ISO = 0.22;
+
+uniform float u_time;
+uniform float u_aspect;
+uniform float u_scene_scale;
+uniform vec2 u_resolution;
+uniform int u_count;
+uniform vec4 u_balls[MAX_BALLS];
+uniform vec4 u_props[MAX_BALLS];
+
+float hash21(vec2 p) {
+  p = fract(p * vec2(123.34, 456.21));
+  p += dot(p, p + 45.32);
+  return fract(p.x * p.y);
+}
+
+float glass_width(float y) {
+  float t = clamp((y - GLASS_BOTTOM) / (GLASS_TOP - GLASS_BOTTOM), 0.0, 1.0);
+  float shoulder = pow(max(sin(PI * t), 0.0), 0.65);
+  return mix(0.315, 0.215, t) + 0.032 * shoulder;
+}
+
+float glass_distance(vec2 p) {
+  float vertical = max(GLASS_BOTTOM - p.y, p.y - GLASS_TOP);
+  float side = abs(p.x) - glass_width(p.y);
+  return max(vertical, side);
+}
+
+float shape_mask(float d) {
+  return 1.0 - smoothstep(-0.004, 0.004, d);
+}
+
+float trapezoid_distance(vec2 p, float y0, float y1, float w0, float w1) {
+  float t = clamp((p.y - y0) / (y1 - y0), 0.0, 1.0);
+  float w = mix(w0, w1, t);
+  return max(abs(p.x) - w, max(y0 - p.y, p.y - y1));
+}
+
+vec4 wax_field(vec2 p) {
+  float field = 0.0;
+  vec2 gradient = vec2(0.0);
+  float heat_sum = 0.0;
+
+  for (int i = 0; i < MAX_BALLS; i++) {
+    if (i >= u_count) {
+      break;
+    }
+
+    vec4 ball = u_balls[i];
+    vec4 prop = u_props[i];
+    vec2 d = p - ball.xy;
+    float c = prop.x;
+    float s = prop.y;
+    vec2 local = vec2(c * d.x + s * d.y, -s * d.x + c * d.y);
+    vec2 radii = max(ball.zw, vec2(0.001));
+    float q = dot(local / radii, local / radii);
+
+    if (q < 1.0) {
+      float h = 1.0 - q;
+      float k = h * h * h * prop.w;
+      vec2 local_gradient = 2.0 * local / (radii * radii);
+      vec2 world_gradient = vec2(
+        c * local_gradient.x - s * local_gradient.y,
+        s * local_gradient.x + c * local_gradient.y
+      );
+
+      field += k;
+      gradient -= 3.0 * h * h * world_gradient * prop.w;
+      heat_sum += k * prop.z;
+    }
+  }
+
+  return vec4(field, gradient, heat_sum);
+}
+
+void main() {
+  vec2 screen_p = v_uv * 2.0 - 1.0;
+  screen_p.x *= u_aspect;
+  vec2 p = screen_p / u_scene_scale;
+
+  float vertical_mix = clamp(v_uv.y, 0.0, 1.0);
+  vec3 color = mix(vec3(0.020, 0.011, 0.026), vec3(0.008, 0.006, 0.014), vertical_mix);
+
+  float room_halo = exp(-1.9 * dot(p * vec2(1.22, 0.76), p * vec2(1.22, 0.76)));
+  color += vec3(0.090, 0.025, 0.047) * room_halo;
+
+  float far_glow_a = exp(-18.0 * dot(p - vec2(-0.78, 0.22), p - vec2(-0.78, 0.22)));
+  float far_glow_b = exp(-24.0 * dot(p - vec2(0.72, -0.08), p - vec2(0.72, -0.08)));
+  color += vec3(0.045, 0.016, 0.032) * far_glow_a;
+  color += vec3(0.018, 0.020, 0.038) * far_glow_b;
+
+  float floor_mix = 1.0 - smoothstep(-0.97, -0.80, p.y);
+  color = mix(color, vec3(0.016, 0.011, 0.019), floor_mix * 0.72);
+
+  vec2 shadow_p = vec2(p.x / 0.56, (p.y + 0.935) / 0.055);
+  float floor_shadow = exp(-2.2 * dot(shadow_p, shadow_p));
+  color *= 1.0 - 0.74 * floor_shadow;
+
+  float glass_d = glass_distance(p);
+  float glass_mask = shape_mask(glass_d);
+  float w = glass_width(p.y);
+  float relative_x = p.x / max(w, 0.001);
+  float height_t = clamp((p.y - GLASS_BOTTOM) / (GLASS_TOP - GLASS_BOTTOM), 0.0, 1.0);
+
+  vec3 liquid_bottom = vec3(0.128, 0.026, 0.047);
+  vec3 liquid_top = vec3(0.048, 0.016, 0.052);
+  vec3 liquid = mix(liquid_bottom, liquid_top, smoothstep(0.0, 1.0, height_t));
+  liquid *= 0.78 + 0.18 * (1.0 - relative_x * relative_x);
+
+  float liquid_haze = 0.5 + 0.5 * sin(
+    p.y * 13.0 + sin(p.y * 5.3 + u_time * 0.045) * 1.4 + p.x * 4.0
+  );
+  liquid += vec3(0.017, 0.003, 0.010) * liquid_haze;
+
+  float heater_glow = exp(-20.0 * (p.y - GLASS_BOTTOM) * (p.y - GLASS_BOTTOM))
+    * exp(-8.0 * p.x * p.x);
+  liquid += vec3(0.190, 0.046, 0.014) * heater_glow;
+
+  float meniscus = exp(-pow((p.y - GLASS_TOP + 0.012) / 0.010, 2.0));
+  liquid += vec3(0.055, 0.018, 0.036) * meniscus;
+  color = mix(color, liquid, glass_mask * 0.985);
+
+  vec4 wax = vec4(0.0);
+  if (glass_mask > 0.001) {
+    wax = wax_field(p);
+  }
+
+  float wax_aa = max(fwidth(wax.x) * 0.90, 0.004);
+  float wax_mask = smoothstep(ISO - wax_aa, ISO + wax_aa, wax.x) * glass_mask;
+  float temperature = wax.w / max(wax.x, 0.0001);
+
+  float gradient_length = length(wax.yz);
+  vec2 outward = gradient_length > 0.0001
+    ? -wax.yz / gradient_length
+    : vec2(-0.28, 0.36);
+  float depth = smoothstep(ISO + 0.01, 1.15, wax.x);
+  vec3 normal = normalize(vec3(outward * (0.72 - 0.18 * depth), 0.84 + 0.40 * depth));
+  vec3 light_direction = normalize(vec3(-0.48, 0.70, 0.86));
+  float diffuse = max(dot(normal, light_direction), 0.0);
+  vec3 half_vector = normalize(light_direction + vec3(0.0, 0.0, 1.0));
+  float specular = pow(max(dot(normal, half_vector), 0.0), 26.0);
+
+  vec3 cool_wax = vec3(0.310, 0.012, 0.058);
+  vec3 warm_wax = vec3(0.790, 0.045, 0.028);
+  vec3 hot_wax = vec3(1.180, 0.205, 0.022);
+  vec3 wax_color = mix(cool_wax, warm_wax, smoothstep(0.24, 0.58, temperature));
+  wax_color = mix(wax_color, hot_wax, smoothstep(0.58, 0.88, temperature));
+
+  float contour = 1.0 - smoothstep(ISO + 0.015, ISO + 0.34, wax.x);
+  float core = smoothstep(ISO + 0.18, 1.2, wax.x);
+  wax_color *= 0.52 + 0.64 * diffuse;
+  wax_color += vec3(0.72, 0.25, 0.12) * specular * (0.22 + 0.78 * contour);
+  wax_color += vec3(0.17, 0.025, 0.005) * core;
+  wax_color *= 1.0 - 0.25 * contour;
+  wax_color += vec3(0.22, 0.035, 0.010) * contour;
+  wax_color += vec3(0.30, 0.075, 0.012) * heater_glow * (0.35 + 0.65 * core);
+  color = mix(color, wax_color, wax_mask);
+
+  float left_streak_center = -0.74 + 0.025 * sin(p.y * 5.1);
+  float left_streak = exp(-pow((relative_x - left_streak_center) / 0.036, 2.0));
+  left_streak *= smoothstep(GLASS_BOTTOM + 0.06, GLASS_BOTTOM + 0.18, p.y);
+  left_streak *= 1.0 - smoothstep(GLASS_TOP - 0.19, GLASS_TOP - 0.05, p.y);
+
+  float soft_streak = exp(-pow((relative_x + 0.49) / 0.12, 2.0));
+  soft_streak *= 0.5 + 0.5 * smoothstep(-0.45, 0.45, p.y);
+
+  float right_streak = exp(-pow((relative_x - 0.88) / 0.025, 2.0));
+  right_streak *= 0.45 + 0.55 * smoothstep(0.12, 0.64, p.y);
+
+  color += glass_mask * (
+    vec3(0.38, 0.19, 0.21) * left_streak * 0.26
+    + vec3(0.19, 0.08, 0.13) * soft_streak * 0.11
+    + vec3(0.27, 0.15, 0.22) * right_streak * 0.13
+  );
+
+  float side_rim = exp(-150.0 * abs(abs(p.x) - w));
+  side_rim *= smoothstep(GLASS_BOTTOM, GLASS_BOTTOM + 0.035, p.y);
+  side_rim *= 1.0 - smoothstep(GLASS_TOP - 0.035, GLASS_TOP, p.y);
+  float end_rim = exp(-150.0 * min(abs(p.y - GLASS_BOTTOM), abs(p.y - GLASS_TOP)));
+  end_rim *= 1.0 - smoothstep(0.0, 0.025, abs(p.x) - w);
+  color += vec3(0.30, 0.15, 0.20) * side_rim * 0.24;
+  color += vec3(0.26, 0.11, 0.17) * end_rim * 0.18;
+
+  float base_d = trapezoid_distance(p, -0.985, -0.625, 0.455, 0.305);
+  float base_mask = shape_mask(base_d);
+  float base_t = clamp((p.y + 0.985) / 0.360, 0.0, 1.0);
+  float base_w = mix(0.455, 0.305, base_t);
+  float base_x = p.x / max(base_w, 0.001);
+  float base_highlight = exp(-pow((base_x + 0.28) / 0.21, 2.0));
+  float base_edge_light = exp(-pow((abs(base_x) - 0.90) / 0.10, 2.0));
+  float brushing = hash21(vec2(floor((p.y + 1.0) * 930.0), 9.0)) - 0.5;
+  vec3 base_color = vec3(0.075, 0.060, 0.066);
+  base_color += vec3(0.230, 0.176, 0.157) * base_highlight;
+  base_color += vec3(0.070, 0.047, 0.050) * base_edge_light;
+  base_color += brushing * vec3(0.018, 0.014, 0.014);
+  base_color *= 0.82 + 0.18 * smoothstep(0.0, 0.76, base_t);
+
+  float base_outline = exp(-115.0 * abs(base_d));
+  base_color += vec3(0.22, 0.15, 0.14) * base_outline * 0.33;
+  color = mix(color, base_color, base_mask);
+
+  float foot_d = trapezoid_distance(p, -0.995, -0.955, 0.420, 0.452);
+  float foot_mask = shape_mask(foot_d);
+  color = mix(color, vec3(0.052, 0.043, 0.050), foot_mask);
+
+  float collar_d = trapezoid_distance(p, -0.715, -0.600, 0.335, 0.294);
+  float collar_mask = shape_mask(collar_d);
+  float collar_x = p.x / 0.335;
+  vec3 collar_color = vec3(0.105, 0.075, 0.073);
+  collar_color += vec3(0.210, 0.110, 0.076)
+    * exp(-pow((collar_x + 0.24) / 0.30, 2.0));
+  collar_color += vec3(0.23, 0.065, 0.020)
+    * exp(-pow((p.y + 0.704) / 0.018, 2.0));
+  color = mix(color, collar_color, collar_mask);
+
+  float cap_d = trapezoid_distance(p, 0.675, 0.955, 0.244, 0.064);
+  float cap_mask = shape_mask(cap_d);
+  float cap_t = clamp((p.y - 0.675) / 0.280, 0.0, 1.0);
+  float cap_w = mix(0.244, 0.064, cap_t);
+  float cap_x = p.x / max(cap_w, 0.001);
+  float cap_highlight = exp(-pow((cap_x + 0.26) / 0.24, 2.0));
+  float cap_brush = hash21(vec2(floor((p.y + 0.2) * 1010.0), 17.0)) - 0.5;
+  vec3 cap_color = vec3(0.072, 0.057, 0.064);
+  cap_color += vec3(0.245, 0.177, 0.158) * cap_highlight;
+  cap_color += cap_brush * vec3(0.020, 0.015, 0.015);
+  cap_color *= 0.94 - 0.20 * cap_t;
+  float cap_outline = exp(-120.0 * abs(cap_d));
+  cap_color += vec3(0.23, 0.15, 0.14) * cap_outline * 0.28;
+  color = mix(color, cap_color, cap_mask);
+
+  float cap_tip_d = trapezoid_distance(p, 0.944, 0.969, 0.071, 0.060);
+  float cap_tip_mask = shape_mask(cap_tip_d);
+  color = mix(color, vec3(0.105, 0.079, 0.083), cap_tip_mask);
+
+  float grain = hash21(floor(gl_FragCoord.xy)) - 0.5;
+  color += grain * 0.006;
+
+  vec2 vignette_p = v_uv * 2.0 - 1.0;
+  float vignette = 1.0 - 0.20 * smoothstep(0.35, 1.35, dot(vignette_p, vignette_p));
+  color *= vignette;
+
+  color = 1.0 - exp(-color * 1.28);
+  color = pow(max(color, 0.0), vec3(0.91));
+  out_color = vec4(color, 1.0);
+}
+  </script>
+
+  <script>
+  (function () {
+    "use strict";
+
+    var canvas = document.getElementById("lava");
+    var GLASS_BOTTOM = -0.69;
+    var GLASS_TOP = 0.70;
+    var MAX_BALLS = 28;
+    var FIXED_STEP = 1 / 90;
+    var TWO_PI = Math.PI * 2;
+
+    function clamp(value, low, high) {
+      return Math.max(low, Math.min(high, value));
+    }
+
+    function smoothstep(edge0, edge1, value) {
+      var t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+      return t * t * (3 - 2 * t);
+    }
+
+    function shortestAngle(from, to) {
+      var difference = (to - from + Math.PI) % TWO_PI - Math.PI;
+      return difference < -Math.PI ? difference + TWO_PI : difference;
+    }
+
+    function glassWidth(y) {
+      var t = clamp((y - GLASS_BOTTOM) / (GLASS_TOP - GLASS_BOTTOM), 0, 1);
+      var shoulder = Math.pow(Math.max(Math.sin(Math.PI * t), 0), 0.65);
+      return 0.315 + (0.215 - 0.315) * t + 0.032 * shoulder;
+    }
+
+    function mulberry32(seed) {
+      return function () {
+        var value = seed += 0x6D2B79F5;
+        value = Math.imul(value ^ value >>> 15, value | 1);
+        value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+        return ((value ^ value >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    var random = mulberry32(0x1A7A10);
+    var particles = [];
+    var groups = [
+      { x: -0.075, y: -0.570, count: 6, heat: 0.32, vx: 0.001, vy: 0.000, spread: 0.063 },
+      { x: -0.105, y: -0.145, count: 5, heat: 0.76, vx: 0.004, vy: 0.030, spread: 0.060 },
+      { x:  0.035, y:  0.515, count: 4, heat: 0.54, vx: 0.002, vy: 0.012, spread: 0.058 },
+      { x:  0.112, y:  0.090, count: 4, heat: 0.27, vx: -0.003, vy: -0.030, spread: 0.057 },
+      { x:  0.098, y: -0.365, count: 5, heat: 0.70, vx: -0.002, vy: 0.026, spread: 0.060 }
+    ];
+
+    groups.forEach(function (group, groupIndex) {
+      for (var i = 0; i < group.count; i++) {
+        var angle = TWO_PI * (i / group.count) + groupIndex * 0.81 + (random() - 0.5) * 0.35;
+        var radial = group.spread * (0.34 + 0.72 * Math.sqrt((i + 0.4) / group.count));
+        var radius = 0.043 + random() * 0.013;
+        var x = group.x + Math.cos(angle) * radial;
+        var y = group.y + Math.sin(angle) * radial * 1.12;
+
+        particles.push({
+          x: x,
+          y: y,
+          vx: group.vx + (random() - 0.5) * 0.004,
+          vy: group.vy + (random() - 0.5) * 0.004,
+          ax: 0,
+          ay: 0,
+          r: radius,
+          temperature: clamp(group.heat + (random() - 0.5) * 0.065, 0.20, 0.90),
+          thermalBias: (random() - 0.5) * 0.090,
+          phase: random() * TWO_PI,
+          angle: angle,
+          stretch: 1,
+          stress: 0,
+          stressX: 0,
+          stressY: 0
+        });
+      }
+    });
+
+    var simulationTime = 0;
+    var temperatureChanges = new Float64Array(particles.length);
+
+    function simulate(dt) {
+      simulationTime += dt;
+      temperatureChanges.fill(0);
+
+      for (var i = 0; i < particles.length; i++) {
+        var particle = particles[i];
+        particle.ax = 0;
+        particle.ay = 0;
+        particle.stress = 0;
+        particle.stressX = 0;
+        particle.stressY = 0;
+
+        var bottomHeat = 1 - smoothstep(GLASS_BOTTOM + 0.075, GLASS_BOTTOM + 0.285, particle.y);
+        var topCool = smoothstep(GLASS_TOP - 0.255, GLASS_TOP - 0.065, particle.y);
+        var middle = (1 - bottomHeat) * (1 - topCool);
+        var heatChange = bottomHeat * (0.87 + particle.thermalBias - particle.temperature) / 13.0;
+        var coolChange = topCool * (0.22 + particle.thermalBias * 0.35 - particle.temperature) / 9.5;
+        var ambientChange = middle * (0.47 - particle.temperature) / 115.0;
+        particle.temperature += (heatChange + coolChange + ambientChange) * dt;
+        particle.temperature = clamp(particle.temperature, 0.18, 0.92);
+
+        var sizeResponse = clamp(0.052 / particle.r, 0.88, 1.14);
+        particle.ay += 0.128 * (particle.temperature - 0.515) * sizeResponse;
+
+        var longFlow = 0.0105 * Math.sin(TWO_PI * simulationTime / 53 + particle.y * 3.7);
+        var crossFlow = 0.0055 * Math.sin(TWO_PI * simulationTime / 31 - particle.y * 7.1 + 0.8);
+        var slowCurl = 0.0040 * Math.sin(TWO_PI * simulationTime / 79 + particle.phase);
+        var targetFlowX = longFlow + crossFlow + slowCurl;
+        particle.ax += (targetFlowX - particle.vx) * 0.19;
+        particle.ay += 0.0016 * Math.sin(TWO_PI * simulationTime / 47 + particle.phase + particle.x * 5.0);
+      }
+
+      for (var aIndex = 0; aIndex < particles.length; aIndex++) {
+        var a = particles[aIndex];
+
+        for (var bIndex = aIndex + 1; bIndex < particles.length; bIndex++) {
+          var b = particles[bIndex];
+          var dx = b.x - a.x;
+          var dy = b.y - a.y;
+          var distanceSquared = dx * dx + dy * dy;
+          var sumRadius = a.r + b.r;
+          var cutoff = sumRadius * 1.25;
+
+          if (distanceSquared < cutoff * cutoff) {
+            var distance = Math.sqrt(Math.max(distanceSquared, 0.0000001));
+            var nx = dx / distance;
+            var ny = dy / distance;
+            var rest = sumRadius * 0.74;
+            var force;
+
+            if (distance < rest) {
+              force = -1.85 * (rest - distance);
+            } else {
+              var u = (distance - rest) / (cutoff - rest);
+              var heatSoftening = 1 - 0.20 * smoothstep(0.64, 0.90, Math.max(a.temperature, b.temperature));
+              var thermalDifference = Math.abs(a.temperature - b.temperature);
+              var thermalSeparation = 1 - 1.45 * smoothstep(0.045, 0.14, thermalDifference);
+              force = 0.40 * (distance - rest) * (1 - u) * heatSoftening * thermalSeparation;
+            }
+
+            a.ax += nx * force;
+            a.ay += ny * force;
+            b.ax -= nx * force;
+            b.ay -= ny * force;
+
+            var proximity = 1 - distance / cutoff;
+            var relativeVx = b.vx - a.vx;
+            var relativeVy = b.vy - a.vy;
+            var viscosity = 0.070 * proximity;
+            a.ax += relativeVx * viscosity;
+            a.ay += relativeVy * viscosity;
+            b.ax -= relativeVx * viscosity;
+            b.ay -= relativeVy * viscosity;
+
+            var exchange = (b.temperature - a.temperature) * 0.007 * proximity;
+            temperatureChanges[aIndex] += exchange;
+            temperatureChanges[bIndex] -= exchange;
+
+            var stress = Math.abs(force) * (0.5 + proximity);
+            a.stress += stress;
+            b.stress += stress;
+            a.stressX += nx * force;
+            a.stressY += ny * force;
+            b.stressX -= nx * force;
+            b.stressY -= ny * force;
+          }
+        }
+      }
+
+      for (var pIndex = 0; pIndex < particles.length; pIndex++) {
+        var p = particles[pIndex];
+        p.temperature += temperatureChanges[pIndex] * dt;
+
+        var lowerLimit = GLASS_BOTTOM + p.r * 0.62;
+        var upperLimit = GLASS_TOP - p.r * 0.62;
+        var halfWidth = glassWidth(p.y) - p.r * 0.70;
+        var edgeDistance = halfWidth - Math.abs(p.x);
+
+        if (edgeDistance < 0.026) {
+          var wallDirection = p.x < 0 ? 1 : -1;
+          p.ax += wallDirection * (0.026 - edgeDistance) * 2.25;
+          if (p.vx * wallDirection < 0) {
+            p.ax += -p.vx * 1.8;
+          }
+        }
+
+        if (p.y < lowerLimit + 0.025) {
+          p.ay += (lowerLimit + 0.025 - p.y) * 2.2;
+          if (p.vy < 0) {
+            p.ay += -p.vy * 1.65;
+          }
+        }
+
+        if (p.y > upperLimit - 0.025) {
+          p.ay -= (p.y - upperLimit + 0.025) * 2.2;
+          if (p.vy > 0) {
+            p.ay += -p.vy * 1.65;
+          }
+        }
+
+        var acceleration = Math.hypot(p.ax, p.ay);
+        if (acceleration > 0.19) {
+          p.ax *= 0.19 / acceleration;
+          p.ay *= 0.19 / acceleration;
+        }
+
+        p.vx += p.ax * dt;
+        p.vy += p.ay * dt;
+        var damping = Math.exp(-0.42 * dt);
+        p.vx *= damping;
+        p.vy *= damping;
+
+        var speed = Math.hypot(p.vx, p.vy);
+        if (speed > 0.082) {
+          p.vx *= 0.082 / speed;
+          p.vy *= 0.082 / speed;
+          speed = 0.082;
+        }
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+
+        lowerLimit = GLASS_BOTTOM + p.r * 0.60;
+        upperLimit = GLASS_TOP - p.r * 0.60;
+        if (p.y < lowerLimit) {
+          p.y = lowerLimit;
+          p.vy = Math.max(0, p.vy * -0.03);
+        } else if (p.y > upperLimit) {
+          p.y = upperLimit;
+          p.vy = Math.min(0, p.vy * -0.03);
+        }
+
+        halfWidth = glassWidth(p.y) - p.r * 0.68;
+        if (Math.abs(p.x) > halfWidth) {
+          p.x = (p.x < 0 ? -1 : 1) * halfWidth;
+          p.vx *= -0.05;
+        }
+
+        var directionSpeed = Math.hypot(p.vx, p.vy);
+        var targetAngle;
+        if (directionSpeed > 0.0045) {
+          targetAngle = Math.atan2(p.vy, p.vx);
+        } else if (p.stress > 0.002) {
+          targetAngle = Math.atan2(p.stressY, p.stressX);
+        } else {
+          targetAngle = p.phase + 0.18 * Math.sin(simulationTime * 0.08 + p.phase);
+        }
+
+        p.angle += shortestAngle(p.angle, targetAngle) * (1 - Math.exp(-1.25 * dt));
+        var wobble = 0.025 * (0.5 + 0.5 * Math.sin(simulationTime * 0.19 + p.phase));
+        var targetStretch = 1 + clamp(directionSpeed * 3.7 + p.stress * 3.0 + wobble, 0, 0.31);
+        p.stretch += (targetStretch - p.stretch) * (1 - Math.exp(-1.7 * dt));
+      }
+    }
+
+    function compileShader(gl, type, source) {
+      var shader = gl.createShader(type);
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        var message = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error(message);
+      }
+      return shader;
+    }
+
+    function createWebGLRenderer() {
+      var gl = canvas.getContext("webgl2", {
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: false
+      });
+
+      if (!gl) {
+        return null;
+      }
+
+      var vertexSource = document.getElementById("vertex-shader").textContent.trimStart();
+      var fragmentSource = document.getElementById("fragment-shader").textContent.trimStart();
+      var vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexSource);
+      var fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+      var program = gl.createProgram();
+      gl.attachShader(program, vertexShader);
+      gl.attachShader(program, fragmentShader);
+      gl.linkProgram(program);
+      gl.deleteShader(vertexShader);
+      gl.deleteShader(fragmentShader);
+
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        var linkMessage = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error(linkMessage);
+      }
+
+      var buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+        -1, -1,
+         3, -1,
+        -1,  3
+      ]), gl.STATIC_DRAW);
+
+      gl.useProgram(program);
+      var position = gl.getAttribLocation(program, "a_position");
+      gl.enableVertexAttribArray(position);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+      var uniforms = {
+        time: gl.getUniformLocation(program, "u_time"),
+        aspect: gl.getUniformLocation(program, "u_aspect"),
+        sceneScale: gl.getUniformLocation(program, "u_scene_scale"),
+        resolution: gl.getUniformLocation(program, "u_resolution"),
+        count: gl.getUniformLocation(program, "u_count"),
+        balls: gl.getUniformLocation(program, "u_balls[0]"),
+        props: gl.getUniformLocation(program, "u_props[0]")
+      };
+
+      var ballData = new Float32Array(MAX_BALLS * 4);
+      var propData = new Float32Array(MAX_BALLS * 4);
+
+      function resize() {
+        var cssWidth = Math.max(1, canvas.clientWidth);
+        var cssHeight = Math.max(1, canvas.clientHeight);
+        var maxPixels = 1750000;
+        var pixelRatio = Math.min(
+          window.devicePixelRatio || 1,
+          1.5,
+          Math.sqrt(maxPixels / (cssWidth * cssHeight))
+        );
+        var width = Math.round(cssWidth * pixelRatio);
+        var height = Math.round(cssHeight * pixelRatio);
+
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+          gl.viewport(0, 0, width, height);
+        }
+      }
+
+      function render() {
+        resize();
+        ballData.fill(0);
+        propData.fill(0);
+
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          var ballOffset = i * 4;
+          var support = p.r * 1.66;
+          var stretch = p.stretch;
+          var renderX = p.x + 0.0022 * Math.sin(simulationTime * 0.13 + p.phase);
+          var renderY = p.y + 0.0018 * Math.sin(simulationTime * 0.17 + p.phase * 1.37);
+
+          ballData[ballOffset] = renderX;
+          ballData[ballOffset + 1] = renderY;
+          ballData[ballOffset + 2] = support * stretch;
+          ballData[ballOffset + 3] = support / stretch;
+          propData[ballOffset] = Math.cos(p.angle);
+          propData[ballOffset + 1] = Math.sin(p.angle);
+          propData[ballOffset + 2] = p.temperature;
+          propData[ballOffset + 3] = 0.97 + 0.06 * Math.sin(p.phase * 2.17);
+        }
+
+        var aspect = canvas.width / canvas.height;
+        var sceneScale = Math.min(1, aspect / 0.50);
+        gl.useProgram(program);
+        gl.uniform1f(uniforms.time, simulationTime);
+        gl.uniform1f(uniforms.aspect, aspect);
+        gl.uniform1f(uniforms.sceneScale, sceneScale);
+        gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+        gl.uniform1i(uniforms.count, particles.length);
+        gl.uniform4fv(uniforms.balls, ballData);
+        gl.uniform4fv(uniforms.props, propData);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
+
+      return render;
+    }
+
+    var render;
+    try {
+      render = createWebGLRenderer();
+    } catch (error) {
+      console.error("The lava lamp shader could not start:", error);
+      render = null;
+    }
+
+    if (!render) {
+      canvas.style.display = "none";
+      var note = document.createElement("div");
+      note.className = "webgl-note";
+      note.textContent = "This lava lamp needs WebGL 2, which is disabled in this browser.";
+      document.body.appendChild(note);
+      return;
+    }
+
+    var lastTimestamp = performance.now();
+    var accumulator = 0;
+    var running = true;
+    var contextLost = false;
+    var animationFrameId = 0;
+
+    function frame(timestamp) {
+      animationFrameId = 0;
+      if (!running) {
+        return;
+      }
+
+      var elapsed = Math.min((timestamp - lastTimestamp) / 1000, 0.10);
+      lastTimestamp = timestamp;
+      accumulator += Math.max(0, elapsed);
+
+      while (accumulator >= FIXED_STEP) {
+        simulate(FIXED_STEP);
+        accumulator -= FIXED_STEP;
+      }
+
+      render();
+      animationFrameId = requestAnimationFrame(frame);
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        running = false;
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+          animationFrameId = 0;
+        }
+      } else if (!running && !contextLost) {
+        running = true;
+        accumulator = 0;
+        lastTimestamp = performance.now();
+        animationFrameId = requestAnimationFrame(frame);
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      if (!contextLost) {
+        render();
+      }
+    }, { passive: true });
+
+    canvas.addEventListener("webglcontextlost", function (event) {
+      event.preventDefault();
+      contextLost = true;
+      running = false;
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = 0;
+      }
+    });
+
+    canvas.addEventListener("webglcontextrestored", function () {
+      location.reload();
+    });
+
+    render();
+    animationFrameId = requestAnimationFrame(frame);
+  }());
+  </script>
+</body>
+</html>

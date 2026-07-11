@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Hollow House</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#000;overflow:hidden;
+    font-family:Georgia,'Times New Roman',serif;color:#b9b3a6;
+    -webkit-user-select:none;user-select:none;cursor:crosshair}
+  #cv{display:block;position:absolute;inset:0}
+  .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;background:rgba(2,2,4,.88);z-index:10;padding:24px}
+  .hidden{display:none}
+  h1{font-size:clamp(28px,6vw,58px);letter-spacing:.32em;margin:0 0 6px;color:#8e1d1d;
+    text-shadow:0 0 18px rgba(160,20,20,.55),0 0 60px rgba(120,0,0,.3);font-weight:normal;
+    animation:flicker 7.3s infinite}
+  @keyframes flicker{
+    0%,5.9%,8.1%,38.9%,41.6%,69.9%,73.1%,100%{opacity:1;
+      text-shadow:0 0 18px rgba(160,20,20,.55),0 0 60px rgba(120,0,0,.3)}
+    6.5%{opacity:.72;text-shadow:0 0 8px rgba(160,20,20,.3)}
+    7.2%{opacity:.94}
+    40%{opacity:.85;text-shadow:0 0 12px rgba(160,20,20,.4)}
+    71%{opacity:.55;text-shadow:0 0 6px rgba(160,20,20,.2)}
+    72%{opacity:.9}
+  }
+  .sub{color:#6f6a5e;font-style:italic;margin-bottom:26px;letter-spacing:.08em;
+    animation:breathe 5.6s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.55}50%{opacity:1}}
+  .rules{max-width:520px;line-height:1.75;font-size:15px;color:#9c968a;
+    border-top:1px solid #2a2620;border-bottom:1px solid #2a2620;padding:16px 8px;margin-bottom:26px}
+  .rules b{color:#cfc8b8;font-weight:normal;letter-spacing:.05em}
+  .key{display:inline-block;border:1px solid #57503f;border-radius:3px;padding:0 7px;margin:0 2px;
+    font-size:13px;color:#d8d1c0;background:#141210;box-shadow:0 2px 0 #000}
+  button{font-family:inherit;font-size:17px;letter-spacing:.25em;padding:12px 40px;cursor:pointer;
+    color:#c9c2b2;background:#160c0c;border:1px solid #5a1a1a;transition:all .25s}
+  button:hover{background:#2a0e0e;color:#fff;box-shadow:0 0 22px rgba(150,20,20,.45)}
+  #startBtn{animation:beckon 3.4s ease-in-out infinite}
+  @keyframes beckon{0%,100%{box-shadow:0 0 0 rgba(150,20,20,0)}50%{box-shadow:0 0 18px rgba(150,20,20,.35)}}
+  .tiny{margin-top:18px;font-size:12px;color:#565248;font-style:italic}
+  #hud{position:absolute;top:14px;left:16px;z-index:5;pointer-events:none;font-size:12px;
+    letter-spacing:.12em;color:#8f897c;text-shadow:0 1px 2px #000}
+  .barwrap{width:150px;height:8px;background:#0d0c0a;border:1px solid #3a352b;margin:3px 0 9px}
+  .bar{height:100%;transition:width .15s linear}
+  #batBar{background:linear-gradient(90deg,#6e6428,#c7b452)}
+  #stamBar{background:linear-gradient(90deg,#274436,#4f8a68)}
+  #sigils{position:absolute;top:14px;right:18px;z-index:5;pointer-events:none;text-align:right;
+    font-size:13px;letter-spacing:.2em;color:#7fb8ab;text-shadow:0 0 10px rgba(90,200,180,.35)}
+  #hint{position:absolute;bottom:12px;right:16px;z-index:5;pointer-events:none;font-size:11px;
+    letter-spacing:.12em;color:#4e4a41}
+  #msg{position:absolute;bottom:9%;left:0;right:0;text-align:center;z-index:6;pointer-events:none;
+    font-size:19px;font-style:italic;letter-spacing:.06em;color:#cfc7b4;
+    text-shadow:0 0 12px #000,0 2px 4px #000;opacity:0;transition:opacity .6s}
+  #death h1{color:#a02222}
+  #win h1{color:#b8ae8e;text-shadow:0 0 24px rgba(220,200,140,.5)}
+  .lore{max-width:480px;color:#847e70;line-height:1.7;font-style:italic;margin-bottom:28px}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<div id="hud" class="hidden">
+  TORCH<div class="barwrap"><div id="batBar" class="bar"></div></div>
+  BREATH<div class="barwrap"><div id="stamBar" class="bar"></div></div>
+</div>
+<div id="sigils" class="hidden">SIGILS 0 / 6</div>
+<div id="hint" class="hidden">WASD move &nbsp;·&nbsp; mouse aim &nbsp;·&nbsp; SHIFT run &nbsp;·&nbsp; F torch</div>
+<div id="msg"></div>
+
+<div id="title" class="overlay">
+  <h1>THE HOLLOW HOUSE</h1>
+  <div class="sub">no one has left since 1911</div>
+  <div class="rules">
+    You wake inside a sealed mansion. <b>Six sigils</b> bind the front door —
+    find them all, then escape. Something else walks these halls.<br><br>
+    <span class="key">W A S D</span> move &nbsp;
+    <span class="key">MOUSE</span> aim torch &nbsp;
+    <span class="key">SHIFT</span> run &nbsp;
+    <span class="key">F</span> torch on/off<br><br>
+    <b>Running is loud.</b> It listens. Your torch beam slows It —
+    but light carries far, and the battery will not last. Darkness hides you both.
+  </div>
+  <button id="startBtn">E N T E R</button>
+  <div class="tiny">headphones recommended — keyboard &amp; mouse required</div>
+</div>
+
+<div id="death" class="overlay hidden">
+  <h1>TAKEN</h1>
+  <div class="lore" id="deathLore">The house keeps what it catches.</div>
+  <button id="retryBtn">A G A I N</button>
+</div>
+
+<div id="win" class="overlay hidden">
+  <h1>YOU ESCAPED</h1>
+  <div class="lore" id="winLore"></div>
+  <button id="againBtn">R E T U R N</button>
+</div>
+
+<script>
+'use strict';
+/* ============================ WORLD ============================ */
+const T = 44, COLS = 48, ROWS = 34;
+const W = COLS * T, H = ROWS * T;
+let grid = [];
+
+function buildMap() {
+  grid = Array.from({length: ROWS}, () => new Array(COLS).fill(0));
+  for (let c = 0; c < COLS; c++) { grid[0][c] = 1; grid[ROWS-1][c] = 1; }
+  for (let r = 0; r < ROWS; r++) { grid[r][0] = 1; grid[r][COLS-1] = 1; }
+  // interior walls: 3x3 grid of rooms
+  for (let r = 0; r < ROWS; r++) { grid[r][15] = 1; grid[r][31] = 1; }
+  for (let c = 0; c < COLS; c++) { grid[11][c] = 1; grid[22][c] = 1; }
+  // doorways
+  const doors = [
+    [31,5],[31,6],            // gallery - bedroom
+    [7,11],[8,11],            // library - dining
+    [22,11],[23,11],          // gallery - great hall
+    [38,11],[39,11],          // bedroom - study
+    [15,16],[15,17],          // dining - great hall
+    [4,22],[5,22],            // dining - cellar
+    [22,22],[23,22],          // great hall - foyer
+    [41,22],[42,22],          // study - conservatory
+    [31,27],[31,28]           // foyer - conservatory
+  ];
+  for (const [c, r] of doors) grid[r][c] = 0;
+  // furniture / obstacles
+  const blocks = [];
+  for (const c of [4,5,6,9,10,11]) { blocks.push([c,4],[c,7]); }      // library shelves
+  blocks.push([19,5],[27,5]);                                          // gallery statues
+  blocks.push([34,3],[35,3],[36,3],[34,4],[35,4],[36,4],[34,5],[35,5],[36,5],[44,2],[45,2]); // bed, wardrobe
+  for (let c = 5; c <= 10; c++) for (let r = 15; r <= 17; r++) blocks.push([c,r]); // dining table
+  blocks.push([19,14],[27,14],[19,19],[27,19]);                        // hall pillars
+  blocks.push([36,15],[37,15],[38,15]);                                // study desk
+  blocks.push([5,26],[6,26],[11,25],[10,31]);                          // cellar crates
+  blocks.push([19,26],[27,26]);                                        // foyer pillars
+  blocks.push([35,26],[38,26],[41,26]);                                // conservatory planters
+  for (const [c, r] of blocks) grid[r][c] = 1;
+}
+const isWall = (c, r) => c < 0 || r < 0 || c >= COLS || r >= ROWS || grid[r][c] === 1;
+const wallAt = (x, y) => isWall(Math.floor(x / T), Math.floor(y / T));
+const cx = t => t * T + T / 2;
+
+const EXIT = { cols: [22, 23, 24], row: 33 };
+const ITEM_DEFS = [
+  {type:'sigil', c:2,  r:2 }, {type:'sigil', c:23, r:3 }, {type:'sigil', c:44, r:4 },
+  {type:'sigil', c:2,  r:20}, {type:'sigil', c:44, r:13}, {type:'sigil', c:2,  r:31},
+  {type:'bat',   c:28, r:9 }, {type:'bat',   c:17, r:12}, {type:'bat',   c:33, r:9 },
+  {type:'bat',   c:12, r:13}, {type:'bat',   c:44, r:31}
+];
+const ROOM_NAMES = [['the library','the gallery','the bedchamber'],
+                    ['the dining hall','the great hall','the study'],
+                    ['the cellar','the foyer','the conservatory']];
+const roomIdx = (c, r) => [c <= 15 ? 0 : c <= 31 ? 1 : 2, r <= 11 ? 0 : r <= 22 ? 1 : 2];
+const ROOM_PAL = [
+  [[46,37,26],[41,36,46],[46,30,28]],
+  [[45,35,24],[34,37,45],[30,40,33]],
+  [[29,33,41],[43,33,22],[26,41,30]]
+];
+
+/* ============================ STATE ============================ */
+let state = 'title';           // title | play | dying | dead | won
+let player, foe, items, sigils, exitOpen, now = 0, shakeT = 0, dyingT = 0, wonT = 0;
+let msgT = 0, msgQueue = [], doorNagT = 0, creepT = 14, whisperT = 9;
+let heartT = 0, stepT = 0, grainSeed = 0;
+
+function reset() {
+  buildMap();
+  player = { x: cx(23), y: cx(31), a: -Math.PI/2, r: 10, run:false, moving:false,
+             bat: 100, stam: 100, light: true, aimedMouse:false };
+  foe = { x: cx(40), y: cx(6), st: 'roam', path: [], target: null, repath: 0,
+          lastSeen: null, lostT: 0, scanT: 0, grace: 9, inBeam: false, wasHunt:false };
+  items = ITEM_DEFS.map(d => ({...d, x: cx(d.c), y: cx(d.r), got: false}));
+  sigils = 0; exitOpen = false;
+  shakeT = 0; dyingT = 0; wonT = 0; doorNagT = 0; creepT = 16; whisperT = 9;
+  msgQueue = [[1.2,'You wake on the cold floor of the foyer.'],
+              [5.2,'Six sigils bind the front door. Find them.'],
+              [9.4,'Quietly.']];
+  msgEl.style.opacity = 0;
+}
+
+/* ============================ INPUT ============================ */
+const keys = {};
+let mouse = { x: innerWidth/2, y: innerHeight/2 };
+addEventListener('keydown', e => {
+  keys[e.code] = true;
+  if (e.code === 'KeyF' && state === 'play') { player.light = !player.light; A.click(); }
+  if (e.code === 'KeyR' && (state === 'dead' || state === 'won')) restart();
+});
+addEventListener('keyup', e => keys[e.code] = false);
+addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; if (player) player.aimedMouse = true; });
+addEventListener('contextmenu', e => e.preventDefault());
+
+/* ============================ AUDIO ============================ */
+const A = (() => {
+  let ac = null, master, noiseBuf, droneG, presG, presO, windF, windG;
+  const t = () => ac.currentTime;
+  function env(g, t0, a, peak, d) {
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(peak, t0 + a);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + d);
+  }
+  function noiseSrc(dur) {
+    const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true;
+    if (dur) s.stop(t() + dur); return s;
+  }
+  function init() {
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = 0.75; master.connect(ac.destination);
+    const len = ac.sampleRate * 2, nb = ac.createBuffer(1, len, ac.sampleRate), d = nb.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    noiseBuf = nb;
+    // --- drone: two detuned saws + sub, dark lowpass ---
+    droneG = ac.createGain(); droneG.gain.value = 0.05;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 110; lp.Q.value = 2;
+    for (const f of [41, 41.5]) {
+      const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.connect(lp); o.start();
+    }
+    const sub = ac.createOscillator(); sub.type = 'sine'; sub.frequency.value = 55;
+    const sg = ac.createGain(); sg.gain.value = 0.5; sub.connect(sg); sg.connect(lp); sub.start();
+    lp.connect(droneG); droneG.connect(master);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 0.07;
+    const lg = ac.createGain(); lg.gain.value = 0.02;
+    lfo.connect(lg); lg.connect(droneG.gain); lfo.start();
+    // --- wind: looped noise through wandering bandpass ---
+    const wn = noiseSrc(); windF = ac.createBiquadFilter(); windF.type = 'bandpass';
+    windF.frequency.value = 380; windF.Q.value = 0.6;
+    windG = ac.createGain(); windG.gain.value = 0.028;
+    wn.connect(windF); windF.connect(windG); windG.connect(master); wn.start();
+    const wl = ac.createOscillator(); wl.frequency.value = 0.11;
+    const wlg = ac.createGain(); wlg.gain.value = 160;
+    wl.connect(wlg); wlg.connect(windF.frequency); wl.start();
+    // --- presence: eerie tone that swells when It is near ---
+    presO = ac.createOscillator(); presO.type = 'sine'; presO.frequency.value = 620;
+    const vib = ac.createOscillator(); vib.frequency.value = 4.3;
+    const vg = ac.createGain(); vg.gain.value = 9; vib.connect(vg); vg.connect(presO.frequency); vib.start();
+    const brth = ac.createOscillator(); brth.frequency.value = 0.55;
+    presG = ac.createGain(); presG.gain.value = 0;
+    const bg = ac.createGain(); bg.gain.value = 0; // breathing depth, set with presence
+    brth.connect(bg); bg.connect(presG.gain); brth.start();
+    presO.connect(presG); presG.connect(master); presO.start();
+    presG._breath = bg;
+  }
+  return {
+    init,
+    get on() { return !!ac; },
+    danger(v, hunting) { // v 0..1
+      if (!ac) return;
+      const g = Math.pow(v, 2) * 0.045 + (hunting ? 0.02 : 0);
+      presG.gain.setTargetAtTime(g, t(), 0.4);
+      presG._breath.gain.setTargetAtTime(g * 0.7, t(), 0.4);
+      droneG.gain.setTargetAtTime(0.05 + v * 0.05, t(), 0.6);
+    },
+    step(run) {
+      if (!ac) return;
+      const s = noiseSrc(0.12), f = ac.createBiquadFilter(); f.type = 'lowpass';
+      f.frequency.value = 320 + Math.random() * 180;
+      const g = ac.createGain(); env(g, t(), 0.004, run ? 0.11 : 0.05, 0.09);
+      s.playbackRate.value = 0.7 + Math.random() * 0.4;
+      s.connect(f); f.connect(g); g.connect(master); s.start();
+    },
+    heart(vol) {
+      if (!ac) return;
+      for (const [dt, f, v] of [[0, 52, vol], [0.17, 44, vol * 0.65]]) {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g = ac.createGain(); env(g, t() + dt, 0.006, v, 0.14);
+        o.connect(g); g.connect(master); o.start(t() + dt); o.stop(t() + dt + 0.25);
+      }
+    },
+    whisper() {
+      if (!ac) return;
+      const s = noiseSrc(1.6), f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 7;
+      f.frequency.setValueAtTime(900 + Math.random() * 500, t());
+      f.frequency.linearRampToValueAtTime(1700 + Math.random() * 900, t() + 0.7);
+      f.frequency.linearRampToValueAtTime(700 + Math.random() * 400, t() + 1.5);
+      const g = ac.createGain(); env(g, t(), 0.4, 0.045, 1.1);
+      const p = ac.createStereoPanner ? ac.createStereoPanner() : ac.createGain();
+      if (p.pan) p.pan.value = Math.random() * 1.6 - 0.8;
+      s.connect(f); f.connect(g); g.connect(p); p.connect(master); s.start();
+    },
+    creak() {
+      if (!ac) return;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      const f0 = 90 + Math.random() * 70;
+      o.frequency.setValueAtTime(f0, t());
+      o.frequency.linearRampToValueAtTime(f0 * (0.6 + Math.random() * 0.2), t() + 0.7);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 340;
+      const g = ac.createGain(); env(g, t(), 0.15, 0.045, 0.6);
+      o.connect(lp); lp.connect(g); g.connect(master); o.start(); o.stop(t() + 0.9);
+    },
+    thud(v = 0.28) {
+      if (!ac) return;
+      const o = ac.createOscillator(); o.type = 'sine';
+      o.frequency.setValueAtTime(58, t()); o.frequency.exponentialRampToValueAtTime(30, t() + 0.3);
+      const g = ac.createGain(); env(g, t(), 0.005, v, 0.35);
+      o.connect(g); g.connect(master); o.start(); o.stop(t() + 0.45);
+    },
+    click() {
+      if (!ac) return;
+      const s = noiseSrc(0.04), f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1800;
+      const g = ac.createGain(); env(g, t(), 0.002, 0.08, 0.03);
+      s.connect(f); f.connect(g); g.connect(master); s.start();
+    },
+    pickup() {
+      if (!ac) return;
+      for (const [f, v] of [[659, 0.10], [692, 0.08], [110, 0.12]]) {
+        const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+        const g = ac.createGain(); env(g, t(), 0.01, v, 1.3);
+        o.connect(g); g.connect(master); o.start(); o.stop(t() + 1.5);
+      }
+    },
+    growl() {
+      if (!ac) return;
+      const o = ac.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(78, t()); o.frequency.exponentialRampToValueAtTime(33, t() + 1.1);
+      const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 180; lp.Q.value = 4;
+      const g = ac.createGain(); env(g, t(), 0.03, 0.4, 1.0);
+      o.connect(lp); lp.connect(g); g.connect(master); o.start(); o.stop(t() + 1.3);
+      const s = noiseSrc(0.9), f2 = ac.createBiquadFilter(); f2.type = 'lowpass'; f2.frequency.value = 240;
+      const g2 = ac.createGain(); env(g2, t(), 0.05, 0.16, 0.8);
+      s.connect(f2); f2.connect(g2); g2.connect(master); s.start();
+    },
+    sting() {
+      if (!ac) return;
+      for (const f of [418, 431, 404]) {
+        const o = ac.createOscillator(); o.type = 'sawtooth';
+        o.frequency.setValueAtTime(f, t()); o.frequency.exponentialRampToValueAtTime(f * 0.2, t() + 0.85);
+        const g = ac.createGain(); env(g, t(), 0.005, 0.22, 0.9);
+        o.connect(g); g.connect(master); o.start(); o.stop(t() + 1.1);
+      }
+      const s = noiseSrc(0.5), f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 500;
+      const g = ac.createGain(); env(g, t(), 0.003, 0.4, 0.45);
+      s.connect(f); f.connect(g); g.connect(master); s.start();
+      this.thud(0.5);
+    },
+    unlock() {
+      if (!ac) return;
+      this.thud(0.45); this.creak();
+      const o = ac.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(180, t()); o.frequency.linearRampToValueAtTime(520, t() + 1.4);
+      const g = ac.createGain(); env(g, t(), 0.4, 0.05, 1.2);
+      o.connect(g); g.connect(master); o.start(); o.stop(t() + 1.8);
+    },
+    winPad() {
+      if (!ac) return;
+      this.danger(0, false);
+      for (const f of [220, 277, 330, 440]) {
+        const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.value = f;
+        const g = ac.createGain();
+        g.gain.setValueAtTime(0.0001, t());
+        g.gain.linearRampToValueAtTime(0.05, t() + 2.2);
+        g.gain.linearRampToValueAtTime(0.0001, t() + 7);
+        o.connect(g); g.connect(master); o.start(); o.stop(t() + 7.2);
+      }
+    }
+  };
+})();
+
+/* ============================ HELPERS ============================ */
+function hash(x, y) {
+  let h = (x * 374761393 + y * 668265263) | 0;
+  h = ((h ^ (h >>> 13)) * 1274126177) | 0;
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967295;
+}
+function los(x1, y1, x2, y2) {
+  const d = Math.hypot(x2 - x1, y2 - y1), steps = Math.ceil(d / 7);
+  for (let i = 1; i < steps; i++) {
+    const f = i / steps;
+    if (wallAt(x1 + (x2 - x1) * f, y1 + (y2 - y1) * f)) return false;
+  }
+  return true;
+}
+function castRay(x, y, ang, max) {
+  const dx = Math.cos(ang), dy = Math.sin(ang), step = 6;
+  let d = 0;
+  while (d < max) {
+    d += step;
+    if (wallAt(x + dx * d, y + dy * d)) return d;
+  }
+  return max;
+}
+function bfs(sc, sr, tc, tr) {
+  if (isWall(tc, tr)) return null;
+  const key = (c, r) => r * COLS + c;
+  const prev = new Map(); prev.set(key(sc, sr), -1);
+  const q = [[sc, sr]];
+  while (q.length) {
+    const [c, r] = q.shift();
+    if (c === tc && r === tr) {
+      const path = []; let k = key(c, r);
+      while (k !== -1) { path.push([k % COLS, Math.floor(k / COLS)]); k = prev.get(k); }
+      path.reverse(); path.shift();
+      return path.map(([pc, pr]) => ({x: cx(pc), y: cx(pr)}));
+    }
+    for (const [dc, dr] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+      const nc = c + dc, nr = r + dr, k = key(nc, nr);
+      if (!isWall(nc, nr) && !prev.has(k)) { prev.set(k, key(c, r)); q.push([nc, nr]); }
+    }
+  }
+  return null;
+}
+function moveCircle(e, dx, dy) {
+  const R = e.r || 10;
+  const tryAxis = (nx, ny) => {
+    for (const ox of [-R, R]) for (const oy of [-R, R])
+      if (wallAt(nx + ox * 0.75, ny + oy * 0.75)) return false;
+    return true;
+  };
+  if (tryAxis(e.x + dx, e.y)) e.x += dx;
+  if (tryAxis(e.x, e.y + dy)) e.y += dy;
+  e.x = Math.max(R, Math.min(W - R, e.x));
+  e.y = Math.max(R, Math.min(H - R, e.y));
+}
+
+/* ============================ UI ============================ */
+const cvs = document.getElementById('cv'), ctx = cvs.getContext('2d');
+const lcv = document.createElement('canvas'), lctx = lcv.getContext('2d');
+const msgEl = document.getElementById('msg');
+const hudEl = document.getElementById('hud'), sigEl = document.getElementById('sigils'),
+      hintEl = document.getElementById('hint');
+let VW = 0, VH = 0;
+function resize() {
+  VW = cvs.width = lcv.width = innerWidth;
+  VH = cvs.height = lcv.height = innerHeight;
+}
+addEventListener('resize', resize); resize();
+
+function showMsg(txt, dur = 3.4) {
+  msgEl.textContent = txt; msgEl.style.opacity = 1; msgT = dur;
+}
+
+/* ============================ UPDATE ============================ */
+function update(dt) {
+  now += dt;
+  // ---- messages ----
+  for (const m of msgQueue) m[0] -= dt;
+  while (msgQueue.length && msgQueue[0][0] <= 0) showMsg(msgQueue.shift()[1]);
+  if (msgT > 0) { msgT -= dt; if (msgT <= 0) msgEl.style.opacity = 0; }
+  if (shakeT > 0) shakeT -= dt;
+
+  if (state === 'dying') {
+    dyingT += dt;
+    if (dyingT > 1.15) { state = 'dead'; document.getElementById('death').classList.remove('hidden'); }
+    return;
+  }
+  if (state === 'won') { wonT += dt; return; }
+  if (state !== 'play') return;
+
+  /* ---- player ---- */
+  const p = player;
+  let mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  let my = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+  const mag = Math.hypot(mx, my);
+  p.moving = mag > 0;
+  const wantRun = (keys.ShiftLeft || keys.ShiftRight) && p.moving && p.stam > 4;
+  p.run = wantRun;
+  if (wantRun) p.stam = Math.max(0, p.stam - 24 * dt);
+  else p.stam = Math.min(100, p.stam + 13 * dt);
+  const spd = p.run ? 205 : 128;
+  if (mag > 0) moveCircle(p, mx / mag * spd * dt, my / mag * spd * dt);
+  // aim
+  const sx = p.x - cam.x, sy = p.y - cam.y;
+  if (p.aimedMouse) p.a = Math.atan2(mouse.y - sy, mouse.x - sx);
+  else if (mag > 0) p.a = Math.atan2(my, mx);
+  // battery
+  if (p.light) {
+    p.bat -= dt * 1.15;
+    if (p.bat <= 0) { p.bat = 0; p.light = false; showMsg('Your torch dies.'); A.click(); }
+  }
+  // footsteps
+  if (p.moving) {
+    stepT -= dt;
+    if (stepT <= 0) { A.step(p.run); stepT = p.run ? 0.27 : 0.44; }
+  } else stepT = 0.1;
+
+  /* ---- items ---- */
+  for (const it of items) {
+    if (it.got || Math.hypot(it.x - p.x, it.y - p.y) > 26) continue;
+    it.got = true;
+    if (it.type === 'bat') {
+      p.bat = Math.min(100, p.bat + 45);
+      A.click(); showMsg('A fresh battery. The dark recedes, a little.');
+    } else {
+      sigils++;
+      A.pickup();
+      sigEl.textContent = `SIGILS ${sigils} / 6`;
+      const [rc, rr] = roomIdx(it.c, it.r);
+      if (sigils < 6) {
+        showMsg(`A sigil, torn from ${ROOM_NAMES[rr][rc]}. Something felt that. (${sigils}/6)`);
+        foe.st = 'seek'; foe.target = {x: p.x, y: p.y}; foe.path = []; foe.repath = 0;
+      } else {
+        exitOpen = true;
+        for (const c of EXIT.cols) grid[EXIT.row][c] = 0;
+        A.unlock(); A.growl();
+        showMsg('The front door groans open. IT KNOWS. RUN.', 5);
+        foe.st = 'hunt'; foe.lastSeen = {x: p.x, y: p.y}; foe.lostT = 0; foe.wasHunt = true;
+        shakeT = 0.5;
+      }
+    }
+  }
+
+  /* ---- locked door nag ---- */
+  doorNagT -= dt;
+  if (!exitOpen && doorNagT <= 0 &&
+      Math.hypot(p.x - cx(23), p.y - EXIT.row * T) < 80) {
+    doorNagT = 5; A.thud(0.2);
+    showMsg(`Sealed fast. ${6 - sigils} sigil${6 - sigils === 1 ? '' : 's'} remain.`);
+  }
+
+  /* ---- the Hollow One ---- */
+  const f = foe;
+  if (f.grace > 0) f.grace -= dt;
+  const dist = Math.hypot(f.x - p.x, f.y - p.y);
+  const seen = los(f.x, f.y, p.x, p.y);
+  // is the torch beam on it?
+  let adiff = Math.atan2(f.y - p.y, f.x - p.x) - p.a;
+  adiff = Math.atan2(Math.sin(adiff), Math.cos(adiff));
+  f.inBeam = p.light && seen && dist < 400 && Math.abs(adiff) < 0.46;
+  // senses
+  const sight = (p.light ? 360 : 190) + (p.run ? 50 : 0);
+  const noiseR = p.moving ? (p.run ? 400 : 150) : 0;
+  const detects = f.grace <= 0 && seen && (dist < sight || dist < 60);
+  if (detects) {
+    if (f.st !== 'hunt') {
+      f.st = 'hunt';
+      if (!f.wasHunt || now - (f.lastGrowl || -9) > 8) { A.growl(); f.lastGrowl = now; }
+      if (!f.wasHunt) showMsg('It has seen you.');
+      f.wasHunt = true; shakeT = Math.max(shakeT, 0.35);
+    }
+    f.lastSeen = {x: p.x, y: p.y}; f.lostT = 0;
+  } else if (f.st === 'hunt') {
+    f.lostT += dt;
+    if (f.lostT > 3.2) { f.st = 'seek'; f.target = {...f.lastSeen}; f.path = []; f.repath = 0; }
+  } else if (f.grace <= 0 && dist < noiseR && f.st !== 'seek') {
+    f.st = 'seek';
+    f.target = {x: p.x + (Math.random() - 0.5) * 60, y: p.y + (Math.random() - 0.5) * 60};
+    f.path = []; f.repath = 0;
+  }
+  // movement per state
+  let goal = null, spdF = 0;
+  if (f.st === 'hunt') { goal = {x: p.x, y: p.y}; spdF = 126 + sigils * 6; }
+  else if (f.st === 'seek') { goal = f.target; spdF = 96; }
+  else if (f.st === 'scan') {
+    f.scanT -= dt;
+    if (f.scanT <= 0) f.st = 'roam';
+  } else { // roam
+    if (!f.target) {
+      let c, r;
+      if (Math.random() < 0.45) { // stalk: drift toward the player's part of the house
+        c = Math.floor(p.x / T) + Math.floor(Math.random() * 13) - 6;
+        r = Math.floor(p.y / T) + Math.floor(Math.random() * 13) - 6;
+      } else { c = 1 + Math.floor(Math.random() * (COLS - 2)); r = 1 + Math.floor(Math.random() * (ROWS - 2)); }
+      if (!isWall(c, r)) f.target = {x: cx(c), y: cx(r)};
+    }
+    goal = f.target; spdF = 56;
+  }
+  if (goal) {
+    f.repath -= dt;
+    if (f.repath <= 0 || !f.path.length) {
+      f.path = bfs(Math.floor(f.x / T), Math.floor(f.y / T),
+                   Math.floor(goal.x / T), Math.floor(goal.y / T)) || [];
+      f.repath = f.st === 'hunt' ? 0.4 : 1.2;
+      if (!f.path.length && f.st !== 'hunt') {
+        f.target = null;
+        if (f.st === 'seek') { f.st = 'scan'; f.scanT = 1.6; }
+      }
+    }
+    // straight-shot when it can see its goal (smoother, scarier corners)
+    let tgt = f.path.length ? f.path[0] : goal;
+    if (los(f.x, f.y, goal.x, goal.y)) { tgt = goal; }
+    const gd = Math.hypot(tgt.x - f.x, tgt.y - f.y);
+    let sp = spdF * (f.inBeam ? 0.48 : 1);
+    if (gd > 1) {
+      const step = Math.min(sp * dt, gd);
+      f.x += (tgt.x - f.x) / gd * step;
+      f.y += (tgt.y - f.y) / gd * step;
+    }
+    if (f.path.length && Math.hypot(f.path[0].x - f.x, f.path[0].y - f.y) < 6) f.path.shift();
+    const goalD = Math.hypot(goal.x - f.x, goal.y - f.y);
+    if (goalD < 16 && f.st !== 'hunt') {
+      f.target = null; f.path = [];
+      if (f.st === 'seek') { f.st = 'scan'; f.scanT = 1.8; }
+    }
+  }
+  // caught?
+  if (dist < 25 && f.grace <= 0) return kill();
+
+  /* ---- exit / win ---- */
+  if (exitOpen && Math.floor(p.y / T) >= EXIT.row - 0 &&
+      EXIT.cols.includes(Math.floor(p.x / T))) return win();
+  // (also count standing deep in the doorway)
+  if (exitOpen && p.y > (EXIT.row * T) + 8 ) return win();
+
+  /* ---- ambient dread ---- */
+  const danger = Math.max(0, 1 - dist / 620);
+  A.danger(danger, f.st === 'hunt');
+  if (danger > 0.05) {
+    heartT -= dt;
+    if (heartT <= 0) {
+      A.heart(0.10 + danger * 0.3);
+      heartT = 1.5 - danger * 1.05;
+    }
+  }
+  whisperT -= dt;
+  if (whisperT <= 0) {
+    whisperT = 7 + Math.random() * 14;
+    if (dist < 480) A.whisper();
+  }
+  creepT -= dt;
+  if (creepT <= 0) {
+    creepT = 18 + Math.random() * 26;
+    Math.random() < 0.5 ? A.creak() : A.thud(0.12);
+    if (Math.random() < 0.35) showMsg(['Something shifts overhead.','A floorboard settles far away.',
+      'The house exhales.','You are not alone here.'][Math.floor(Math.random() * 4)], 2.6);
+  }
+}
+
+function kill() {
+  state = 'dying'; dyingT = 0; shakeT = 0.9;
+  A.sting(); A.danger(0, false);
+  document.getElementById('deathLore').textContent =
+    sigils >= 6 ? 'So close to dawn. The house keeps what it catches.'
+    : `You found ${sigils} of six sigils. The house keeps what it catches.`;
+}
+function win() {
+  state = 'won'; wonT = 0;
+  A.winPad();
+  document.getElementById('winLore').textContent =
+    'You stumble into grey morning air. Behind you, the Hollow House stands silent — already waiting for the next guest.';
+  setTimeout(() => document.getElementById('win').classList.remove('hidden'), 2600);
+}
+
+/* ============================ RENDER ============================ */
+const cam = {x: 0, y: 0};
+function render() {
+  const p = player;
+  cam.x = Math.max(0, Math.min(W - VW, p.x - VW / 2));
+  cam.y = Math.max(0, Math.min(H - VH, p.y - VH / 2));
+  if (W < VW) cam.x = (W - VW) / 2;
+  if (H < VH) cam.y = (H - VH) / 2;
+
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.save();
+  let shx = 0, shy = 0;
+  if (shakeT > 0) { shx = (Math.random() - 0.5) * 9 * shakeT; shy = (Math.random() - 0.5) * 9 * shakeT; }
+  ctx.translate(-cam.x + shx, -cam.y + shy);
+
+  // ---- tiles ----
+  const c0 = Math.max(0, Math.floor(cam.x / T)), c1 = Math.min(COLS - 1, Math.ceil((cam.x + VW) / T));
+  const r0 = Math.max(0, Math.floor(cam.y / T)), r1 = Math.min(ROWS - 1, Math.ceil((cam.y + VH) / T));
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+    const x = c * T, y = r * T, hv = hash(c, r);
+    if (grid[r][c] === 1) {
+      const v = 10 + hv * 5;
+      ctx.fillStyle = `rgb(${v|0},${v|0},${(v + 4)|0})`;
+      ctx.fillRect(x, y, T, T);
+      if (!isWall(c, r + 1)) { // lit south face edge
+        ctx.fillStyle = 'rgba(120,115,130,0.10)';
+        ctx.fillRect(x, y + T - 5, T, 5);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillRect(x, y, T, 3);
+    } else {
+      const [rc, rr] = roomIdx(c, r);
+      const b = ROOM_PAL[rr][rc], m = 0.85 + hv * 0.3;
+      ctx.fillStyle = `rgb(${b[0]*m|0},${b[1]*m|0},${b[2]*m|0})`;
+      ctx.fillRect(x, y, T, T);
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';                     // plank seams
+      ctx.fillRect(x, y, T, 1);
+      if (hv > 0.72) ctx.fillRect(x + T * hv * 0.8, y, 1, T); // odd scratches
+    }
+  }
+
+  // ---- exit door ----
+  const dx0 = EXIT.cols[0] * T, dw = 3 * T, dy0 = EXIT.row * T;
+  ctx.fillStyle = exitOpen ? '#241505' : '#2c1010';
+  ctx.fillRect(dx0, dy0, dw, T);
+  ctx.fillStyle = exitOpen ? 'rgba(255,190,110,0.25)' : '#1a0808';
+  ctx.fillRect(dx0 + 4, dy0 + 4, dw - 8, T - 8);
+  for (let i = 0; i < 6; i++) { // six sigil sockets on the door
+    const gx = dx0 + 14 + i * (dw - 28) / 5;
+    ctx.beginPath(); ctx.arc(gx, dy0 + 14, 5, 0, 7);
+    ctx.fillStyle = i < sigils ? '#7fd8c8' : '#0d0d12';
+    ctx.fill();
+  }
+
+  // ---- items ----
+  for (const it of items) {
+    if (it.got) continue;
+    if (it.type === 'sigil') {
+      const pulse = 0.6 + 0.4 * Math.sin(now * 3 + it.c);
+      ctx.strokeStyle = `rgba(127,216,200,${0.75 * pulse})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(it.x, it.y, 9, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(it.x - 5, it.y + 4); ctx.lineTo(it.x, it.y - 6); ctx.lineTo(it.x + 5, it.y + 4);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = '#c8b84e';
+      ctx.fillRect(it.x - 6, it.y - 4, 12, 8);
+      ctx.fillRect(it.x + 6, it.y - 2, 2, 4);
+      ctx.fillStyle = '#332f14'; ctx.fillRect(it.x - 4, it.y - 2, 3, 4);
+    }
+  }
+
+  // ---- the Hollow One ----
+  drawFoe();
+
+  // ---- player ----
+  ctx.fillStyle = '#181820';
+  ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2b2b35';
+  ctx.beginPath(); ctx.arc(p.x + Math.cos(p.a) * 3, p.y + Math.sin(p.a) * 3, 5, 0, 7); ctx.fill();
+  if (p.light) {
+    ctx.fillStyle = '#ffe9b0';
+    ctx.beginPath(); ctx.arc(p.x + Math.cos(p.a) * 10, p.y + Math.sin(p.a) * 10, 2.4, 0, 7); ctx.fill();
+  }
+  ctx.restore();
+
+  // ---- darkness & light ----
+  drawLight();
+  ctx.drawImage(lcv, 0, 0);
+  // warm torchlight tint over the beam
+  if (p.light && beamPoly.length) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(beamPoly[0][0], beamPoly[0][1]);
+    for (let i = 1; i < beamPoly.length; i++) ctx.lineTo(beamPoly[i][0], beamPoly[i][1]);
+    ctx.closePath(); ctx.clip();
+    ctx.globalCompositeOperation = 'lighter';
+    const bsx = p.x - cam.x, bsy = p.y - cam.y;
+    const wg = ctx.createRadialGradient(bsx, bsy, 8, bsx, bsy, beamRange);
+    wg.addColorStop(0, 'rgba(255,196,120,0.20)');
+    wg.addColorStop(0.4, 'rgba(224,164,96,0.11)');
+    wg.addColorStop(1, 'rgba(180,120,60,0)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(bsx - beamRange, bsy - beamRange, beamRange * 2, beamRange * 2);
+    ctx.restore();
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  // ---- glows that pierce the dark ----
+  const w2s = (wx, wy) => [wx - cam.x + shx, wy - cam.y + shy];
+  for (const it of items) {
+    if (it.got || it.type !== 'sigil') continue;
+    const [gx, gy] = w2s(it.x, it.y);
+    if (gx < -40 || gy < -40 || gx > VW + 40 || gy > VH + 40) continue;
+    const pulse = 0.5 + 0.5 * Math.sin(now * 3 + it.c);
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 26);
+    g.addColorStop(0, `rgba(110,220,200,${0.22 + 0.12 * pulse})`);
+    g.addColorStop(1, 'rgba(110,220,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(gx - 26, gy - 26, 52, 52);
+  }
+  if (exitOpen) {
+    const [gx, gy] = w2s(cx(23), EXIT.row * T);
+    const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, 130);
+    g.addColorStop(0, 'rgba(255,200,120,0.28)');
+    g.addColorStop(1, 'rgba(255,200,120,0)');
+    ctx.fillStyle = g; ctx.fillRect(gx - 130, gy - 130, 260, 260);
+  }
+  // its eyes, watching through the dark
+  {
+    const f = foe, d = Math.hypot(f.x - p.x, f.y - p.y);
+    if (d < 320 && state !== 'won') {
+      const blink = Math.sin(now * 0.9 + 2) > 0.985 ? 0 : 1;
+      const a = (1 - d / 320) * 0.95 * blink;
+      const [ex, ey] = w2s(f.x, f.y - 26);
+      const hunting = f.st === 'hunt';
+      ctx.shadowBlur = 9;
+      ctx.shadowColor = hunting ? 'rgba(255,70,50,0.9)' : 'rgba(210,225,255,0.8)';
+      ctx.fillStyle = hunting ? `rgba(255,80,60,${a})` : `rgba(215,228,255,${a})`;
+      const look = Math.atan2(p.y - f.y, p.x - f.x);
+      const ox = Math.cos(look) * 1.5, oy = Math.sin(look) * 1.5;
+      ctx.beginPath(); ctx.arc(ex - 4 + ox, ey + oy, 2.1, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(ex + 4 + ox, ey + oy, 2.1, 0, 7); ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // ---- hunt vignette ----
+  if (foe.st === 'hunt' && state === 'play') {
+    const puls = 0.5 + 0.5 * Math.sin(now * 6);
+    const g = ctx.createRadialGradient(VW/2, VH/2, VH * 0.32, VW/2, VH/2, VH * 0.75);
+    g.addColorStop(0, 'rgba(120,0,0,0)');
+    g.addColorStop(1, `rgba(120,0,0,${0.16 + 0.13 * puls})`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, VW, VH);
+  }
+
+  // ---- grain & vignette ----
+  ctx.globalAlpha = 0.05;
+  grainSeed = (grainSeed + 1) % 97;
+  ctx.drawImage(grainCv, -(grainSeed * 3 % 128), -(grainSeed * 7 % 128), VW + 128, VH + 128);
+  ctx.globalAlpha = 1;
+  const vg = ctx.createRadialGradient(VW/2, VH/2, VH * 0.3, VW/2, VH/2, VH * 0.85);
+  vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(0,0,0,0.72)');
+  ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+
+  // ---- death face ----
+  if (state === 'dying') drawScare();
+  // ---- dawn fade ----
+  if (state === 'won') {
+    ctx.fillStyle = `rgba(214,205,182,${Math.min(1, wonT / 2.2)})`;
+    ctx.fillRect(0, 0, VW, VH);
+  }
+
+  // ---- hud ----
+  document.getElementById('batBar').style.width = p.bat + '%';
+  document.getElementById('stamBar').style.width = p.stam + '%';
+}
+
+function drawFoe() {
+  const f = foe, t = now * 3;
+  const x = f.x, y = f.y;
+  ctx.save();
+  ctx.translate(x, y);
+  // wavering shroud
+  ctx.fillStyle = f.inBeam ? 'rgba(10,10,18,0.96)' : 'rgba(4,4,9,0.94)';
+  ctx.beginPath();
+  ctx.moveTo(0, -38 + Math.sin(t) * 2);
+  ctx.bezierCurveTo(-14 + Math.sin(t * 1.3) * 3, -30, -12 + Math.sin(t * 0.8) * 4, 0, -16 + Math.sin(t * 1.7) * 5, 16);
+  ctx.lineTo(-8, 14); ctx.lineTo(-3 + Math.sin(t * 2) * 2, 18); ctx.lineTo(3, 13);
+  ctx.lineTo(9 + Math.sin(t * 1.1) * 3, 17);
+  ctx.bezierCurveTo(13, 0, 14 + Math.sin(t * 1.5) * 3, -28, 0, -38 + Math.sin(t) * 2);
+  ctx.fill();
+  // long arms
+  ctx.strokeStyle = 'rgba(5,5,10,0.9)';
+  ctx.lineWidth = 4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(-10, -22);
+  ctx.quadraticCurveTo(-22 + Math.sin(t * 1.9) * 4, -4, -18 + Math.sin(t * 2.2) * 5, 20);
+  ctx.moveTo(10, -22);
+  ctx.quadraticCurveTo(22 + Math.sin(t * 1.6) * 4, -4, 18 + Math.sin(t * 2.5) * 5, 20);
+  ctx.stroke();
+  // head
+  ctx.fillStyle = f.inBeam ? '#11111c' : '#050509';
+  ctx.beginPath(); ctx.ellipse(0, -30, 8, 11, Math.sin(t * 0.7) * 0.12, 0, 7); ctx.fill();
+  if (f.inBeam) { // caught in the light: a pale, wrong outline
+    ctx.strokeStyle = `rgba(205,215,240,${0.10 + 0.06 * Math.sin(t * 5)})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.ellipse(0, -30, 9, 12, 0, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(0, -8, 13, 26, 0, 0, 7); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+let beamPoly = [], beamRange = 420;
+function drawLight() {
+  const p = player;
+  lctx.globalCompositeOperation = 'source-over';
+  lctx.fillStyle = 'rgba(2,2,7,0.978)';
+  lctx.fillRect(0, 0, VW, VH);
+  lctx.globalCompositeOperation = 'destination-out';
+  const sx = p.x - cam.x, sy = p.y - cam.y;
+  // ambient body-heat glow
+  const amb = lctx.createRadialGradient(sx, sy, 0, sx, sy, 92);
+  amb.addColorStop(0, 'rgba(0,0,0,0.72)'); amb.addColorStop(1, 'rgba(0,0,0,0)');
+  lctx.fillStyle = amb;
+  lctx.fillRect(sx - 94, sy - 94, 188, 188);
+  // torch beam (raycast against walls)
+  beamPoly = [];
+  if (p.light) {
+    let flick = 0.92 + Math.sin(now * 23) * 0.03 + Math.sin(now * 61) * 0.03;
+    if (p.bat < 25 && Math.random() < 0.06 + (25 - p.bat) * 0.004) flick *= 0.25; // dying sputter
+    const range = beamRange = 420 * flick, half = 0.44, N = 46;
+    beamPoly.push([sx, sy]);
+    for (let i = 0; i <= N; i++) {
+      const a = p.a - half + (i / N) * half * 2;
+      const d = castRay(p.x, p.y, a, range) + 6;
+      beamPoly.push([sx + Math.cos(a) * d, sy + Math.sin(a) * d]);
+    }
+    lctx.save();
+    lctx.beginPath();
+    lctx.moveTo(sx, sy);
+    for (let i = 1; i < beamPoly.length; i++) lctx.lineTo(beamPoly[i][0], beamPoly[i][1]);
+    lctx.closePath();
+    lctx.clip();
+    const g = lctx.createRadialGradient(sx, sy, 10, sx, sy, range);
+    g.addColorStop(0, `rgba(0,0,0,${0.98 * flick})`);
+    g.addColorStop(0.55, `rgba(0,0,0,${0.86 * flick})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    lctx.fillStyle = g;
+    lctx.fillRect(sx - range, sy - range, range * 2, range * 2);
+    lctx.restore();
+  }
+}
+
+function drawScare() {
+  // a pale face fills the screen for an instant
+  const k = Math.min(1, dyingT / 0.18);
+  ctx.fillStyle = 'rgba(0,0,0,0.94)'; ctx.fillRect(0, 0, VW, VH);
+  const fx = VW / 2 + (Math.random() - 0.5) * 26, fy = VH / 2 + (Math.random() - 0.5) * 26;
+  const s = Math.min(VW, VH) * (0.32 + dyingT * 0.55) * k;
+  ctx.fillStyle = `rgba(196,190,184,${0.85 - dyingT * 0.5})`;
+  ctx.beginPath(); ctx.ellipse(fx, fy, s * 0.55, s * 0.8, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(8,6,8,0.98)';
+  ctx.beginPath(); ctx.ellipse(fx - s * 0.22, fy - s * 0.2, s * 0.13, s * 0.19, 0.15, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(fx + s * 0.22, fy - s * 0.2, s * 0.13, s * 0.19, -0.15, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(fx, fy + s * 0.38, s * 0.16, s * 0.34 + Math.random() * 8, 0, 0, 7); ctx.fill();
+}
+
+// pre-rendered grain tile
+const grainCv = document.createElement('canvas');
+grainCv.width = grainCv.height = 128;
+{
+  const g = grainCv.getContext('2d'), im = g.createImageData(128, 128);
+  for (let i = 0; i < im.data.length; i += 4) {
+    const v = Math.random() * 255;
+    im.data[i] = im.data[i+1] = im.data[i+2] = v; im.data[i+3] = 255;
+  }
+  g.putImageData(im, 0, 0);
+}
+
+/* ============================ LOOP ============================ */
+let last = 0;
+function loop(ts) {
+  const dt = Math.min(0.05, (ts - last) / 1000 || 0.016);
+  last = ts;
+  if (state !== 'title') { update(dt); render(); }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+function begin() {
+  A.init();
+  reset();
+  state = 'play';
+  document.getElementById('title').classList.add('hidden');
+  hudEl.classList.remove('hidden'); sigEl.classList.remove('hidden'); hintEl.classList.remove('hidden');
+  sigEl.textContent = 'SIGILS 0 / 6';
+}
+function restart() {
+  document.getElementById('death').classList.add('hidden');
+  document.getElementById('win').classList.add('hidden');
+  reset();
+  sigEl.textContent = 'SIGILS 0 / 6';
+  state = 'play';
+}
+document.getElementById('startBtn').addEventListener('click', begin);
+document.getElementById('retryBtn').addEventListener('click', restart);
+document.getElementById('againBtn').addEventListener('click', restart);
+</script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+/* Beckon Bench — terminal edition. Near-black, phosphor green, all-mono,
+   boxy pixel chrome (initialcommit.co energy). Same class contract as the
+   light theme — build.mjs markup unchanged except the hero terminal. */
+:root {
+  --bg: #0a0a0c;
+  --panel: #0f0f13;
+  --line: #26262e;
+  --ink: #e8e8e2;
+  --dim: #8b8b95;
+  --gold: #22f284;          /* accent: phosphor green (legacy var name) */
+  --gold-deep: #17c96a;
+  --gold-soft: #0d2418;
+  --glow: rgba(34, 242, 132, .45);
+  --good: #22f284;
+  --bad: #ff5d57;
+  --warn: #ffcc66;
+  --link: #e8e8e2;
+  font-size: 16px;
+}
+* { box-sizing: border-box; }
+
+/* faded GitHub-style contribution grid — hero area only, slow fade downward */
+body { position: relative; }
+body::before {
+  content: ""; position: absolute; z-index: -1; pointer-events: none;
+  top: 0; left: 0; right: 0; height: 62rem;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22392%22%20height%3D%2298%22%3E%3Crect%20x%3D%220%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%220%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2214%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2228%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2242%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2256%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2270%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2284%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%2298%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22112%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22126%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22140%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22154%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22168%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22182%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22196%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22210%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22224%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22238%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22252%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22266%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22280%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22294%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.065)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22308%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22322%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22336%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22350%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3Crect%20x%3D%22364%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%220%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2214%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.018)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2228%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2242%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2256%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.03)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2270%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(34%2C242%2C132%2C0.045)%22%2F%3E%3Crect%20x%3D%22378%22%20y%3D%2284%22%20width%3D%2211%22%20height%3D%2211%22%20rx%3D%222%22%20fill%3D%22rgba(255%2C255%2C255%2C0.008)%22%2F%3E%3C%2Fsvg%3E");
+  background-size: 392px 98px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 28%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 28%, transparent 100%);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: .95rem/1.7 ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+h1, h2, h3, .brand { font-family: inherit; font-weight: 700; }
+::selection { background: var(--gold); color: #04140b; }
+a { color: var(--link); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+a:hover { text-decoration-color: var(--gold); color: var(--gold); }
+
+header {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .5rem;
+  padding: .9rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+.brand { font-weight: 700; letter-spacing: .02em; color: var(--ink); font-size: 1.05rem; text-decoration: none; }
+.brand::before { content: "▚ "; color: var(--gold); }
+.brand span { color: var(--gold); }
+nav { display: flex; gap: 1.4rem; align-items: center; }
+nav a { color: var(--dim); font-weight: 600; font-size: .88rem; text-decoration: none; }
+nav a.on { color: var(--gold); box-shadow: 0 2px 0 var(--gold); }
+nav a:hover { color: var(--ink); }
+nav a.cta {
+  color: #04140b; background: var(--gold);
+  padding: .35rem .85rem; border-radius: 0; font-weight: 700;
+  box-shadow: 3px 3px 0 var(--gold-soft), 3px 3px 0 1px var(--gold-deep);
+}
+nav a.cta:hover { background: var(--gold-deep); color: #04140b; }
+
+main { max-width: 70rem; margin: 0 auto; padding: 1rem clamp(1rem, 4vw, 3rem) 4rem; }
+footer {
+  max-width: 70rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 3rem) 3rem;
+  color: var(--dim); border-top: 1px solid var(--line); font-size: .82rem;
+}
+footer::before { content: "── ✦ ──"; display: block; color: var(--line); margin-bottom: .8rem; letter-spacing: .3em; }
+
+.hero { padding: 3rem 0 1.8rem; }
+.hero.small { padding: 1.8rem 0 .8rem; }
+.hero h1 { font-size: clamp(1.7rem, 5vw, 3rem); line-height: 1.15; margin: .45rem 0 .8rem; letter-spacing: -.02em; font-weight: 700; }
+.hero p { max-width: 46rem; color: var(--dim); font-size: 1rem; }
+.season { color: var(--gold); font-weight: 700; letter-spacing: .14em; font-size: .74rem; }
+.bigscore { font-size: 2.2rem; font-weight: 800; }
+.bigscore .dim { font-size: 1rem; font-weight: 400; margin-left: .5rem; }
+
+/* ---------- terminal window (hero) ---------- */
+.term {
+  border: 1px solid var(--line); background: var(--panel);
+  box-shadow: 6px 6px 0 #000, 6px 6px 0 1px var(--line);
+  max-width: 52rem;
+}
+.term-bar {
+  display: flex; align-items: center; gap: .45rem;
+  padding: .5rem .8rem; border-bottom: 1px solid var(--line); background: #131318;
+}
+.term-dot { width: .68rem; height: .68rem; border-radius: 0; background: var(--line); }
+.term-dot:nth-child(1) { background: #ff5d57; }
+.term-dot:nth-child(2) { background: #ffcc66; }
+.term-dot:nth-child(3) { background: var(--gold); }
+.term-title { margin-left: .6rem; color: var(--dim); font-size: .74rem; letter-spacing: .06em; }
+.term-body { padding: 1.4rem 1.6rem 1.6rem; }
+.term-body .season::before { content: "$ "; color: var(--dim); }
+
+.cursor {
+  display: inline-block; width: .55em; height: 1em;
+  margin-left: .12em; vertical-align: -.08em;
+  background: var(--gold); box-shadow: 0 0 12px var(--glow);
+  animation: blink 1.06s steps(1) infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+h2 { margin: 2.6rem 0 .3rem; font-size: 1.15rem; font-weight: 700; }
+h2::before { content: "❯ "; color: var(--gold); }
+.tag {
+  font-size: .62rem; vertical-align: 2px; border-radius: 0; padding: .18rem .6rem;
+  letter-spacing: .1em; font-weight: 700; margin-left: .4rem; text-transform: uppercase;
+  background: var(--gold-soft); color: var(--gold); border: 1px solid var(--gold-deep);
+}
+.tag.alt { background: #101825; color: #6fb3ff; border-color: #2c4a74; }
+
+.scroll { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 0; }
+table { border-collapse: collapse; width: 100%; }
+.board th, .board td, .ladder th, .ladder td { padding: .6rem .75rem; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.board tbody tr:last-child td, .ladder tbody tr:last-child td { border-bottom: 0; }
+.board tbody tr:hover, .ladder tbody tr:hover { background: var(--gold-soft); }
+.board thead th, .ladder thead th {
+  color: var(--dim); font-size: .68rem; letter-spacing: .14em; text-transform: uppercase;
+  background: #0c0c10; border-bottom: 1px solid var(--line);
+}
+.ladder { background: var(--panel); border: 1px solid var(--line); border-radius: 0; overflow: hidden; }
+.rank { color: var(--dim); width: 2rem; font-variant-numeric: tabular-nums; }
+.rank::before { content: "#"; opacity: .6; }
+.model { font-weight: 700; text-decoration: none; }
+.model:hover { color: var(--gold); }
+.sub { color: var(--dim); font-size: .76rem; }
+.total { font-weight: 800; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.elo { font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+.chip {
+  display: inline-block; min-width: 2.1rem; text-align: center; border-radius: 0;
+  padding: .08rem .4rem; font-weight: 700; font-size: .85rem;
+  background: #0c0c10; border: 1px solid var(--line); font-variant-numeric: tabular-nums;
+}
+.chip.s10, .chip.s9 { color: var(--good); border-color: color-mix(in srgb, var(--good) 55%, black); background: color-mix(in srgb, var(--good) 12%, #0c0c10); text-shadow: 0 0 8px var(--glow); }
+.chip.s8, .chip.s7 { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 45%, black); background: color-mix(in srgb, var(--warn) 9%, #0c0c10); }
+.chip.s0, .chip.s1, .chip.s2, .chip.s3, .chip.s4 { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, black); background: color-mix(in srgb, var(--bad) 9%, #0c0c10); }
+.chip.pending { color: var(--dim); }
+.dim { color: var(--dim); }
+.empty { color: var(--dim); background: var(--panel); border: 1px dashed var(--line); border-radius: 0; padding: 1rem 1.25rem; }
+.empty::before { content: "// "; color: var(--line); }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 1.25rem 1.5rem; margin: 1.25rem 0; }
+.card h3 { margin: 0 0 .8rem; font-size: 1rem; }
+.card h3::before { content: "▪ "; color: var(--gold); }
+.artifact { width: 100%; aspect-ratio: 16/10; border: 1px solid var(--line); border-radius: 0; background: #060608; display: block; }
+img.artifact { aspect-ratio: auto; max-height: 34rem; object-fit: contain; }
+.cols { display: grid; grid-template-columns: minmax(12rem, 16rem) 1fr; gap: 1.25rem; margin-top: 1rem; }
+@media (max-width: 40rem) { .cols { grid-template-columns: 1fr; } }
+.rubric td { border-bottom: 1px solid var(--line); padding: .32rem .5rem; }
+.rubric td:last-child { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rubric .sum td { border-top: 2px solid var(--gold-deep); border-bottom: 0; font-weight: 800; color: var(--gold); }
+.notes { margin: 0 0 .5rem; }
+.votes { list-style: none; padding: 0; margin: .5rem 0 0; }
+.votes li { padding: .4rem 0 .4rem 1.1rem; border-top: 1px solid var(--line); position: relative; }
+.votes li::before { content: ">"; position: absolute; left: 0; color: var(--gold); }
+
+pre {
+  background: #060608; color: var(--ink); border: 1px solid var(--line); border-radius: 0;
+  padding: 1rem 1.25rem; overflow-x: auto; white-space: pre-wrap; font-size: .85rem; line-height: 1.55;
+  box-shadow: 4px 4px 0 #000;
+}
+.btn {
+  display: inline-block; background: var(--gold); color: #04140b; font-weight: 700;
+  border-radius: 0; padding: .5rem 1rem; text-decoration: none;
+  box-shadow: 3px 3px 0 var(--gold-soft), 3px 3px 0 1px var(--gold-deep);
+}
+.btn:hover { background: var(--gold-deep); color: #04140b; }
+.powered {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-size: .78rem; color: var(--dim); border: 1px solid var(--line);
+  border-radius: 0; padding: .25rem .8rem; text-decoration: none; margin-top: 1rem;
+}
+.powered b { color: var(--gold); }
+.powered:hover { border-color: var(--gold); }
+
+/* ---------- motion layer ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes drift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(6%, 4%) scale(1.08); }
+}
+
+.hero { position: relative; }
+.hero > * { animation: rise .65s cubic-bezier(.2, .7, .2, 1) backwards; }
+.hero > *:nth-child(2) { animation-delay: .07s; }
+.hero > *:nth-child(3) { animation-delay: .14s; }
+.hero > *:nth-child(4) { animation-delay: .21s; }
+.hero > *:nth-child(5) { animation-delay: .28s; }
+
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s cubic-bezier(.2, .7, .2, 1); }
+.reveal.in { opacity: 1; transform: none; }
+
+.reveal.in .board tbody tr, .reveal.in .ladder tbody tr { animation: rise .5s cubic-bezier(.2, .7, .2, 1) backwards; }
+.reveal.in tbody tr:nth-child(1) { animation-delay: .05s; }
+.reveal.in tbody tr:nth-child(2) { animation-delay: .12s; }
+.reveal.in tbody tr:nth-child(3) { animation-delay: .19s; }
+.reveal.in tbody tr:nth-child(4) { animation-delay: .26s; }
+.reveal.in tbody tr:nth-child(5) { animation-delay: .33s; }
+.reveal.in tbody tr:nth-child(6) { animation-delay: .40s; }
+.reveal.in tbody tr:nth-child(n+7) { animation-delay: .47s; }
+
+.card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000, 6px 6px 0 1px var(--gold-deep); border-color: var(--gold); }
+.board tbody tr, .ladder tbody tr { transition: background .2s ease; }
+.chip { transition: transform .18s ease; }
+tr:hover .chip { transform: scale(1.12); }
+
+nav a.cta { position: relative; overflow: hidden; transition: transform .2s ease, background .2s ease; }
+nav a.cta:hover { transform: translateY(-1px); }
+nav a.cta::after {
+  content: ""; position: absolute; inset: 0; transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .5), transparent); width: 60%;
+}
+nav a.cta:hover::after { transition: transform .6s ease; transform: translateX(220%) skewX(-18deg); }
+.btn, .powered { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.btn:hover, .powered:hover { transform: translateY(-1px); }
+.btn:hover { box-shadow: 3px 3px 0 #000, 0 0 22px var(--glow); }
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+  .cursor { animation: none !important; }
+}
+
+/* ---------- head-to-head videos ---------- */
+.versus-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr)); gap: 1.25rem; }
+.versus-grid .card { margin: 0; }
+.versus video.artifact { aspect-ratio: auto; background: #060608; }
+.versus-line { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .8rem 0 .3rem; font-size: .92rem; }
+
+/* ---------- charts: pixel-segment columns, square everything ---------- */
+.chart { display: flex; align-items: flex-end; gap: clamp(1.5rem, 6vw, 4rem); padding: .5rem .25rem 0; margin: 1.25rem 0; }
+.col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-decoration: none; min-width: 4.5rem; }
+.col .val { font-weight: 700; font-size: .88rem; color: var(--ink); margin-bottom: .35rem; }
+.col .bar { width: 24px; border-radius: 0; transition: filter .2s ease; position: relative; }
+/* pixel-segment overlay — ::after so the inline background hue survives */
+.col .bar::after {
+  content: ""; position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(to top, rgba(0, 0, 0, .5) 0 2px, transparent 2px 8px);
+}
+.col .name { margin-top: .5rem; padding-top: .5rem; font-size: .72rem; color: var(--dim); text-align: center; line-height: 1.3; max-width: 8rem; border-top: 1px solid var(--line); align-self: stretch; }
+.col:hover .bar { filter: brightness(1.25) drop-shadow(0 0 8px var(--glow)); }
+.col:hover .name { color: var(--ink); }
+
+.hgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); gap: 1.25rem; margin: 1rem 0 0; }
+.hcard { background: var(--panel); border: 1px solid var(--line); border-radius: 0; padding: 1.1rem 1.3rem .9rem; }
+.hcard .chart { margin: .75rem 0 0; }
+.hlabel { display: flex; align-items: center; gap: .5rem; font-weight: 700; margin: 0; font-size: .92rem; }
+.swatch { width: 10px; height: 10px; border-radius: 0; display: inline-block; }
+.hsub { color: var(--dim); font-size: .78rem; margin: .2rem 0 0; }
+
+.chiplink { text-decoration: none; }
+.more { margin-left: auto; font-size: .82rem; font-weight: 600; }
+
+/* arena verdict line on head-to-head cards */
+.verdict { border-top: 1px solid var(--line); padding-top: .55rem; margin-top: .55rem; }
+.verdict.split .tag.alt { background: #2a1608; color: #ffab66; border-color: #7a4a22; }
+.pullquote { font-style: italic; color: var(--dim); font-size: .88rem; margin: .35rem 0 0; }

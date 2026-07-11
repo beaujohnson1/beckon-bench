@@ -1,0 +1,23 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6-sol (ultra reasoning)",
+  "provider": "OpenAI",
+  "test": "04-svg-self-portrait",
+  "gauntlet_version": "v1",
+  "date": "2026-07-10",
+  "harness": "Codex CLI 0.144.1 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 177,
+    "output_tokens": 9813,
+    "cost_usd": null
+  },
+  "notes": "Perfect score from the judge. Front-facing geometric portrait (1200x1400) output as pure SVG to the terminal, exactly as the prompt asked. Finished in 2m 57s on 9.8k output tokens."
+}

@@ -1,0 +1,33 @@
+{
+  "season": "v1",
+  "elo": { "start": 1000, "k": 24 },
+  "budget_usd_per_run": 20,
+  "judge_timeout_ms": 120000,
+  "judge_retries": 1,
+  "max_artifact_chars": 60000,
+  "judges": [
+    { "name": "gemini-3-1-pro", "model_id": "google/gemini-3.1-pro-preview", "vendor": "google", "vision": true },
+    { "name": "grok-4-5", "model_id": "x-ai/grok-4.5", "vendor": "xai", "vision": true },
+    { "name": "glm-5-2", "model_id": "z-ai/glm-5.2", "vendor": "zhipu", "vision": false },
+    { "name": "kimi-k2-7-code", "model_id": "moonshotai/kimi-k2.7-code", "vendor": "moonshot", "vision": false },
+    { "name": "minimax-m3", "model_id": "minimax/minimax-m3", "vendor": "minimax", "vision": false },
+    { "name": "deepseek-v4-pro", "model_id": "deepseek/deepseek-v4-pro", "vendor": "deepseek", "vision": false }
+  ],
+  "judgeable_tests": [
+    "01-haunted-horror-game",
+    "02-lava-lamp",
+    "03-landing-page",
+    "04-svg-self-portrait",
+    "05-ui-recreation"
+  ],
+  "tests": {
+    "04-svg-self-portrait": { "weak_blinding": true },
+    "05-ui-recreation": { "reference_image": "prompts/assets/reference-ui.png" }
+  },
+  "redact_terms": [
+    "claude", "anthropic", "fable", "opus", "sonnet", "haiku",
+    "gpt", "openai", "codex", "sol", "soul", "luna", "terra",
+    "gemini", "google", "grok", "xai", "x-ai", "deepseek", "glm", "zhipu",
+    "kimi", "moonshot", "minimax", "mistral", "llama", "meta"
+  ]
+}

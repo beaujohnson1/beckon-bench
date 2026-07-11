@@ -1,0 +1,23 @@
+{
+  "model": "gpt-5-6-sol-ultra",
+  "model_id": "gpt-5.6-sol (ultra reasoning)",
+  "provider": "OpenAI",
+  "test": "02-lava-lamp",
+  "gauntlet_version": "v1",
+  "date": "2026-07-10",
+  "harness": "Codex CLI 0.144.1 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 3401,
+    "output_tokens": 67537,
+    "cost_usd": null
+  },
+  "notes": "Second straight 10 from the judge. Canvas metaball lamp, self-validated by the model in headless Chrome at 3/15/30/60s checkpoints before it declared done. 56m 41s, ~67.5k output tokens across its planning threads."
+}

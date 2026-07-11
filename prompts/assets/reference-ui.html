@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reference UI — screenshot me at 1280px (judge asset, never shown to models)</title>
+<style>
+  * { margin: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; background: #0f1117; color: #e6e8ee; min-height: 100vh; }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  aside { background: #161922; padding: 24px 16px; border-right: 1px solid #232734; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; margin-bottom: 32px; }
+  .logo .mark { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #7c6cf6, #4dc9b0); }
+  nav a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: #9aa1b2; text-decoration: none; font-size: 0.92rem; margin-bottom: 4px; }
+  nav a.active { background: #232946; color: #fff; }
+  nav a .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: 0.7; }
+  main { padding: 28px 32px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  .topbar h1 { font-size: 1.35rem; }
+  .topbar .sub { color: #9aa1b2; font-size: 0.85rem; margin-top: 4px; }
+  .btn { background: #7c6cf6; color: #fff; border: none; padding: 10px 18px; border-radius: 10px; font-size: 0.9rem; font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat { background: #161922; border: 1px solid #232734; border-radius: 14px; padding: 18px; }
+  .stat .label { color: #9aa1b2; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat .value { font-size: 1.7rem; font-weight: 700; margin-top: 8px; }
+  .stat .delta { font-size: 0.8rem; margin-top: 6px; }
+  .up { color: #4dc9b0; } .down { color: #f6786c; }
+  .panel { background: #161922; border: 1px solid #232734; border-radius: 14px; padding: 20px; }
+  .panel h2 { font-size: 1rem; margin-bottom: 16px; }
+  .bars { display: flex; align-items: flex-end; gap: 14px; height: 160px; padding-top: 8px; }
+  .bar { flex: 1; background: #2a2f42; border-radius: 6px 6px 0 0; position: relative; }
+  .bar.hot { background: linear-gradient(180deg, #7c6cf6, #5a4bd4); }
+  .bar span { position: absolute; bottom: -22px; left: 0; right: 0; text-align: center; color: #9aa1b2; font-size: 0.72rem; }
+  .row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 38px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+  th { text-align: left; color: #9aa1b2; font-weight: 500; padding: 8px 6px; border-bottom: 1px solid #232734; }
+  td { padding: 11px 6px; border-bottom: 1px solid #1d2130; }
+  .pill { padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+  .pill.live { background: rgba(77,201,176,0.15); color: #4dc9b0; }
+  .pill.draft { background: rgba(154,161,178,0.15); color: #9aa1b2; }
+  .pill.failed { background: rgba(246,120,108,0.15); color: #f6786c; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo"><div class="mark"></div>Pulseboard</div>
+    <nav>
+      <a class="active"><span class="dot"></span>Overview</a>
+      <a><span class="dot"></span>Deployments</a>
+      <a><span class="dot"></span>Analytics</a>
+      <a><span class="dot"></span>Alerts</a>
+      <a><span class="dot"></span>Settings</a>
+    </nav>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div>
+        <h1>Overview</h1>
+        <div class="sub">Last updated 2 minutes ago</div>
+      </div>
+      <button class="btn">+ New Deployment</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="label">Requests</div><div class="value">1.42M</div><div class="delta up">▲ 12.4%</div></div>
+      <div class="stat"><div class="label">Avg Latency</div><div class="value">84ms</div><div class="delta up">▲ 3.1% faster</div></div>
+      <div class="stat"><div class="label">Error Rate</div><div class="value">0.42%</div><div class="delta down">▼ 0.09%</div></div>
+      <div class="stat"><div class="label">Uptime</div><div class="value">99.98%</div><div class="delta up">30 days</div></div>
+    </div>
+    <div class="panel">
+      <h2>Traffic — last 7 days</h2>
+      <div class="bars">
+        <div class="bar" style="height:42%"><span>Mon</span></div>
+        <div class="bar" style="height:58%"><span>Tue</span></div>
+        <div class="bar" style="height:50%"><span>Wed</span></div>
+        <div class="bar hot" style="height:92%"><span>Thu</span></div>
+        <div class="bar" style="height:66%"><span>Fri</span></div>
+        <div class="bar" style="height:34%"><span>Sat</span></div>
+        <div class="bar" style="height:28%"><span>Sun</span></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h2>Recent deployments</h2>
+        <table>
+          <tr><th>Service</th><th>Branch</th><th>Status</th><th>When</th></tr>
+          <tr><td>api-gateway</td><td>main</td><td><span class="pill live">Live</span></td><td>14m ago</td></tr>
+          <tr><td>web-frontend</td><td>feat/onboarding</td><td><span class="pill draft">Preview</span></td><td>1h ago</td></tr>
+          <tr><td>worker-queue</td><td>main</td><td><span class="pill failed">Failed</span></td><td>3h ago</td></tr>
+          <tr><td>auth-service</td><td>main</td><td><span class="pill live">Live</span></td><td>6h ago</td></tr>
+        </table>
+      </div>
+      <div class="panel">
+        <h2>Alerts</h2>
+        <table>
+          <tr><td>Latency spike on api-gateway</td></tr>
+          <tr><td>SSL cert renews in 12 days</td></tr>
+          <tr><td>worker-queue deploy failed</td></tr>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
