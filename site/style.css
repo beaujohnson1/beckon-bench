@@ -50,7 +50,7 @@ header {
   backdrop-filter: blur(8px);
 }
 .brand { font-weight: 700; letter-spacing: .02em; color: var(--ink); font-size: 1.05rem; text-decoration: none; }
-.brand::before { content: "▚ "; color: var(--gold); }
+
 .brand span { color: var(--gold); }
 nav { display: flex; gap: 1.4rem; align-items: center; }
 nav a { color: var(--dim); font-weight: 600; font-size: .88rem; text-decoration: none; }
@@ -264,3 +264,7 @@ html { scroll-behavior: smooth; }
 .verdict { border-top: 1px solid var(--line); padding-top: .55rem; margin-top: .55rem; }
 .verdict.split .tag.alt { background: #2a1608; color: #ffab66; border-color: #7a4a22; }
 .pullquote { font-style: italic; color: var(--dim); font-size: .88rem; margin: .35rem 0 0; }
+
+/* ---------- brand mark ---------- */
+.brand { display: inline-flex; align-items: center; gap: .55rem; }
+.brandmark { height: 26px; width: auto; display: block; }

@@ -119,11 +119,12 @@ function page({ title, body, depth = 0, active }) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Poppins:wght@500;600&display=swap">
 <link rel="stylesheet" href="${root}style.css">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏟️</text></svg>">
+<link rel="icon" type="image/png" href="${root}favicon.png">
+<link rel="apple-touch-icon" href="${root}apple-touch-icon.png">
 </head>
 <body>
 <header>
-  <a class="brand" href="${root}index.html">Beckon<span>Bench</span></a>
+  <a class="brand" href="${root}index.html"><img class="brandmark" src="${root}brand-hand.png" alt="">Beckon<span>Bench</span></a>
   <nav>${NAV.map(([href, label]) => `<a href="${root}${href}"${label === active ? ' class="on"' : ''}>${label}</a>`).join('')}<a class="cta" href="https://heybeckon.ai">Try Beckon</a></nav>
 </header>
 <main>
@@ -506,6 +507,9 @@ if (comparisons.length) {
 
 if (existsSync(join(HERE, 'og.png'))) cpSync(join(HERE, 'og.png'), join(DIST, 'og.png'));
 else console.warn('WARN: site/og.png missing; social cards will 404 until it exists');
+
+for (const f of ['favicon.png', 'apple-touch-icon.png', 'brand-hand.png'])
+  if (existsSync(join(HERE, f))) cpSync(join(HERE, f), join(DIST, f));
 
 writeFileSync(join(DIST, 'style.css'), readFileSync(join(HERE, 'style.css')));
 writeFileSync(join(DIST, 'index.html'), page({ title: 'Leaderboard', active: 'Leaderboard', body: indexBody }));
