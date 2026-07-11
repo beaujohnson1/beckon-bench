@@ -71,6 +71,8 @@ const shortName = (m) => (m.meta.model_id || m.slug).replace(/\s*\(([^)]+)\)/, '
 const comparisonsDir = join(BENCH, 'results', 'comparisons');
 const comparisons = existsSync(comparisonsDir) ? readdirSync(comparisonsDir).filter((f) => f.endsWith('.mp4')) : [];
 const comparisonFor = (testId) => comparisons.find((f) => f.startsWith(testId));
+// mtime query param so browsers refetch re-rendered videos instead of serving stale cache
+const vurl = (f, root = '') => `${root}videos/${esc(f)}?v=${Math.round(statSync(join(comparisonsDir, f)).mtimeMs)}`;
 
 const elo = readJSON(join(BENCH, 'arena-panel', 'elo.json'));
 const matchesDir = join(BENCH, 'arena-panel', 'matches');
@@ -90,6 +92,11 @@ const NAV = [
   ['tests.html', 'Tests'],
 ];
 
+// Deploy domain: beckonbench.com (Namecheap, live via Vercel). og:image must be an
+// absolute URL; the card image itself lives at site/og.png and is copied to dist.
+const SITE_URL = 'https://www.beckonbench.com';
+const DESCRIPTION = "The vibe coder's benchmark. Eight one-shot tests, identical conditions. Every prompt, artifact, and score public.";
+
 function page({ title, body, depth = 0, active }) {
   const root = '../'.repeat(depth);
   return `<!doctype html>
@@ -98,6 +105,16 @@ function page({ title, body, depth = 0, active }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)} · Beckon Bench</title>
+<meta name="description" content="${DESCRIPTION}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Beckon Bench">
+<meta property="og:title" content="${esc(title)} · Beckon Bench">
+<meta property="og:description" content="${DESCRIPTION}">
+<meta property="og:image" content="${SITE_URL}/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)} · Beckon Bench">
+<meta name="twitter:description" content="${DESCRIPTION}">
+<meta name="twitter:image" content="${SITE_URL}/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Poppins:wght@500;600&display=swap">
@@ -238,7 +255,7 @@ const versus = tests
     }
     return `<article class="card reveal versus">
 <h3>${t.num} · ${esc(t.title)}</h3>
-<video class="artifact" controls muted loop playsinline preload="metadata" src="videos/${esc(comparisonFor(t.id))}"></video>
+<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(comparisonFor(t.id))}"></video>
 <p class="versus-line">${chips}<a class="more" href="test/${t.id}.html">Full result</a></p>
 ${verdict}
 </article>`;
@@ -348,7 +365,7 @@ ${s ? `<div><p class="notes">${esc(s.notes || '')}</p><p class="dim">${s.stats?.
   <h1>${esc(t.title)}</h1>
   <p>Measures ${esc(t.measures.toLowerCase())}.</p>
 </section>
-${video ? `<video class="artifact reveal" controls muted loop playsinline preload="metadata" src="../videos/${esc(video)}"></video>` : ''}
+${video ? `<video class="artifact reveal" controls muted loop playsinline preload="metadata" src="${vurl(video, '../')}"></video>` : ''}
 <section class="reveal">
   <h2>The prompt, verbatim</h2>
   ${t.prompt ? `<pre>${esc(t.prompt)}</pre>` : '<p class="dim">Agentic test. Harness rules are in the repo.</p>'}
@@ -432,7 +449,7 @@ const matchCards = matches
     const video = comparisonFor(m.test);
     return `<article class="card reveal">
 <h3>${esc(m.test)} · <a href="model/${esc(m.model_a)}.html">${esc(m.model_a)}</a> vs <a href="model/${esc(m.model_b)}.html">${esc(m.model_b)}</a></h3>
-${video ? `<video class="artifact" controls muted loop playsinline preload="metadata" src="videos/${esc(video)}"></video>` : ''}
+${video ? `<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(video)}"></video>` : ''}
 <p>Winner <b>${esc(m.winner)}</b> (${m.votes ? Object.values(m.votes).sort((a, b) => b - a).join(' to ') : ''}), ${esc(m.date?.slice(0, 10) ?? '')}.</p>
 <ul class="votes">${votes}</ul>
 </article>`;
@@ -486,6 +503,9 @@ if (comparisons.length) {
   mkdirSync(join(DIST, 'videos'), { recursive: true });
   for (const f of comparisons) cpSync(join(comparisonsDir, f), join(DIST, 'videos', f));
 }
+
+if (existsSync(join(HERE, 'og.png'))) cpSync(join(HERE, 'og.png'), join(DIST, 'og.png'));
+else console.warn('WARN: site/og.png missing; social cards will 404 until it exists');
 
 writeFileSync(join(DIST, 'style.css'), readFileSync(join(HERE, 'style.css')));
 writeFileSync(join(DIST, 'index.html'), page({ title: 'Leaderboard', active: 'Leaderboard', body: indexBody }));

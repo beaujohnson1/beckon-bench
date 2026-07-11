@@ -1,0 +1,77 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=VT323&display=swap">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    background: #fdfcf9;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: #14182a;
+  }
+  .glow {
+    position: absolute; left: -180px; top: -220px; width: 800px; height: 520px; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(217,168,64,.20), rgba(217,168,64,.05) 60%, transparent);
+    filter: blur(24px);
+  }
+  .left { position: absolute; left: 72px; top: 118px; width: 430px; }
+  .season { color: #be963c; font-weight: 700; letter-spacing: 4px; font-size: 15px; }
+  h1 { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 88px; line-height: 1.04; margin-top: 18px; letter-spacing: -1px; }
+  h1 .gold { color: #be963c; }
+  .tag { margin-top: 26px; font-size: 25px; color: #6f7280; line-height: 1.45; }
+  .site { position: absolute; left: 74px; bottom: 56px; font-family: 'VT323', monospace; font-size: 27px; color: #8a8272; letter-spacing: 1px; }
+  .panels { position: absolute; right: 64px; top: 64px; display: flex; flex-direction: column; gap: 16px; width: 560px; }
+  .panel {
+    background: #fff; border: 1px solid #e9e6dd; border-radius: 14px;
+    padding: 13px 24px 11px; display: flex; align-items: center; gap: 22px;
+    box-shadow: 0 1px 3px rgba(20,24,42,.04);
+  }
+  .meta { width: 168px; }
+  .hlabel { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 17px; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; }
+  .hsub { color: #6f7280; font-size: 13px; margin-top: 4px; line-height: 1.35; }
+  .chart { display: flex; align-items: flex-end; gap: 34px; flex: 1; justify-content: center; }
+  .col { display: flex; flex-direction: column; align-items: center; }
+  .val { font-weight: 800; font-size: 19px; margin-bottom: 5px; font-variant-numeric: tabular-nums; }
+  .bar { width: 26px; border-radius: 4px 4px 0 0; }
+  .name { margin-top: 6px; padding-top: 6px; font-size: 12.5px; color: #6f7280; border-top: 1px solid #e9e6dd; align-self: stretch; text-align: center; }
+</style>
+<body>
+  <div class="glow"></div>
+  <div class="left">
+    <div class="season">SEASON 1 &middot; GAUNTLET v1</div>
+    <h1>Beckon<br><span class="gold">Bench</span></h1>
+    <div class="tag">The vibe coder's benchmark. Eight one-shot tests. Every prompt, artifact, and score public.</div>
+  </div>
+  <div class="site">beckonbench.com</div>
+  <div class="panels" id="panels"></div>
+  <script>
+    const H = 68; // plot height
+    const panels = [
+      { label: 'Human Score', sub: 'Points, live season', hue: '#a8842f',
+        bars: [{ n: 'Sol Ultra', v: 48, show: '48' }, { n: 'Fable 5 Max', v: 34, show: '34' }] },
+      { label: 'Token efficiency', sub: 'Tokens per point, lower wins', hue: '#3b6cc0',
+        bars: [{ n: 'Sol Ultra', v: 2.2, show: '2.2k' }, { n: 'Fable 5 Max', v: 34.9, show: '34.9k' }] },
+      { label: 'Time on bench', sub: 'Wall clock, lower wins', hue: '#2e8b57',
+        bars: [{ n: 'Sol Ultra', v: 73, show: '73m' }, { n: 'Fable 5 Max', v: 125, show: '125m' }] },
+    ];
+    document.getElementById('panels').innerHTML = panels.map((p) => {
+      const max = Math.max(...p.bars.map((b) => b.v));
+      const cols = p.bars.map((b) => `
+        <div class="col">
+          <span class="val">${b.show}</span>
+          <span class="bar" style="height:${Math.max(8, Math.round((b.v / max) * H))}px;background:${p.hue}"></span>
+          <span class="name">${b.n}</span>
+        </div>`).join('');
+      return `<div class="panel">
+        <div class="meta">
+          <div class="hlabel"><span class="swatch" style="background:${p.hue}"></span>${p.label}</div>
+          <div class="hsub">${p.sub}</div>
+        </div>
+        <div class="chart">${cols}</div>
+      </div>`;
+    }).join('');
+  </script>
+</body>

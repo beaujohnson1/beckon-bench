@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    background: #14182a; color: #f6f5f0;
+  }
+  /* faint pixel grid + scanlines */
+  body::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 4px),
+      linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+    background-size: 100% 100%, 40px 40px, 40px 40px;
+  }
+  /* warm gold glow behind the wordmark */
+  .glow {
+    position: absolute; left: -140px; top: 40px; width: 900px; height: 560px;
+    background: radial-gradient(closest-side, rgba(217,168,64,.20), rgba(217,168,64,.05) 60%, transparent);
+    filter: blur(10px);
+  }
+  .left { position: absolute; left: 84px; top: 118px; }
+  .prompt {
+    font-family: 'VT323', monospace; font-size: 34px; color: #d9a840;
+    letter-spacing: 2px; margin-bottom: 38px;
+  }
+  .prompt .cursor {
+    display: inline-block; width: 16px; height: 26px; background: #d9a840;
+    vertical-align: -3px; margin-left: 10px;
+  }
+  h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 76px; line-height: 1.32;
+    color: #f6f5f0; text-shadow: 6px 6px 0 rgba(0,0,0,.45);
+  }
+  h1 .gold { color: #d9a840; }
+  .tag {
+    font-family: 'VT323', monospace; font-size: 40px; color: #c9c4b4;
+    letter-spacing: 3px; margin-top: 40px;
+  }
+  .chips {
+    font-family: 'Press Start 2P', monospace; font-size: 17px; color: #d9a840;
+    margin-top: 34px; letter-spacing: 1px;
+  }
+  .chips span { color: #5a5f75; padding: 0 12px; }
+  /* pixel bar chart, right side */
+  .chart {
+    position: absolute; right: 84px; bottom: 118px;
+    display: flex; align-items: flex-end; gap: 18px;
+    padding-bottom: 14px; border-bottom: 6px solid #f6f5f0;
+  }
+  .bar { display: flex; flex-direction: column-reverse; gap: 4px; }
+  .bar i { width: 30px; height: 30px; display: block; }
+  .site {
+    position: absolute; right: 88px; bottom: 52px;
+    font-family: 'VT323', monospace; font-size: 30px; color: #8a8fa3; letter-spacing: 2px;
+  }
+</style>
+<body>
+  <div class="glow"></div>
+  <div class="left">
+    <div class="prompt">&gt; run gauntlet<span class="cursor"></span></div>
+    <h1>BECKON<br><span class="gold">BENCH</span></h1>
+    <div class="tag">THE VIBE CODER'S BENCHMARK</div>
+    <div class="chips">8 TESTS<span>&#183;</span>1 SHOT<span>&#183;</span>RECEIPTS</div>
+  </div>
+  <div class="chart" id="chart"></div>
+  <div class="site">beckonbench.com</div>
+  <script>
+    const bars = [
+      { n: 10, c: '#e0b75c' },
+      { n: 8,  c: '#6b9be0' },
+      { n: 7,  c: '#5cb885' },
+      { n: 5,  c: '#6b9be0' },
+      { n: 4,  c: '#5cb885' },
+      { n: 3,  c: '#e0b75c' },
+    ];
+    document.getElementById('chart').innerHTML = bars
+      .map((b) => `<div class="bar">${`<i style="background:${b.c}"></i>`.repeat(b.n)}</div>`)
+      .join('');
+  </script>
+</body>
