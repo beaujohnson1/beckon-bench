@@ -125,7 +125,7 @@ function page({ title, body, depth = 0, active }) {
 <body>
 <header>
   <a class="brand" href="${root}index.html"><img class="brandmark" src="${root}brand-hand.png" alt="">Beckon<span>Bench</span></a>
-  <nav>${NAV.map(([href, label]) => `<a href="${root}${href}"${label === active ? ' class="on"' : ''}>${label}</a>`).join('')}<a class="cta" href="https://heybeckon.ai">Try Beckon</a></nav>
+  <nav>${NAV.map(([href, label]) => `<a href="${root}${href}"${label === active ? ' class="on"' : ''}>${label}</a>`).join('')}<a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer">Join Discord</a><a class="cta" href="https://heybeckon.ai">Try Beckon</a></nav>
 </header>
 <main>
 ${body}
@@ -141,6 +141,7 @@ ${body}
 <footer>
   <p>Gauntlet v1, frozen 2026-07-10. Human scores by Beau, on camera. Arena scores by a cross-vendor AI judge panel. <a href="${root}tests.html">The protocol</a> is public.</p>
   <p>Every run happens inside <a href="https://heybeckon.ai">Beckon</a>. Say the word. Your agents build.</p>
+  <p class="dim"><a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer">Join Discord</a></p>
 </footer>
 </body>
 </html>`;
