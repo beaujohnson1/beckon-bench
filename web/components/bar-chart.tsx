@@ -34,7 +34,7 @@ export function BarChart({
               background: `repeating-linear-gradient(to top, ${color} 0 6px, color-mix(in srgb, ${color} 55%, transparent) 6px 8px)`,
             }}
           />
-          <span className="mt-2 line-clamp-3 min-h-[3.3em] w-full max-w-24 self-stretch border-t border-line pt-1.5 text-center text-[0.7rem] leading-tight text-muted group-hover:text-foreground">
+          <span className="mt-2 line-clamp-3 min-h-[3.3em] w-full max-w-24 self-stretch border-t border-border pt-1.5 text-center text-[0.7rem] leading-tight text-muted-foreground group-hover:text-foreground">
             {it.name}
           </span>
         </Link>

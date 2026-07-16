@@ -8,7 +8,7 @@ export function ScoreChip({ score, denom, className }: { score: number; denom?: 
       : score >= 7
         ? 'border-warn/50 bg-warn/10 text-warn'
         : score >= 5
-          ? 'border-line bg-panel-2 text-foreground'
+          ? 'border-border bg-muted text-foreground'
           : 'border-bad/50 bg-bad/10 text-bad';
   return (
     <span
@@ -26,7 +26,7 @@ export function ScoreChip({ score, denom, className }: { score: number; denom?: 
 
 export function PendingChip() {
   return (
-    <span className="inline-block rounded-md border border-line px-1.5 py-0.5 font-mono text-xs text-muted">
+    <span className="inline-block rounded-md border border-border px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
       pending
     </span>
   );

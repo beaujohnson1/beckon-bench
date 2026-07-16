@@ -17,7 +17,7 @@ export default function VotePage() {
             PEOPLE&apos;S VOTE · {matches.length} OPEN BALLOTS
           </p>
           <h1 className="mt-2 font-mono text-4xl font-bold tracking-tight">Cast your votes</h1>
-          <p className="mt-3 max-w-2xl text-muted">
+          <p className="mt-3 max-w-2xl text-muted-foreground">
             Blind head-to-heads, decided by you. Watch each matchup, then pick your winner — every
             vote is logged publicly.
           </p>
@@ -31,18 +31,18 @@ export default function VotePage() {
                 <CardHeader>
                   <CardTitle>
                     {t ? `${t.num} · ${capTitle(t)}` : m.test}{' '}
-                    <span className="font-normal text-muted">
+                    <span className="font-normal text-muted-foreground">
                       — {nameOfSlug(m.model_a)} vs {nameOfSlug(m.model_b)}
                     </span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {video ? (
-                    <video className="block w-full rounded-lg border border-line bg-black" controls muted loop playsInline preload="metadata" src={vurl(video)} />
+                    <video className="block w-full rounded-lg border border-border bg-black" controls muted loop playsInline preload="metadata" src={vurl(video)} />
                   ) : (
-                    <p className="text-sm text-muted">
+                    <p className="text-sm text-muted-foreground">
                       No side-by-side video for this pairing yet —{' '}
-                      <Link href={`/test/${m.test}/`} className="underline decoration-line underline-offset-4 hover:text-primary">see both artifacts</Link>.
+                      <Link href={`/test/${m.test}/`} className="underline decoration-border underline-offset-4 hover:text-primary">see both artifacts</Link>.
                     </p>
                   )}
                   <VoteRow
@@ -51,8 +51,8 @@ export default function VotePage() {
                     aName={nameOfSlug(m.model_a)} bName={nameOfSlug(m.model_b)}
                   />
                   <p className="mt-3 flex gap-4 font-mono text-xs">
-                    <Link href={`/test/${m.test}/`} className="text-muted hover:text-primary">Full result →</Link>
-                    <Link href="/matches/" className="text-muted hover:text-primary">AI panel votes →</Link>
+                    <Link href={`/test/${m.test}/`} className="text-muted-foreground hover:text-primary">Full result →</Link>
+                    <Link href="/matches/" className="text-muted-foreground hover:text-primary">AI panel votes →</Link>
                   </p>
                 </CardContent>
               </Card>

@@ -32,10 +32,10 @@ export default async function ModelPage({ params }: any) {
           <h1 className="mt-2 font-mono text-3xl font-bold tracking-tight sm:text-4xl">
             {m.meta.model_id || m.slug}
           </h1>
-          <p className="mt-2 text-muted">{m.meta.provider || ''}. {m.meta.harness || ''}</p>
+          <p className="mt-2 text-muted-foreground">{m.meta.provider || ''}. {m.meta.harness || ''}</p>
           <p className="mt-4 font-mono text-4xl font-extrabold">
             {m.total}
-            <span className="ml-2 text-base font-normal text-muted">
+            <span className="ml-2 text-base font-normal text-muted-foreground">
               /{m.testsScored * 10} points, {m.testsScored} of {tests.length} tests scored
             </span>
           </p>
@@ -55,7 +55,7 @@ export default async function ModelPage({ params }: any) {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Link href={`/test/${t.id}/`} className="hover:text-primary">
-                      <span className="text-muted">{t.num} ·</span> {capTitle(t)}
+                      <span className="text-muted-foreground">{t.num} ·</span> {capTitle(t)}
                     </Link>
                     {s ? <ScoreChip score={s.total} denom="/10" /> : <PendingChip />}
                   </CardTitle>
@@ -64,14 +64,14 @@ export default async function ModelPage({ params }: any) {
                   <Artifact m={m} t={t} run={run} />
                   <div className="mt-3 text-sm">
                     {pr && (
-                      <p className="text-muted">
+                      <p className="text-muted-foreground">
                         AI panel: <b className="text-foreground">{pr.panel.total}/10</b> — median of {pr.panel.judges_seated} blind judges.
                       </p>
                     )}
                     {s && (
                       <>
                         <p className="mt-1">{s.notes || ''}</p>
-                        <p className="mt-1 text-muted">
+                        <p className="mt-1 text-muted-foreground">
                           {s.stats?.time_seconds ? `${Math.round(s.stats.time_seconds / 60)}m. ` : ''}
                           {s.stats?.output_tokens ? `${fmtTokens(s.stats.output_tokens)} output tokens.` : ''}
                         </p>
@@ -83,8 +83,8 @@ export default async function ModelPage({ params }: any) {
             );
           })}
           {!Object.keys(m.runs).length && (
-            <p className="rounded-lg border border-dashed border-line p-4 text-sm text-muted">
-              <span className="text-line">{'// '}</span>No runs captured yet.
+            <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+              <span className="text-border">{'// '}</span>No runs captured yet.
             </p>
           )}
         </div>

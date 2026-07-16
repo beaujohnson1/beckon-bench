@@ -9,7 +9,7 @@ const NAV = [
 
 export function SiteHeader({ active }: { active?: string }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-background/85 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-5 py-3">
         <Link href="/" className="flex items-center gap-2.5 font-mono text-base font-bold">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -24,7 +24,7 @@ export function SiteHeader({ active }: { active?: string }) {
               className={
                 label === active
                   ? 'text-primary shadow-[0_2px_0_var(--color-primary)]'
-                  : 'text-muted transition-colors hover:text-foreground'
+                  : 'text-muted-foreground transition-colors hover:text-foreground'
               }
             >
               {label}
@@ -34,7 +34,7 @@ export function SiteHeader({ active }: { active?: string }) {
             href="https://discord.gg/5C8Gwj3MVa"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted transition-colors hover:text-foreground"
+            className="text-muted-foreground transition-colors hover:text-foreground"
           >
             Discord
           </a>

@@ -15,7 +15,7 @@ export default function MatchesPage() {
         <section className="py-12">
           <p className="font-mono text-xs font-bold tracking-[0.2em] text-primary">THE ARENA</p>
           <h1 className="mt-2 font-mono text-4xl font-bold tracking-tight">Models judging models.</h1>
-          <p className="mt-3 max-w-2xl text-muted">
+          <p className="mt-3 max-w-2xl text-muted-foreground">
             Two artifacts, same test, three AI judges from vendors with no horse in the race. Judges
             see anonymous submissions in randomized order and must pick a winner. Majority decides.
             Winners climb an ELO ladder. Every vote and every judge&apos;s reasoning is published.
@@ -29,26 +29,26 @@ export default function MatchesPage() {
               <Card key={m.id}>
                 <CardHeader>
                   <CardTitle>
-                    <span className="text-muted">{m.test} ·</span>{' '}
+                    <span className="text-muted-foreground">{m.test} ·</span>{' '}
                     <Link href={`/model/${m.model_a}/`} className="hover:text-primary">{nameOfSlug(m.model_a)}</Link>
-                    <span className="text-muted"> vs </span>
+                    <span className="text-muted-foreground"> vs </span>
                     <Link href={`/model/${m.model_b}/`} className="hover:text-primary">{nameOfSlug(m.model_b)}</Link>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {video && (
-                    <video className="mb-4 block w-full rounded-lg border border-line bg-black" controls muted loop playsInline preload="metadata" src={vurl(video)} />
+                    <video className="mb-4 block w-full rounded-lg border border-border bg-black" controls muted loop playsInline preload="metadata" src={vurl(video)} />
                   )}
                   <p className="text-sm">
                     Winner <b>{nameOfSlug(m.winner)}</b>{tallies ? ` (${tallies})` : ''},{' '}
-                    <span className="text-muted">{m.date?.slice(0, 10) ?? ''}</span>
+                    <span className="text-muted-foreground">{m.date?.slice(0, 10) ?? ''}</span>
                   </p>
                   <ul className="mt-3 flex flex-col gap-2">
                     {m.judges.map((j: any, i: number) => (
-                      <li key={i} className="border-t border-line pt-2 text-sm">
+                      <li key={i} className="border-t border-border pt-2 text-sm">
                         <span className="text-primary">&gt; </span>
                         <b className="font-mono">{j.judge}</b> voted {nameOfSlug(j.vote)}
-                        {j.reasoning && <span className="text-muted">. {j.reasoning}</span>}
+                        {j.reasoning && <span className="text-muted-foreground">. {j.reasoning}</span>}
                       </li>
                     ))}
                   </ul>

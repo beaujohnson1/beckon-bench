@@ -50,16 +50,16 @@ export function VoteRow({ matchId, aSlug, bSlug, aName, bName }: {
   };
 
   return (
-    <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
-      <span className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-muted">
+    <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-4">
+      <span className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-muted-foreground">
         People&apos;s vote
       </span>
       <div className="flex items-center gap-2">
-        <Button disabled={voted} onClick={() => cast('a')}>{aName}</Button>
-        <span className="font-mono text-sm tabular-nums text-muted">
+        <Button variant="outline" size="sm" className="font-mono text-xs" disabled={voted} onClick={() => cast('a')}>{aName}</Button>
+        <span className="font-mono text-sm tabular-nums text-muted-foreground">
           {tally ? `${tally.a} — ${tally.b}` : '· — ·'}
         </span>
-        <Button disabled={voted} onClick={() => cast('b')}>{bName}</Button>
+        <Button variant="outline" size="sm" className="font-mono text-xs" disabled={voted} onClick={() => cast('b')}>{bName}</Button>
       </div>
     </div>
   );

@@ -3,9 +3,10 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { TableShell, Table, Th, Td } from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart } from '@/components/bar-chart';
-import { Scoreboard, PanelBoard } from '@/components/boards';
+import { Scoreboard, PanelBoard, boardShell, boardTh } from '@/components/boards';
 import { ScoreChip } from '@/components/score-chip';
 import { VoteRow } from '@/components/vote-row';
 import {
@@ -13,8 +14,8 @@ import {
   shortName, nameOfSlug, capTitle, CATS, catScore, catScored, fmtTokens, fmtMins, fmtTime,
 } from '@/lib/data';
 
-function SectionTitle({ children, badge, badgeVariant = 'default', id }: {
-  children: React.ReactNode; badge?: string; badgeVariant?: 'default' | 'info'; id?: string;
+function SectionTitle({ children, badge, badgeVariant = 'soft', id }: {
+  children: React.ReactNode; badge?: string; badgeVariant?: 'soft' | 'info'; id?: string;
 }) {
   return (
     <h2 id={id} className="mb-1 mt-16 flex scroll-mt-20 items-center gap-3 font-mono text-xl font-bold">
@@ -53,29 +54,29 @@ export default function Home() {
       <main className="hero-glow mx-auto max-w-6xl px-5 pb-16">
         {/* hero */}
         <section className="grid gap-6 py-12 lg:grid-cols-[1.6fr_1fr]">
-          <div className="reveal-in overflow-hidden rounded-xl border border-line bg-panel shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
-            <div className="flex items-center gap-1.5 border-b border-line bg-panel-2 px-4 py-2.5">
+          <div className="reveal-in overflow-hidden rounded-xl border border-border bg-card shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-1.5 border-b border-border bg-muted px-4 py-2.5">
               <span className="h-2.5 w-2.5 rounded-full bg-bad" />
               <span className="h-2.5 w-2.5 rounded-full bg-warn" />
               <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-              <span className="ml-2 font-mono text-xs tracking-wider text-muted">
+              <span className="ml-2 font-mono text-xs tracking-wider text-muted-foreground">
                 beckon-bench — live results
               </span>
             </div>
             <div className="p-7">
               <p className="font-mono text-xs font-bold tracking-[0.15em] text-primary">
-                <span className="text-muted">$ </span>beckon run bench --tests 8
+                <span className="text-muted-foreground">$ </span>beckon run bench --tests 8
               </p>
               <h1 className="mt-2 font-mono text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
                 The vibe coder&apos;s benchmark
                 <span className="cursor-blink" />
               </h1>
-              <p className="mt-3 max-w-xl text-muted">
+              <p className="mt-3 max-w-xl text-muted-foreground">
                 Eight one-shot tests, identical conditions. Every prompt, artifact, and vote public.
               </p>
               <a
                 href="https://heybeckon.ai"
-                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-1.5 font-mono text-xs text-muted transition-colors hover:border-primary hover:text-foreground"
+                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
               >
                 Runs live inside <b className="text-primary">Beckon</b>
               </a>
@@ -85,10 +86,10 @@ export default function Home() {
             {newest && (
               <Link href={`/model/${newest.slug}/`} className="group">
                 <Card className="h-full transition-transform group-hover:-translate-y-0.5 group-hover:border-primary/50">
-                  <CardContent className="p-5">
-                    <Badge className="mb-2">New run</Badge>
+                  <CardContent>
+                    <Badge variant="soft" className="mb-2">New run</Badge>
                     <p className="font-mono font-bold">{shortName(newest)}</p>
-                    <p className="mt-1 text-sm text-muted">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       benchmarked {newest.meta.run_date || ''} — artifacts, stats, and ballots are live
                     </p>
                   </CardContent>
@@ -97,10 +98,10 @@ export default function Home() {
             )}
             <Link href="/vote/" className="group">
               <Card className="h-full transition-transform group-hover:-translate-y-0.5 group-hover:border-primary/50">
-                <CardContent className="p-5">
+                <CardContent>
                   <Badge variant="info" className="mb-2">Launch</Badge>
                   <p className="font-mono font-bold">The People&apos;s Vote</p>
-                  <p className="mt-1 text-sm text-muted">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     the crowd now decides — {matches.length} open ballots, watch and vote
                   </p>
                 </CardContent>
@@ -167,24 +168,24 @@ export default function Home() {
 
         {/* scoreboard */}
         <SectionTitle id="board" badge="per test">Scoreboard</SectionTitle>
-        <p className="mb-4 text-sm text-muted">
+        <p className="mb-4 text-sm text-muted-foreground">
           Runs first try · polish · prompt adherence · wow factor — ten points per test, ties to the
           cheaper run. ◌ run captured, no score. New runs are decided by the People&apos;s Vote and the AI panel.
         </p>
         <Scoreboard />
         <nav className="mt-4 flex flex-wrap gap-4 font-mono text-xs font-semibold">
-          {matches.length > 0 && <Link className="text-muted hover:text-primary" href="/vote/"><span className="text-primary"># </span>Cast your votes</Link>}
-          {versusCards.length > 0 && <a className="text-muted hover:text-primary" href="#watch"><span className="text-primary"># </span>Head-to-heads</a>}
-          <a className="text-muted hover:text-primary" href="#arena"><span className="text-primary"># </span>Arena</a>
-          <a className="text-muted hover:text-primary" href="#efficiency"><span className="text-primary"># </span>Efficiency</a>
-          <Link className="text-muted hover:text-primary" href="/tests/"><span className="text-primary"># </span>The 8 tests</Link>
+          {matches.length > 0 && <Link className="text-muted-foreground hover:text-primary" href="/vote/"><span className="text-primary"># </span>Cast your votes</Link>}
+          {versusCards.length > 0 && <a className="text-muted-foreground hover:text-primary" href="#watch"><span className="text-primary"># </span>Head-to-heads</a>}
+          <a className="text-muted-foreground hover:text-primary" href="#arena"><span className="text-primary"># </span>Arena</a>
+          <a className="text-muted-foreground hover:text-primary" href="#efficiency"><span className="text-primary"># </span>Efficiency</a>
+          <Link className="text-muted-foreground hover:text-primary" href="/tests/"><span className="text-primary"># </span>The 8 tests</Link>
         </nav>
 
         {/* head-to-heads */}
         {versusCards.length > 0 && (
           <>
             <SectionTitle id="watch" badge="side by side">Head-to-heads</SectionTitle>
-            <p className="mb-4 text-sm text-muted">Same prompt, same clock, side by side.</p>
+            <p className="mb-4 text-sm text-muted-foreground">Same prompt, same clock, side by side.</p>
             <div className="grid gap-5 lg:grid-cols-2">
               {versusCards.map(({ f, t, pairModels, scored, match }: any) => {
                 const tally = match ? match.judges.filter((j: any) => j.vote === match.winner).length : 0;
@@ -192,33 +193,33 @@ export default function Home() {
                   <Card key={f} className="overflow-hidden">
                     <CardHeader>
                       <CardTitle>
-                        <span className="text-muted">{t.num} ·</span> {capTitle(t)}
+                        <span className="text-muted-foreground">{t.num} ·</span> {capTitle(t)}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <video
-                        className="block w-full rounded-lg border border-line bg-black"
+                        className="block w-full rounded-lg border border-border bg-black"
                         controls muted loop playsInline preload="metadata"
                         src={vurl(f)}
                       />
                       <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
                         {(scored.length ? scored : pairModels).map((m: any, i: number) => (
                           <span key={m.slug} className="flex items-center gap-2">
-                            {i > 0 && <span className="text-muted">vs</span>}
+                            {i > 0 && <span className="text-muted-foreground">vs</span>}
                             <span className="font-semibold">{shortName(m)}</span>
                             {m.runs[t.id]?.score && <ScoreChip score={m.runs[t.id].score.total} />}
                           </span>
                         ))}
-                        <Link href={`/test/${t.id}/`} className="ml-auto font-mono text-xs text-muted hover:text-primary">
+                        <Link href={`/test/${t.id}/`} className="ml-auto font-mono text-xs text-muted-foreground hover:text-primary">
                           Full result →
                         </Link>
                       </p>
                       {match && (
-                        <p className="mt-3 flex items-center gap-2 border-t border-line pt-3 text-sm">
+                        <p className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-sm">
                           <Badge variant="info">AI panel</Badge>
                           <span className="font-semibold">{nameOfSlug(match.winner)}</span>
                           <b className="font-mono tabular-nums">{tally}–{match.judges.length - tally}</b>
-                          <Link href="/matches/" className="ml-auto font-mono text-xs text-muted hover:text-primary">
+                          <Link href="/matches/" className="ml-auto font-mono text-xs text-muted-foreground hover:text-primary">
                             Votes →
                           </Link>
                         </p>
@@ -240,38 +241,53 @@ export default function Home() {
 
         {/* arena */}
         <SectionTitle id="arena" badge="AI judge panel" badgeVariant="info">Arena</SectionTitle>
-        {elo?.ladder?.length ? (
-          <>
-            <TableShell className="max-w-xl">
-              <Table>
-                <thead>
-                  <tr><Th></Th><Th>Model</Th><Th>ELO</Th><Th>Record</Th></tr>
-                </thead>
-                <tbody>
-                  {elo.ladder.map((r: any, i: number) => (
-                    <tr key={r.model} className="hover:bg-info/[0.04]">
-                      <Td className="font-mono text-xs text-muted">#{i + 1}</Td>
-                      <Td><Link href={`/model/${r.model}/`} className="font-semibold hover:text-primary">{nameOfSlug(r.model)}</Link></Td>
-                      <Td className="font-mono font-bold tabular-nums text-info">{r.elo}</Td>
-                      <Td className="font-mono tabular-nums text-muted">{r.w}W–{r.l}L</Td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </TableShell>
-            <p className="mt-2 text-sm text-muted">
-              {elo.matches} matches. Every vote is public on the <Link href="/matches/" className="underline decoration-line underline-offset-4 hover:text-primary">Arena page</Link>.
+        <Tabs defaultValue="elo" className="mt-3">
+          <TabsList>
+            <TabsTrigger value="elo" className="font-mono text-xs">ELO ladder</TabsTrigger>
+            <TabsTrigger value="panel" className="font-mono text-xs">Panel Score</TabsTrigger>
+          </TabsList>
+          <TabsContent value="elo">
+            {elo?.ladder?.length ? (
+              <>
+                <div className={`${boardShell} max-w-xl`}>
+                  <Table>
+                    <thead>
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className={boardTh}></TableHead>
+                        <TableHead className={boardTh}>Model</TableHead>
+                        <TableHead className={boardTh}>ELO</TableHead>
+                        <TableHead className={boardTh}>Record</TableHead>
+                      </TableRow>
+                    </thead>
+                    <TableBody>
+                      {elo.ladder.map((r: any, i: number) => (
+                        <TableRow key={r.model} className="hover:bg-info/[0.04]">
+                          <TableCell className="px-3 font-mono text-xs text-muted-foreground">#{i + 1}</TableCell>
+                          <TableCell className="px-3"><Link href={`/model/${r.model}/`} className="font-semibold hover:text-primary">{nameOfSlug(r.model)}</Link></TableCell>
+                          <TableCell className="px-3 font-mono font-bold tabular-nums text-info">{r.elo}</TableCell>
+                          <TableCell className="px-3 font-mono tabular-nums text-muted-foreground">{r.w}W–{r.l}L</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {elo.matches} matches, blind pairwise, majority of three judges. Every vote is public on the{' '}
+                  <Link href="/matches/" className="underline decoration-border underline-offset-4 hover:text-primary">Arena page</Link>.
+                </p>
+              </>
+            ) : (
+              <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No matches played yet.</p>
+            )}
+          </TabsContent>
+          <TabsContent value="panel">
+            <PanelBoard />
+            <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+              v2 pilot — five cross-vendor judges score each artifact blind on the frozen v1 rubric,
+              with render evidence where it exists; the median of each dimension is published.
             </p>
-          </>
-        ) : null}
-        <h3 className="mb-1 mt-8 flex items-center gap-2 font-mono text-base font-bold">
-          Panel Score <Badge variant="info">v2 pilot</Badge>
-        </h3>
-        <p className="mb-4 max-w-3xl text-sm text-muted">
-          Five cross-vendor judges score each artifact blind on the frozen v1 rubric, with render
-          evidence where it exists; the median of each dimension is published.
-        </p>
-        <PanelBoard />
+          </TabsContent>
+        </Tabs>
 
         {/* on the bench */}
         {benchModels.length > 0 && (
@@ -285,8 +301,8 @@ export default function Home() {
                     <Card className="border-dashed transition-transform hover:-translate-y-0.5 hover:border-primary/50">
                       <CardContent className="p-5">
                         <p className="font-mono font-bold">{shortName(m)}</p>
-                        <p className="text-xs text-muted">{m.meta.provider || ''}</p>
-                        <p className="mt-2 text-sm text-muted">
+                        <p className="text-xs text-muted-foreground">{m.meta.provider || ''}</p>
+                        <p className="mt-2 text-sm text-muted-foreground">
                           {captured ? `${captured} of ${tests.length} runs captured · scoring pending` : 'awaiting first run'}
                         </p>
                       </CardContent>
@@ -302,7 +318,7 @@ export default function Home() {
         {scoredModels.length > 0 && (
           <>
             <SectionTitle badge="same points, grouped">Category breakdown</SectionTitle>
-            <p className="mb-4 max-w-3xl text-sm text-muted">
+            <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
               The eight frozen tests, grouped by what they measure. Points are the scores, unchanged —
               no category is scored separately.
             </p>
@@ -318,7 +334,7 @@ export default function Home() {
                         {c.tests.map((t, i) => (
                           <span key={t.id}>
                             {i > 0 && ' · '}
-                            <Link href={`/test/${t.id}/`} title={capTitle(t)} className="underline decoration-line underline-offset-4 hover:text-primary">{t.num}</Link>
+                            <Link href={`/test/${t.id}/`} title={capTitle(t)} className="underline decoration-border underline-offset-4 hover:text-primary">{t.num}</Link>
                           </span>
                         ))}{' '}
                         — out of {c.tests.length * 10}
@@ -332,8 +348,8 @@ export default function Home() {
                           items={scored.map((m) => ({ name: shortName(m), value: catScore(m, c), href: `/model/${m.slug}/` }))}
                         />
                       ) : (
-                        <p className="rounded-lg border border-dashed border-line p-4 text-sm text-muted">
-                          <span className="text-line">{'// '}</span>Scoring pending.
+                        <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                          <span className="text-border">{'// '}</span>Scoring pending.
                         </p>
                       )}
                     </CardContent>
@@ -372,28 +388,32 @@ export default function Home() {
             </Card>
           )}
         </div>
-        <TableShell>
+        <div className={boardShell}>
           <Table>
             <thead>
-              <tr>
-                <Th>Model</Th><Th>Points</Th><Th>Time</Th><Th>Output tokens</Th><Th>Tokens / point</Th>
-                {anyCost && <Th>Cost</Th>}
-              </tr>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className={boardTh}>Model</TableHead>
+                <TableHead className={boardTh}>Points</TableHead>
+                <TableHead className={boardTh}>Time</TableHead>
+                <TableHead className={boardTh}>Output tokens</TableHead>
+                <TableHead className={boardTh}>Tokens / point</TableHead>
+                {anyCost && <TableHead className={boardTh}>Cost</TableHead>}
+              </TableRow>
             </thead>
-            <tbody>
+            <TableBody>
               {scoredModels.map((m) => (
-                <tr key={m.slug} className="hover:bg-primary/[0.04]">
-                  <Td><Link href={`/model/${m.slug}/`} title={m.meta.model_id || m.slug} className="font-semibold hover:text-primary">{shortName(m)}</Link></Td>
-                  <Td className="font-mono font-bold tabular-nums">{m.total}</Td>
-                  <Td className="font-mono tabular-nums">{m.secs ? fmtTime(m.secs) : '·'}</Td>
-                  <Td className="font-mono tabular-nums">{m.toks ? fmtTokens(m.toks) : '·'}</Td>
-                  <Td className="font-mono tabular-nums">{m.toks && m.total ? fmtTokens(Math.round(m.toks / m.total)) : '·'}</Td>
-                  {anyCost && <Td className="font-mono tabular-nums">{m.hasCost ? `$${m.cost.toFixed(2)}` : '·'}</Td>}
-                </tr>
+                <TableRow key={m.slug} className="hover:bg-primary/[0.04]">
+                  <TableCell className="px-3"><Link href={`/model/${m.slug}/`} title={m.meta.model_id || m.slug} className="font-semibold hover:text-primary">{shortName(m)}</Link></TableCell>
+                  <TableCell className="px-3 font-mono font-bold tabular-nums">{m.total}</TableCell>
+                  <TableCell className="px-3 font-mono tabular-nums">{m.secs ? fmtTime(m.secs) : '·'}</TableCell>
+                  <TableCell className="px-3 font-mono tabular-nums">{m.toks ? fmtTokens(m.toks) : '·'}</TableCell>
+                  <TableCell className="px-3 font-mono tabular-nums">{m.toks && m.total ? fmtTokens(Math.round(m.toks / m.total)) : '·'}</TableCell>
+                  {anyCost && <TableCell className="px-3 font-mono tabular-nums">{m.hasCost ? `$${m.cost.toFixed(2)}` : '·'}</TableCell>}
+                </TableRow>
               ))}
-            </tbody>
+            </TableBody>
           </Table>
-        </TableShell>
+        </div>
       </main>
       <SiteFooter />
     </>

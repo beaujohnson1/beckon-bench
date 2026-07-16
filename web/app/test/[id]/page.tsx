@@ -33,20 +33,20 @@ export default async function TestPage({ params }: any) {
             TEST {t.num} · {catName(t).toUpperCase()} · GAUNTLET V1
           </p>
           <h1 className="mt-2 font-mono text-4xl font-bold tracking-tight">{capTitle(t)}</h1>
-          <p className="mt-3 text-muted">Measures {t.measures.toLowerCase()}.</p>
+          <p className="mt-3 text-muted-foreground">Measures {t.measures.toLowerCase()}.</p>
         </section>
 
         {vids.map((f) => (
-          <video key={f} className="mb-6 block w-full rounded-lg border border-line bg-black" controls muted loop playsInline preload="metadata" src={vurl(f)} />
+          <video key={f} className="mb-6 block w-full rounded-lg border border-border bg-black" controls muted loop playsInline preload="metadata" src={vurl(f)} />
         ))}
 
         <Card className="mb-6">
           <CardHeader><CardTitle>The prompt, verbatim</CardTitle></CardHeader>
           <CardContent>
             {t.prompt ? (
-              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-line bg-black p-4 font-mono text-xs leading-relaxed text-foreground/90">{t.prompt}</pre>
+              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-border bg-black p-4 font-mono text-xs leading-relaxed text-foreground/90">{t.prompt}</pre>
             ) : (
-              <p className="text-sm text-muted">Agentic test. Harness rules are in the repo.</p>
+              <p className="text-sm text-muted-foreground">Agentic test. Harness rules are in the repo.</p>
             )}
           </CardContent>
         </Card>
@@ -71,8 +71,8 @@ export default async function TestPage({ params }: any) {
                       <table className="text-sm">
                         <tbody>
                           {Object.entries(s.scores).map(([k, v]: any) => (
-                            <tr key={k} className="border-b border-line/60">
-                              <td className="py-1 pr-4 capitalize text-muted">{k.replace(/_/g, ' ')}</td>
+                            <tr key={k} className="border-b border-border/60">
+                              <td className="py-1 pr-4 capitalize text-muted-foreground">{k.replace(/_/g, ' ')}</td>
                               <td className="py-1 text-right font-mono font-bold tabular-nums">{v}</td>
                             </tr>
                           ))}
@@ -85,14 +85,14 @@ export default async function TestPage({ params }: any) {
                     ) : <div />}
                     <div className="text-sm">
                       {pr && (
-                        <p className="text-muted">
+                        <p className="text-muted-foreground">
                           AI panel: <b className="text-foreground">{pr.panel.total}/10</b> — median of {pr.panel.judges_seated} blind judges.
                         </p>
                       )}
                       {s && (
                         <>
                           <p className="mt-1">{s.notes || ''}</p>
-                          <p className="mt-1 text-muted">
+                          <p className="mt-1 text-muted-foreground">
                             {s.stats?.time_seconds ? `${Math.round(s.stats.time_seconds / 60)}m. ` : ''}
                             {s.stats?.output_tokens ? `${fmtTokens(s.stats.output_tokens)} output tokens.` : ''}
                           </p>
@@ -105,8 +105,8 @@ export default async function TestPage({ params }: any) {
             );
           })}
           {!runs.length && (
-            <p className="rounded-lg border border-dashed border-line p-4 text-sm text-muted">
-              <span className="text-line">{'// '}</span>No runs captured yet.
+            <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+              <span className="text-border">{'// '}</span>No runs captured yet.
             </p>
           )}
         </div>
