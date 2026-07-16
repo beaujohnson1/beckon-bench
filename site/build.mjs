@@ -111,6 +111,14 @@ const shortName = (m) => {
 const comparisonsDir = join(BENCH, 'results', 'comparisons');
 const comparisons = existsSync(comparisonsDir) ? readdirSync(comparisonsDir).filter((f) => f.endsWith('.mp4')) : [];
 const comparisonFor = (testId) => comparisons.find((f) => f.startsWith(testId));
+// Multi-matchup: videos are named <test-id>--<slugA>-vs-<slugB>.mp4 so several
+// pairings per test coexist (Sol/Fable and K3/Opus both have lava lamps).
+const comparisonForPair = (testId, a, b) =>
+  comparisons.find((f) => f.startsWith(testId) && f.includes(a) && f.includes(b));
+const pairOf = (f) => {
+  const seg = f.replace(/\.mp4$/, '').split('--')[1];
+  return seg ? seg.split('-vs-') : null;
+};
 // mtime query param so browsers refetch re-rendered videos instead of serving stale cache
 const vurl = (f, root = '') => `${root}videos/${esc(f)}?v=${Math.round(statSync(join(comparisonsDir, f)).mtimeMs)}`;
 
@@ -374,18 +382,26 @@ ${chart}
 </section>`
   : '';
 
-const versus = tests
-  .filter((t) => comparisonFor(t.id))
-  .map((t) => {
-    const scored = models
+// One head-to-head card per comparison video (test + model pair).
+const versus = comparisons
+  .map((f) => {
+    const t = tests.find((x) => f.startsWith(x.id));
+    const pair = pairOf(f);
+    if (!t || !pair) return '';
+    const pairModels = pair.map((slug) => models.find((m) => m.slug === slug)).filter(Boolean);
+    const scored = pairModels
       .filter((m) => m.runs[t.id]?.score)
       .sort((a, b) => b.runs[t.id].score.total - a.runs[t.id].score.total);
-    const chips = scored
-      .map((m) => `${esc(shortName(m))} <span class="chip s${Math.min(10, m.runs[t.id].score.total)}">${m.runs[t.id].score.total}</span>`)
-      .join(' <span class="dim">vs</span> ');
+    const chips = scored.length
+      ? scored
+          .map((m) => `${esc(shortName(m))} <span class="chip s${Math.min(10, m.runs[t.id].score.total)}">${m.runs[t.id].score.total}</span>`)
+          .join(' <span class="dim">vs</span> ')
+      : pairModels.map((m) => esc(shortName(m))).join(' <span class="dim">vs</span> ');
     // Arena verdict line: winner + tally on every judged card; when the panel
     // disagrees with a decisive human score, that's the story — add a pull-quote.
-    const match = matches.find((x) => x.test === t.id);
+    const match = matches.find(
+      (x) => x.test === t.id && pair.includes(x.model_a) && pair.includes(x.model_b)
+    );
     let verdict = '';
     if (match) {
       const tally = match.judges.filter((j) => j.vote === match.winner).length;
@@ -403,7 +419,7 @@ const versus = tests
     }
     return `<article class="card reveal versus">
 <h3>${t.num} · ${esc(capTitle(t))}</h3>
-<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(comparisonFor(t.id))}"></video>
+<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(f)}"></video>
 <p class="versus-line">${chips}<a class="more" href="test/${t.id}.html">Full result</a></p>
 ${verdict}
 ${match ? voteBlock(match) : ''}
@@ -527,7 +543,7 @@ ${matches.length ? VOTE_SCRIPT : ''}`;
 // ---------- per-test result pages ----------
 
 function testPage(t) {
-  const video = comparisonFor(t.id);
+  const vids = comparisons.filter((f) => f.startsWith(t.id));
   const runs = models.filter((m) => m.runs[t.id]);
   const cards = runs
     .sort((a, b) => (b.runs[t.id].score?.total ?? -1) - (a.runs[t.id].score?.total ?? -1))
@@ -556,7 +572,7 @@ ${scoreTable(s)}
   <h1>${esc(t.title)}</h1>
   <p>Measures ${esc(t.measures.toLowerCase())}.</p>
 </section>
-${video ? `<video class="artifact reveal" controls muted loop playsinline preload="metadata" src="${vurl(video, '../')}"></video>` : ''}
+${vids.map((f) => `<video class="artifact reveal" controls muted loop playsinline preload="metadata" src="${vurl(f, '../')}"></video>`).join('\n')}
 <section class="reveal">
   <h2>The prompt, verbatim</h2>
   ${t.prompt ? `<pre>${esc(t.prompt)}</pre>` : '<p class="dim">Agentic test. Harness rules are in the repo.</p>'}
@@ -637,7 +653,7 @@ const matchCards = matches
     const votes = m.judges
       .map((j) => `<li><b>${esc(j.judge)}</b> voted ${esc(j.vote)}${j.reasoning ? `<span class="dim">. ${esc(j.reasoning)}</span>` : ''}</li>`)
       .join('');
-    const video = comparisonFor(m.test);
+    const video = comparisonForPair(m.test, m.model_a, m.model_b);
     return `<article class="card reveal">
 <h3>${esc(m.test)} · <a href="model/${esc(m.model_a)}.html">${esc(m.model_a)}</a> vs <a href="model/${esc(m.model_b)}.html">${esc(m.model_b)}</a></h3>
 ${video ? `<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(video)}"></video>` : ''}

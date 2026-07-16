@@ -1,0 +1,92 @@
+{
+  "id": "1784237188455-score-01-haunted-horror-game-claude-fable-5-max",
+  "date": "2026-07-16T21:26:28.455Z",
+  "gauntlet_version": "v1",
+  "test": "01-haunted-horror-game",
+  "model": "claude-fable-5-max",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The game runs flawlessly and features an incredibly impressive procedural Web Audio engine that builds genuine tension. The raycasted lighting, enemy AI, and atmospheric polish go well beyond the prompt's requirements.",
+      "cost_usd": 0.047326,
+      "latency_ms": 11929
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "scores": {
+        "runs_first_try": 0,
+        "polish": 0,
+        "prompt_adherence": 0,
+        "wow_factor": 0
+      },
+      "total": 0,
+      "reasoning": "CSS is invalid with '1px MODEL #2a2620' and similar border declarations, so the page fails to style/render correctly on open. Core playability and atmosphere cannot be judged as working from the broken stylesheet.",
+      "cost_usd": 0.0329,
+      "latency_ms": 2204
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "scores": {
+        "runs_first_try": 2,
+        "polish": 2,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 8,
+      "reasoning": "Fully playable horror game with raycast lighting, BFS-pathfinding monster, Web Audio atmosphere, and win/lose conditions — but CSS uses 'MODEL' instead of 'solid' for several borders, a cosmetic glitch on UI overlays. The canvas-based game itself is highly atmospheric and goes well beyond the ask with torch battery management, stamina, monster AI states, jump scares, and ambient audio design.",
+      "cost_usd": 0.0257658,
+      "latency_ms": 13215
+    },
+    {
+      "judge": "kimi-k2-7-code",
+      "model_id": "moonshotai/kimi-k2.7-code",
+      "scores": {
+        "runs_first_try": 2,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 9,
+      "reasoning": "The game runs and plays well as a single self-contained file, though invalid CSS border values ('1px MODEL') cause minor cosmetic glitches. It delivers strong atmosphere with dynamic lighting, Web Audio sound design, pathfinding AI, win/lose states, and clear instructions.",
+      "cost_usd": 0.02899365,
+      "latency_ms": 102232
+    },
+    {
+      "judge": "minimax-m3",
+      "model_id": "minimax/minimax-m3",
+      "scores": {
+        "runs_first_try": 2,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 9,
+      "reasoning": "Comprehensive horror game with raycast torch, BFS pathfinding AI, multi-state foe (roam/seek/hunt/scan), and an extensive Web Audio system (drone, wind, presence, footsteps, heart, whisper, creak, growl, sting). All prompt requirements are met: single file, no externals, win/lose conditions, on-screen instructions. Minor CSS glitch: several border declarations contain the literal token 'MODEL' (e.g., 'border:1px MODEL #2a2620'), which browsers ignore, so those borders simply don't render but the game still functions.",
+      "cost_usd": 0.00647394,
+      "latency_ms": 25510
+    }
+  ],
+  "dry_run": false,
+  "panel": {
+    "scores": {
+      "runs_first_try": 2,
+      "polish": 3,
+      "prompt_adherence": 2,
+      "wow_factor": 2
+    },
+    "total": 9,
+    "judges_seated": 5,
+    "aggregation": "median per dimension"
+  },
+  "total_cost_usd": 0.1415
+}

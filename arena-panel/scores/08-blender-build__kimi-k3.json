@@ -1,0 +1,64 @@
+{
+  "id": "1784237530692-score-08-blender-build-kimi-k3",
+  "date": "2026-07-16T21:32:10.692Z",
+  "gauntlet_version": "v1",
+  "test": "08-blender-build",
+  "model": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 1,
+        "prompt_adherence": 2,
+        "wow_factor": 0
+      },
+      "total": 6,
+      "reasoning": "The model successfully included all requested elements, including the icing drips, plate, and table. However, the visual quality suffers from visibly stretched textures on the dough and table, spherical instead of cylindrical sprinkles, and a stark black background.",
+      "cost_usd": 0.01445,
+      "latency_ms": 12400
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 1
+      },
+      "total": 9,
+      "reasoning": "The render shows a complete, appetizing donut with glossy pink icing, multi-colored sprinkles, soft dough, ceramic plate, and wooden table under good lighting and composition at the requested resolution. Materials and modeling look convincing with nice drip details and reflections, though sprinkles are simple spheres rather than elongated rods.",
+      "cost_usd": 0.005984,
+      "latency_ms": 3016
+    },
+    {
+      "judge": "qwen3-vl-235b",
+      "model_id": "qwen/qwen3-vl-235b-a22b-instruct",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The render is flawless and visually appetizing, with perfect materials and lighting. It fulfills all core requirements, though the step-by-step progress isn't visible in the final image.",
+      "cost_usd": 0.00058044,
+      "latency_ms": 3775
+    }
+  ],
+  "dry_run": false,
+  "panel": {
+    "scores": {
+      "runs_first_try": 3,
+      "polish": 3,
+      "prompt_adherence": 2,
+      "wow_factor": 1
+    },
+    "total": 9,
+    "judges_seated": 3,
+    "aggregation": "median per dimension"
+  },
+  "total_cost_usd": 0.021
+}

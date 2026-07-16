@@ -1,0 +1,92 @@
+{
+  "id": "1784237411132-score-04-svg-self-portrait-gpt-5-6-sol-ultra",
+  "date": "2026-07-16T21:30:11.132Z",
+  "gauntlet_version": "v1",
+  "test": "04-svg-self-portrait",
+  "model": "gpt-5-6-sol-ultra",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The SVG renders flawlessly and presents a stunning, ethereal representation of AI consciousness that avoids generic robot tropes. The intricate use of gradients, glowing nodes, and subtle background details demonstrates exceptional ambition and polish.",
+      "cost_usd": 0.032124,
+      "latency_ms": 8055
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The SVG renders cleanly as a sophisticated, luminous AI portrait with dual cool/warm lighting, neural mesh, orbital rings, and animated accents that feel personal rather than generic. Ambitious composition, color, and detail fully meet the single-file self-portrait brief with strong aesthetic polish.",
+      "cost_usd": 0.022626,
+      "latency_ms": 3089
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "A highly detailed, abstract AI self-portrait with sophisticated gradients, glows, and CSS animations that render flawlessly. It perfectly fulfills the ambitious composition and personal expression requirements.",
+      "cost_usd": 0.01049076,
+      "latency_ms": 9167
+    },
+    {
+      "judge": "kimi-k2-7-code",
+      "model_id": "moonshotai/kimi-k2.7-code",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The SVG is well-formed and should render cleanly in modern browsers, with rich gradients, filters, and CSS animations adding polish. It fully satisfies the single-file, code-only requirement while delivering an ambitious, distinctive AI self-portrait rather than a generic robot.",
+      "cost_usd": 0.00798442,
+      "latency_ms": 10467
+    },
+    {
+      "judge": "minimax-m3",
+      "model_id": "minimax/minimax-m3",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "Highly ambitious SVG with layered composition, dual cool/warm color palette, glowing cores, orbital systems, neural nodes, and animated elements that convey an AI consciousness rather than a generic robot. Code is syntactically sound with proper defs, gradients, filters, and clip paths, and should render flawlessly on first open.",
+      "cost_usd": 0.00349008,
+      "latency_ms": 9623
+    }
+  ],
+  "dry_run": false,
+  "panel": {
+    "scores": {
+      "runs_first_try": 3,
+      "polish": 3,
+      "prompt_adherence": 2,
+      "wow_factor": 2
+    },
+    "total": 10,
+    "judges_seated": 5,
+    "aggregation": "median per dimension"
+  },
+  "total_cost_usd": 0.0767
+}
