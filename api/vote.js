@@ -36,8 +36,22 @@ const ensureSchema = () =>
     UNIQUE (match, voter)
   )`);
 
+// CORS: same-origin needs nothing; this allowlist additionally lets the
+// bench's own preview builds (localhost) read tallies and vote. Arbitrary
+// third-party origins stay blocked — part of Ruling #6's vote-integrity item.
+const ORIGIN_OK = (o) =>
+  /^https:\/\/(www\.)?beckonbench\.com$/.test(o) || /^http:\/\/localhost(:\d+)?$/.test(o);
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  const origin = req.headers.origin;
+  if (origin && ORIGIN_OK(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
   if (!sql) return res.status(503).json({ error: 'voting not configured' });
   await ensureSchema();
 
