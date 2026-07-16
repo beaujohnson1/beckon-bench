@@ -316,3 +316,9 @@ html { scroll-behavior: smooth; }
 .card.ballot { padding: 0.85rem 1rem; }
 .card.ballot h3 { font-size: 0.85rem; margin: 0 0 0.35rem; }
 .card.ballot .versus-line { font-size: 0.8rem; margin: 0 0 0.45rem; }
+
+/* vote page — one row per ballot; symmetric vote row: model A | tally | model B */
+.card.ballot-row { max-width: 56rem; margin: 1.1rem auto; }
+.vote-row { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.4rem; }
+.vote-row .votebtn { flex: 1; text-align: center; padding: 0.6rem 0.8rem; }
+.vote-row .vote-tally { min-width: 5.5rem; text-align: center; font-size: 1rem; white-space: nowrap; }

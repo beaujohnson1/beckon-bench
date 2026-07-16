@@ -155,9 +155,11 @@ const nameOfSlug = (slug) => {
 // byte-identical to the static story when the backend isn't provisioned.
 const voteBlock = (m) => `<div class="vote" data-match="${esc(m.id)}" data-a="${esc(m.model_a)}" data-b="${esc(m.model_b)}" hidden>
   <span class="vote-label">People's vote</span>
-  <button class="votebtn" data-c="a">${esc(nameOfSlug(m.model_a))}</button>
-  <button class="votebtn" data-c="b">${esc(nameOfSlug(m.model_b))}</button>
-  <span class="vote-tally dim"></span>
+  <div class="vote-row">
+    <button class="votebtn" data-c="a">${esc(nameOfSlug(m.model_a))}</button>
+    <span class="vote-tally dim"></span>
+    <button class="votebtn" data-c="b">${esc(nameOfSlug(m.model_b))}</button>
+  </div>
 </div>`;
 
 // No backticks or ${} below — this string ships inside a template literal.
@@ -202,6 +204,7 @@ const VOTE_SCRIPT = `<script>
 
 const NAV = [
   ['index.html', 'Leaderboard'],
+  ['vote.html', 'Vote'],
   ['matches.html', 'Arena'],
   ['tests.html', 'Tests'],
 ];
@@ -494,23 +497,8 @@ const indexBody = `
   ${leaderboardTable}
   <p class="dim">Runs first try · polish · prompt adherence · wow factor — ten points per test, ties to the cheaper run. ◌ run captured, no score. New runs are decided by the People's Vote and the AI panel.</p>
   </div>
-  <nav class="jump">${matches.length ? '<a href="#vote">Cast your votes</a>' : ''}${versus ? '<a href="#watch">Head-to-heads</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
+  <nav class="jump">${matches.length ? '<a href="vote.html">Cast your votes</a>' : ''}${versus ? '<a href="#watch">Head-to-heads</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
 </section>
-
-${matches.length ? `<section class="reveal" id="vote">
-  <h2>Cast your votes <span class="tag">people's vote</span></h2>
-  <p class="dim">Blind head-to-heads, decided by you. Watch the artifacts, pick your winner — every vote is logged publicly.</p>
-  <div class="versus-grid ballots">
-${matches.map((m) => {
-  const t = tests.find((x) => x.id === m.test);
-  return `<article class="card ballot">
-<h3>${t ? `${t.num} · ${esc(capTitle(t))}` : esc(m.test)}</h3>
-<p class="versus-line">${esc(nameOfSlug(m.model_a))} <span class="dim">vs</span> ${esc(nameOfSlug(m.model_b))}<a class="more" href="test/${esc(m.test)}.html">Watch</a></p>
-${voteBlock(m)}
-</article>`;
-}).join('\n')}
-  </div>
-</section>` : ''}
 
 ${versus ? `<section class="reveal" id="watch">
   <h2>Head-to-heads <span class="tag">side by side</span></h2>
@@ -552,6 +540,26 @@ ${categorySection}
   </table></div>
 </section>
 
+`;
+
+// ---------- vote page: watch the matchup, then vote — one row per ballot ----------
+
+const voteBody = `
+<section class="hero small">
+  <div class="season">PEOPLE'S VOTE · ${matches.length} OPEN BALLOTS</div>
+  <h1>Cast your votes</h1>
+  <p>Blind head-to-heads, decided by you. Watch each matchup, then pick your winner — every vote is logged publicly.</p>
+</section>
+${matches.map((m) => {
+  const t = tests.find((x) => x.id === m.test);
+  const video = comparisonForPair(m.test, m.model_a, m.model_b);
+  return `<article class="card reveal ballot-row">
+<h3>${t ? `${t.num} · ${esc(capTitle(t))}` : esc(m.test)} <span class="dim">— ${esc(nameOfSlug(m.model_a))} vs ${esc(nameOfSlug(m.model_b))}</span></h3>
+${video ? `<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(video)}"></video>` : `<p class="dim">No side-by-side video for this pairing yet — <a href="test/${esc(m.test)}.html">see both artifacts</a>.</p>`}
+${voteBlock(m)}
+<p class="versus-line"><a class="more" href="test/${esc(m.test)}.html">Full result</a><a class="more" href="matches.html">AI panel votes</a></p>
+</article>`;
+}).join('\n')}
 ${matches.length ? VOTE_SCRIPT : ''}`;
 
 // ---------- per-test result pages ----------
@@ -740,6 +748,7 @@ if (existsSync(join(HERE, 'exhibits'))) cpSync(join(HERE, 'exhibits'), join(DIST
 writeFileSync(join(DIST, 'style.css'), readFileSync(join(HERE, 'style.css')));
 writeFileSync(join(DIST, 'index.html'), page({ title: 'Leaderboard', active: 'Leaderboard', body: indexBody }));
 writeFileSync(join(DIST, 'matches.html'), page({ title: 'Arena', active: 'Arena', body: matchesBody }));
+writeFileSync(join(DIST, 'vote.html'), page({ title: 'Cast your votes', active: 'Vote', body: voteBody }));
 writeFileSync(join(DIST, 'tests.html'), page({ title: 'Tests', active: 'Tests', body: testsBody }));
 for (const m of models) writeFileSync(join(DIST, 'model', `${m.slug}.html`), modelPage(m));
 for (const t of tests) writeFileSync(join(DIST, 'test', `${t.id}.html`), testPage(t));
