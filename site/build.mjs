@@ -477,8 +477,41 @@ const arenaLadder = elo?.ladder?.length
 <p class="dim">${elo.matches} matches. Every vote is public on the <a href="matches.html">Arena page</a>.</p>`
   : `<p class="empty">Three cross-vendor AI judges compare artifacts blind and vote. Winners climb an ELO ladder. First matches land after this season's filmed runs. <a href="matches.html">How it works</a></p>`;
 
+// AA-style hero: headline left, latest-news cards right (data-driven).
+const newest = [...models].sort((a, b) => String(b.meta.run_date).localeCompare(String(a.meta.run_date)))[0];
+const updateCards = `
+<aside class="updates">
+  ${newest ? `<a class="update" href="model/${esc(newest.slug)}.html"><span class="update-kicker">NEW RUN</span><b>${esc(shortName(newest))}</b><span class="dim">benchmarked ${esc(newest.meta.run_date || '')} — artifacts, stats, and ballots are live</span></a>` : ''}
+  <a class="update" href="vote.html"><span class="update-kicker">LAUNCH</span><b>The People's Vote</b><span class="dim">the crowd now decides — ${matches.length} open ballots, watch and vote</span></a>
+</aside>`;
+
+// Highlights: three single-hue stat cards (identity via labels + the tables
+// below, per dataviz rules). Hues validated on the dark surface 2026-07-16:
+// contrast/CVD/normal-vision PASS; do NOT combine these three as one
+// multi-series categorical set (lightness band) — one hue per chart only.
+const effItems = scoredModels.filter((m) => m.toks && m.total);
+const highlights = `
+<section class="reveal" id="scores">
+  <p class="hsub">Highlights</p>
+  <div class="hgrid">
+    ${scoredModels.length ? highlightCard({
+      label: 'Score', sub: 'Season points, ten per scored test · higher is better', hue: HUES.gold,
+      items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
+    }) : ''}
+    ${elo?.ladder?.length ? highlightCard({
+      label: 'Arena ELO', sub: 'Blind pairwise AI-judge matches · higher is better', hue: HUES.blue,
+      items: elo.ladder.map((r) => ({ name: nameOfSlug(r.model), value: r.elo, href: `model/${r.model}.html` })),
+    }) : ''}
+    ${effItems.length ? highlightCard({
+      label: 'Tokens per point', sub: 'Output tokens per point · lower is better (unrecorded omitted)', hue: HUES.green,
+      items: effItems.map((m) => ({ name: shortName(m), value: Math.round(m.toks / m.total), href: `model/${m.slug}.html` })),
+      fmt: fmtTokens,
+    }) : ''}
+  </div>
+</section>`;
+
 const indexBody = `
-<section class="hero">
+<section class="hero herosplit">
   <div class="term">
     <div class="term-bar"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="term-title">beckon-bench — live results</span></div>
     <div class="term-body">
@@ -488,15 +521,15 @@ const indexBody = `
       <a class="powered" href="https://heybeckon.ai">Runs live inside <b>Beckon</b></a>
     </div>
   </div>
-  <div id="scores">
-  ${scoredModels.length ? columnChart({
-    items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
-    hue: HUES.gold,
-    plotHeight: 190,
-  }) : ''}
+  ${updateCards}
+</section>
+
+${highlights}
+
+<section class="reveal" id="board">
+  <h2>Scoreboard <span class="tag">per test</span></h2>
   ${leaderboardTable}
   <p class="dim">Runs first try · polish · prompt adherence · wow factor — ten points per test, ties to the cheaper run. ◌ run captured, no score. New runs are decided by the People's Vote and the AI panel.</p>
-  </div>
   <nav class="jump">${matches.length ? '<a href="vote.html">Cast your votes</a>' : ''}${versus ? '<a href="#watch">Head-to-heads</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
 </section>
 

@@ -322,3 +322,14 @@ html { scroll-behavior: smooth; }
 .vote-row { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.4rem; }
 .vote-row .votebtn { flex: 1; text-align: center; padding: 0.6rem 0.8rem; }
 .vote-row .vote-tally { min-width: 5.5rem; text-align: center; font-size: 1rem; white-space: nowrap; }
+
+/* AA-style hero split: terminal left, latest-news cards right */
+.herosplit { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.5rem; align-items: start; }
+.herosplit .term { margin: 0; }
+.updates { display: flex; flex-direction: column; gap: 0; border-left: 1px solid var(--line, #26262c); }
+.update { display: flex; flex-direction: column; gap: 0.3rem; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line, #26262c); text-decoration: none; color: inherit; }
+.update:hover { background: rgba(34, 242, 132, 0.04); }
+.update-kicker { font-size: 0.65rem; letter-spacing: 0.12em; color: #22f284; }
+.update .dim { font-size: 0.78rem; line-height: 1.45; }
+@media (max-width: 60rem) { .herosplit { grid-template-columns: 1fr; } .updates { border-left: 0; border-top: 1px solid var(--line, #26262c); } }
+
