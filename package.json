@@ -4,5 +4,8 @@
   "description": "The vibe-coder's benchmark — one-shot tests, human-scored, receipts included.",
   "scripts": {
     "build": "node site/build.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
   }
 }
