@@ -2,6 +2,7 @@
   "season": "v1",
   "elo": { "start": 1000, "k": 24 },
   "budget_usd_per_run": 20,
+  "score_panel_size": 5,
   "judge_timeout_ms": 120000,
   "judge_retries": 1,
   "max_artifact_chars": 60000,
@@ -38,6 +39,6 @@
     "claude", "anthropic", "fable", "opus", "sonnet", "haiku",
     "gpt", "openai", "codex", "sol", "soul", "luna", "terra",
     "gemini", "google", "grok", "xai", "x-ai", "deepseek", "glm", "zhipu",
-    "kimi", "moonshot", "minimax", "mistral", "llama", "meta"
+    "kimi", "moonshot", "minimax", "mistral", "llama", "meta-llama"
   ]
 }

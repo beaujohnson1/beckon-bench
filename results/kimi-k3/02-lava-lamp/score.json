@@ -1,0 +1,23 @@
+{
+  "model": "kimi-k3",
+  "model_id": "kimi-code/k3 (max effort — K3 is max-only, per Ruling #5)",
+  "provider": "Moonshot",
+  "test": "02-lava-lamp",
+  "gauntlet_version": "v1",
+  "date": "2026-07-16",
+  "harness": "Kimi Code CLI (kimi) v0.26.0 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 895,
+    "output_tokens": null,
+    "cost_usd": null
+  },
+  "notes": "REVISED on re-review, same day: initially scored 0 when the lamp appeared dead in the canvas preview pane; producer verification showed that was a viewer artifact — in a real browser (the prompt's own criterion) the lamp runs flawlessly: erupting wax column, blobs rising, deforming, splitting, raining back. Re-judged in Chrome at 10/10. Fastest lava-lamp run of the season (14m 55s). Kimi Code CLI does not record token usage, so tokens/cost are n/a."
+}

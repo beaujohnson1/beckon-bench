@@ -1,0 +1,9 @@
+{
+  "model": "claude-opus-4-8",
+  "model_id": "claude-opus-4-8 (1M context, max effort, per Ruling #5)",
+  "provider": "Anthropic",
+  "harness": "Claude Code v2.1.211 in a Beckon terminal pane (per Ruling #1: native flagship harness, shared Beckon environment)",
+  "run_date": "2026-07-16",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}

@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Lava Lamp</title>
+<style>
+  :root{
+    /* Glass proportions. Aspect (height/width) must match SIM_ASPECT in the script. */
+    --gh: min(72vh, 640px);
+    --gw: calc(var(--gh) * 0.392);   /* 1 / 2.55 */
+  }
+  html, body{ height:100%; margin:0; }
+  body{
+    background:
+      radial-gradient(130% 90% at 50% 42%, #241035 0%, #150826 42%, #08040f 78%, #05020a 100%);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    font-family: system-ui, -apple-system, sans-serif;
+    -webkit-user-select:none; user-select:none;
+    touch-action:manipulation;
+  }
+
+  .stage{
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+    filter: drop-shadow(0 42px 55px rgba(0,0,0,.65));
+  }
+  /* warm ambient glow spilling onto the backdrop */
+  .stage::before{
+    content:"";
+    position:absolute; left:50%; top:74%;
+    width: calc(var(--gw) * 5.2); height: calc(var(--gw) * 5.2);
+    transform: translate(-50%,-50%);
+    background: radial-gradient(closest-side,
+        rgba(255,120,60,.20), rgba(255,90,50,.08) 42%, transparent 70%);
+    filter: blur(6px);
+    z-index:0; pointer-events:none;
+  }
+
+  /* ---- metallic cap ---- */
+  .cap{
+    position:relative; z-index:3;
+    width: calc(var(--gw) * 0.60);
+    height: calc(var(--gh) * 0.075);
+    margin-bottom: calc(var(--gh) * -0.012);
+    clip-path: polygon(25% 0, 75% 0, 100% 100%, 0 100%);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.30), rgba(0,0,0,.12) 45%, rgba(0,0,0,.40)),
+      linear-gradient(90deg, #26262b 0%, #c9cdd6 20%, #f4f7fb 34%, #969ba5 50%, #e2e6ec 65%, #7d828b 82%, #1d1d21 100%);
+    border-radius: 3px 3px 0 0;
+  }
+
+  /* ---- glass body ---- */
+  .glass{
+    position:relative; z-index:2;
+    width: var(--gw);
+    height: var(--gh);
+    overflow:hidden;
+    border-radius: 48% 48% 15% 15% / 12% 12% 5% 5%;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.05),
+      inset 0 0 40px rgba(0,0,0,.55);
+    background:#05020c;
+  }
+  .glass canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%; display:block;
+  }
+  /* glass sheen / cylindrical highlights & inner shading (drawn over the lava) */
+  .sheen{
+    position:absolute; inset:0; pointer-events:none;
+    border-radius:inherit;
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.13) 0%, rgba(255,255,255,0) 15%),
+      linear-gradient(90deg, transparent 9%, rgba(255,255,255,.22) 13.5%, transparent 18%),
+      linear-gradient(90deg, transparent 79%, rgba(255,255,255,.10) 85%, transparent 91%),
+      radial-gradient(120% 14% at 50% 0%, rgba(255,255,255,.20), transparent 72%),
+      radial-gradient(140% 12% at 50% 100%, rgba(0,0,0,.45), transparent 72%);
+    box-shadow:
+      inset 0 0 26px rgba(0,0,0,.5),
+      inset 0 1px 2px rgba(255,255,255,.35);
+  }
+
+  /* ---- metallic base ---- */
+  .base{
+    position:relative; z-index:3;
+    width: calc(var(--gw) * 1.55);
+    height: calc(var(--gh) * 0.15);
+    margin-top: calc(var(--gh) * -0.012);
+    clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.28), rgba(0,0,0,.10) 40%, rgba(0,0,0,.48)),
+      linear-gradient(90deg, #222227 0%, #c4c8d1 19%, #eef1f6 33%, #8f949e 50%, #dfe3ea 66%, #797e87 82%, #1b1b1f 100%);
+    border-radius: 0 0 5px 5px;
+  }
+  /* warm bulb glow at the very bottom of the glass, seen through it */
+  .base::before{
+    content:"";
+    position:absolute; left:50%; top:-6%;
+    width:60%; height:36%;
+    transform:translateX(-50%);
+    background: radial-gradient(closest-side, rgba(255,150,70,.65), rgba(255,110,50,.15) 60%, transparent 75%);
+    filter: blur(3px);
+  }
+
+  .fallback-msg{
+    color:#e7d9ff; font-size:14px; line-height:1.5; max-width:340px; text-align:center;
+    padding:20px; opacity:.85;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="cap"></div>
+    <div class="glass" id="glass">
+      <canvas id="c"></canvas>
+      <div class="sheen"></div>
+    </div>
+    <div class="base"></div>
+  </div>
+
+<script>
+"use strict";
+(function(){
+  // ============================================================
+  //  Configuration
+  // ============================================================
+  const SIM_ASPECT = 2.55;      // glass height / width (keep in sync with CSS --gw factor)
+  const POOL_TOP   = 0.42;      // top of the molten wax pool (in sim-y units)
+  const POOL_STR   = 5.5;       // strength of the bottom pool field
+  const KREP = 1.8, KATT = 0.30;// blob-blob repulsion / cohesion (surface tension)
+
+  // Behaviour per size class: buoyancy, drag (higher = slower), bias (down force), wander amp.
+  const CLASS = {
+    anchor:{ rmin:0.170, rmax:0.220, buoy:0.90, drag:7.0, bias:-0.60, wa:0.015 },
+    big:   { rmin:0.125, rmax:0.160, buoy:1.30, drag:6.0, bias: 0.00, wa:0.030 },
+    medium:{ rmin:0.090, rmax:0.120, buoy:1.50, drag:5.0, bias: 0.00, wa:0.045 },
+    small: { rmin:0.062, rmax:0.088, buoy:1.80, drag:4.2, bias: 0.00, wa:0.060 },
+    tiny:  { rmin:0.040, rmax:0.058, buoy:2.10, drag:3.5, bias: 0.00, wa:0.080 },
+  };
+  const CLASS_LIST = [];
+  for (let i=0;i<3;i++) CLASS_LIST.push('anchor');
+  for (let i=0;i<5;i++) CLASS_LIST.push('big');
+  for (let i=0;i<9;i++) CLASS_LIST.push('medium');
+  for (let i=0;i<6;i++) CLASS_LIST.push('small');
+  for (let i=0;i<3;i++) CLASS_LIST.push('tiny');   // 26 total
+
+  // ============================================================
+  //  Helpers
+  // ============================================================
+  const clamp = (x,a,b)=> x<a?a:(x>b?b:x);
+  const rand  = (a,b)=> a + Math.random()*(b-a);
+  function smoothstep(e0,e1,x){
+    let t = (x-e0)/(e1-e0);
+    t = t<0?0:(t>1?1:t);
+    return t*t*(3-2*t);
+  }
+
+  let   canvas = document.getElementById('c');
+  const glass  = document.getElementById('glass');
+  let aspect = SIM_ASPECT;
+
+  // ============================================================
+  //  Simulation state
+  // ============================================================
+  let blobs = [];
+  let N = 0;
+  let data = null;              // packed Float32 [x,y,r,T] * N for the shader
+
+  function initBlobs(count){
+    N = count;
+    blobs = [];
+    let ai = 0;
+    for (let i=0;i<N;i++){
+      const cls = CLASS_LIST[i];
+      const c = CLASS[cls];
+      const b = {
+        cls,
+        r:    rand(c.rmin, c.rmax),
+        vx:0, vy:0,
+        buoy: c.buoy * rand(0.90, 1.10),
+        drag: c.drag * rand(0.92, 1.08),
+        bias: c.bias,
+        wa:   c.wa   * rand(0.7, 1.3),
+        wf:   rand(0.08, 0.22),
+        wp:   rand(0, Math.PI*2),
+        T:    0,
+      };
+      if (cls === 'anchor'){
+        b.x = 0.5 + (ai-1)*0.22; ai++;   // 0.28, 0.50, 0.72
+        b.y = rand(0.08, 0.20);
+        b.T = 1.0;
+      } else {
+        b.x = rand(0.20, 0.80);
+        b.y = rand(0.06, aspect*0.94);
+        b.T = clamp((b.y/aspect < 0.55 ? 1.0 : 0.0) + rand(-0.05,0.05), 0, 1);
+      }
+      blobs.push(b);
+    }
+    data = new Float32Array(N*4);
+  }
+
+  // thermal zones: strong heater at the very bottom, cooler near the top,
+  // adiabatic middle -> a relaxation cycle (rise / cool / sink / heat) instead of a stall.
+  const HZ = 0.16, CZ = 0.85, HEATR = 1.1, COOLR = 1.0;
+  const fxA = [], fyA = [];
+
+  function update(dt, time){
+    const n = blobs.length;
+    for (let i=0;i<n;i++){ fxA[i]=0; fyA[i]=0; }
+
+    // pairwise cohesion / repulsion (gooey surface tension)
+    for (let i=0;i<n;i++){
+      const a = blobs[i];
+      for (let j=i+1;j<n;j++){
+        const b = blobs[j];
+        const dx = a.x-b.x, dy = a.y-b.y;
+        const sig = (a.r+b.r)*0.82;
+        const cut = sig*2.2;
+        const d2 = dx*dx+dy*dy;
+        if (d2 < cut*cut){
+          const d = Math.sqrt(d2) + 1e-5;
+          let fm;
+          if (d < sig){ fm = KREP*(sig-d)/sig; }               // push apart
+          else { const u=(d-sig)/(cut-sig); fm = -KATT*4.0*u*(1.0-u); } // pull together
+          const nx = dx/d, ny = dy/d;
+          fxA[i]+=fm*nx; fyA[i]+=fm*ny;
+          fxA[j]-=fm*nx; fyA[j]-=fm*ny;
+        }
+      }
+    }
+
+    for (let i=0;i<n;i++){
+      const b = blobs[i];
+      const yn = b.y/aspect;
+
+      // heat exchange only near the ends
+      const hz = smoothstep(HZ, 0.0, yn);   // heater (bottom)
+      const cz = smoothstep(CZ, 1.0, yn);   // cooler (top)
+      b.T += (hz*HEATR*(1.0-b.T) + cz*COOLR*(0.0-b.T))*dt;
+      b.T = clamp(b.T, 0, 1);
+
+      // forces
+      let Fx = fxA[i], Fy = fyA[i];
+      Fy += b.buoy*(b.T-0.5) + b.bias;      // buoyancy: hot rises, cool sinks
+      Fx += b.wa*Math.sin(time*b.wf + b.wp);// gentle lateral wander
+      Fx += (0.5 - b.x)*0.05;               // soft centering
+
+      // integrate with implicit (unconditionally stable) drag
+      const dd = 1.0/(1.0 + b.drag*dt);
+      b.vx = (b.vx + Fx*dt)*dd;
+      b.vy = (b.vy + Fy*dt)*dd;
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp > 0.9){ const s=0.9/sp; b.vx*=s; b.vy*=s; }
+      b.x += b.vx*dt;
+      b.y += b.vy*dt;
+
+      // walls (soft)
+      const wx = 0.04;
+      if (b.x < wx){ b.x = wx; if (b.vx<0) b.vx*=-0.25; }
+      if (b.x > 1-wx){ b.x = 1-wx; if (b.vx>0) b.vx*=-0.25; }
+      const wyb = 0.015, wyt = aspect-0.04;
+      if (b.y < wyb){ b.y = wyb; if (b.vy<0) b.vy*=-0.25; }
+      if (b.y > wyt){ b.y = wyt; if (b.vy>0) b.vy*=-0.25; }
+    }
+  }
+
+  function pack(){
+    for (let i=0;i<N;i++){
+      const b = blobs[i], o=i*4;
+      data[o]=b.x; data[o+1]=b.y; data[o+2]=b.r; data[o+3]=b.T;
+    }
+  }
+
+  // ============================================================
+  //  WebGL renderer
+  // ============================================================
+  let gl=null, prog=null, uni={}, usingGL=false;
+
+  const VERT = "precision highp float; attribute vec2 aPos; void main(){ gl_Position = vec4(aPos,0.0,1.0); }";
+
+  const FRAG_BODY = `
+uniform vec2  uRes;
+uniform float uAspect;
+uniform float uTime;
+uniform vec4  uBlobs[MAX_BLOBS];
+uniform float uPoolTop;
+uniform float uPoolStrength;
+
+const float THRESH  = 1.0;
+const float KERN    = 1.771;
+const float SUPPORT = 2.4;
+
+vec3 liquidBg(vec2 p){
+  float yy = p.y/uAspect;
+  vec3 bot = vec3(0.30, 0.06, 0.24);
+  vec3 mid = vec3(0.10, 0.03, 0.20);
+  vec3 top = vec3(0.04, 0.02, 0.12);
+  vec3 c = mix(bot, mid, smoothstep(0.0, 0.42, yy));
+  c = mix(c, top, smoothstep(0.42, 1.0, yy));
+  float gx = p.x - 0.5;
+  float glow = exp(-gx*gx*7.0) * exp(-yy*4.5);
+  c += vec3(0.60, 0.22, 0.14) * glow * 0.95;
+  c += vec3(0.10, 0.06, 0.16) * smoothstep(0.55, 1.0, yy) * 0.25;
+  float vx = smoothstep(0.0, 0.12, p.x) * smoothstep(1.0, 0.88, p.x);
+  c *= mix(0.60, 1.0, vx);
+  return c;
+}
+
+void main(){
+  vec2 p;
+  p.x = gl_FragCoord.x / uRes.x;
+  p.y = (gl_FragCoord.y / uRes.y) * uAspect;
+
+  float field = 0.0;
+  float tempAccum = 0.0;
+  vec2  grad = vec2(0.0);
+
+  for (int i=0;i<MAX_BLOBS;i++){
+    vec4 b = uBlobs[i];
+    vec2 d = p - b.xy;
+    float R  = b.z * SUPPORT;
+    float R2 = R*R;
+    float dd = dot(d,d);
+    if (dd < R2){
+      float q  = 1.0 - dd/R2;
+      float q2 = q*q;
+      float f  = KERN * q2 * q;
+      field     += f;
+      tempAccum += f * b.w;
+      grad      += (KERN * 3.0 * q2 * (-2.0/R2)) * d;
+    }
+  }
+
+  // molten pool at the bottom (full width, gently undulating)
+  float poolTop = uPoolTop * (1.0 + 0.05*sin(p.x*7.0 + uTime*0.22));
+  if (p.y < poolTop){
+    float q  = 1.0 - p.y/poolTop;
+    float q2 = q*q;
+    float f  = uPoolStrength * q2 * q;
+    field     += f;
+    tempAccum += f * 0.95;
+    grad.y    += uPoolStrength * 3.0 * q2 * (-1.0/poolTop);
+  }
+
+  vec3 col = liquidBg(p);
+
+  #ifdef HAS_DERIV
+    float aa = max(fwidth(field), 1e-4) * 1.5;
+  #else
+    float aa = 0.05;
+  #endif
+  float t = smoothstep(THRESH - aa, THRESH + aa, field);
+
+  if (t > 0.0015){
+    float temp = tempAccum / max(field, 1e-4);
+    float K = 0.28;
+    vec3 Nn = normalize(vec3(-grad*K, 1.0));
+    vec3 L  = normalize(vec3(-0.45, 0.62, 0.78));
+    float diff = clamp(dot(Nn,L), 0.0, 1.0);
+    vec3 Hh = normalize(L + vec3(0.0,0.0,1.0));
+    float spec = pow(clamp(dot(Nn,Hh),0.0,1.0), 40.0);
+
+    vec3 hot  = vec3(1.00, 0.62, 0.18);
+    vec3 cool = vec3(0.82, 0.10, 0.16);
+    vec3 base = mix(cool, hot, smoothstep(0.25, 0.95, temp));
+
+    float core = smoothstep(THRESH, THRESH + 2.0, field);
+
+    vec3 wax = base * (0.30 + 0.85*diff);
+    wax += base * core * 0.55;              // inner thickness glow
+    wax += hot  * core * temp * 0.30;       // hot emissive
+    wax += vec3(1.0,0.94,0.82) * spec * 0.55;
+    wax += base * (1.0 - core) * 0.10 * temp;
+
+    col = mix(col, wax, t);
+  }
+
+  float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453);
+  col += (dither - 0.5) / 255.0;
+
+  gl_FragColor = vec4(col, 1.0);
+}
+`;
+
+  function compile(type, src){
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+      throw new Error(gl.getShaderInfoLog(s) || "shader compile failed");
+    return s;
+  }
+
+  function initGL(){
+    const opts = { alpha:false, antialias:false, depth:false, stencil:false,
+                   premultipliedAlpha:false, preserveDrawingBuffer:false };
+    gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
+    if (!gl) return false;
+
+    const ext = gl.getExtension('OES_standard_derivatives');
+    const maxVec = gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS) || 64;
+    const count = clamp(26, 8, maxVec - 16);
+    initBlobs(count);
+
+    let header = "";
+    if (ext) header += "#extension GL_OES_standard_derivatives : enable\n";
+    header += "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n";
+    header += "#define MAX_BLOBS " + N + "\n";
+    if (ext) header += "#define HAS_DERIV\n";
+
+    const vs = compile(gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl.FRAGMENT_SHADER, header + FRAG_BODY);
+    prog = gl.createProgram();
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS))
+      throw new Error(gl.getProgramInfoLog(prog) || "link failed");
+    gl.useProgram(prog);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+    uni.res   = gl.getUniformLocation(prog, 'uRes');
+    uni.asp   = gl.getUniformLocation(prog, 'uAspect');
+    uni.time  = gl.getUniformLocation(prog, 'uTime');
+    uni.blobs = gl.getUniformLocation(prog, 'uBlobs[0]');
+    uni.pTop  = gl.getUniformLocation(prog, 'uPoolTop');
+    uni.pStr  = gl.getUniformLocation(prog, 'uPoolStrength');
+
+    usingGL = true;
+    return true;
+  }
+
+  function renderGL(time){
+    gl.uniform2f(uni.res, canvas.width, canvas.height);
+    gl.uniform1f(uni.asp, aspect);
+    gl.uniform1f(uni.time, time);
+    gl.uniform1f(uni.pTop, POOL_TOP);
+    gl.uniform1f(uni.pStr, POOL_STR);
+    gl.uniform4fv(uni.blobs, data);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  // ============================================================
+  //  Resize
+  // ============================================================
+  function resize(){
+    const rect = glass.getBoundingClientRect();
+    if (rect.width < 2 || rect.height < 2) return;
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = Math.round(rect.width  * dpr);
+    let h = Math.round(rect.height * dpr);
+    const maxH = 1500;
+    if (h > maxH){ const s = maxH/h; h = Math.round(h*s); w = Math.round(w*s); }
+    if (canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+    }
+    aspect = h / w;
+    if (usingGL) gl.viewport(0,0,w,h);
+    else if (fb.ctx) resizeFallback();
+  }
+
+  // ============================================================
+  //  Canvas2D fallback (only if WebGL is unavailable)
+  // ============================================================
+  const fb = { ctx:null, small:null, sctx:null, img:null, field:null, temp:null, W:0, H:0, main:null };
+
+  function initFallback(){
+    initBlobs(26);
+    fb.main = canvas.getContext('2d');
+    fb.small = document.createElement('canvas');
+    fb.sctx  = fb.small.getContext('2d');
+    fb.ctx   = fb.sctx;
+    resize();
+    return !!fb.main;
+  }
+  function resizeFallback(){
+    fb.W = 120;
+    fb.H = Math.max(1, Math.round(fb.W * aspect));
+    fb.small.width = fb.W; fb.small.height = fb.H;
+    fb.img   = fb.sctx.createImageData(fb.W, fb.H);
+    fb.field = new Float32Array(fb.W*fb.H);
+    fb.temp  = new Float32Array(fb.W*fb.H);
+  }
+  function renderFallback(){
+    const W=fb.W, H=fb.H, F=fb.field, T=fb.temp;
+    F.fill(0); T.fill(0);
+    for (let k=0;k<blobs.length;k++){
+      const b=blobs[k];
+      const R=b.r*2.4, R2=R*R, rpx=R*W;
+      const cx=b.x*W, cy=(1-b.y/aspect)*H;
+      const x0=Math.max(0,Math.floor(cx-rpx)), x1=Math.min(W-1,Math.ceil(cx+rpx));
+      const y0=Math.max(0,Math.floor(cy-rpx)), y1=Math.min(H-1,Math.ceil(cy+rpx));
+      for (let py=y0;py<=y1;py++){
+        const sy=(1-(py+0.5)/H)*aspect;
+        for (let px=x0;px<=x1;px++){
+          const sx=(px+0.5)/W;
+          const dx=sx-b.x, dy=sy-b.y, dd=dx*dx+dy*dy;
+          if (dd<R2){ const q=1-dd/R2, f=1.771*q*q*q, idx=py*W+px; F[idx]+=f; T[idx]+=f*b.T; }
+        }
+      }
+    }
+    for (let py=0;py<H;py++){
+      const sy=(1-(py+0.5)/H)*aspect;
+      if (sy<POOL_TOP){ const q=1-sy/POOL_TOP, f=POOL_STR*q*q*q;
+        for (let px=0;px<W;px++){ const idx=py*W+px; F[idx]+=f; T[idx]+=f*0.95; } }
+    }
+    const d=fb.img.data;
+    for (let py=0;py<H;py++){
+      for (let px=0;px<W;px++){
+        const idx=py*W+px, field=F[idx];
+        const sx=(px+0.5)/W, yy=(1-(py+0.5)/H);
+        let r=0.10,g=0.03,bl=0.20;
+        const wbot=Math.max(0,1-yy/0.42);
+        r=0.10+0.20*wbot; g=0.03+0.03*wbot; bl=0.20+0.04*wbot;
+        const wtop=Math.max(0,(yy-0.42)/0.58);
+        r+=(0.04-r)*wtop; g+=(0.02-g)*wtop; bl+=(0.12-bl)*wtop;
+        const gx=sx-0.5, glow=Math.exp(-gx*gx*7)*Math.exp(-yy*4.5)*0.9;
+        r+=0.60*glow; g+=0.22*glow; bl+=0.14*glow;
+        if (field>=1.0){
+          const temp=T[idx]/Math.max(field,1e-4);
+          const fl=F[idx-(px>0?1:0)], fr=F[idx+(px<W-1?1:0)];
+          const fu=F[idx-(py>0?W:0)], fd=F[idx+(py<H-1?W:0)];
+          let nx=-(fr-fl)*0.14, ny=(fu-fd)*0.14, nz=1;
+          const nl=Math.hypot(nx,ny,nz); nx/=nl; ny/=nl; nz/=nl;
+          const diff=Math.max(0, nx*(-0.45)+ny*0.62+nz*0.78);
+          const core=clamp((field-1)/2,0,1);
+          const mt=clamp((temp-0.25)/0.70,0,1);
+          const hr=1.0,hg=0.62,hb=0.18, cr=0.82,cg=0.10,cb=0.16;
+          const wr=cr+(hr-cr)*mt, wg=cg+(hg-cg)*mt, wb=cb+(hb-cb)*mt;
+          r  = wr*(0.30+0.85*diff)+wr*core*0.55+hr*core*temp*0.30;
+          g  = wg*(0.30+0.85*diff)+wg*core*0.55+hg*core*temp*0.30;
+          bl = wb*(0.30+0.85*diff)+wb*core*0.55+hb*core*temp*0.30;
+        }
+        const o=idx*4;
+        d[o]=Math.min(255,r*255); d[o+1]=Math.min(255,g*255); d[o+2]=Math.min(255,bl*255); d[o+3]=255;
+      }
+    }
+    fb.sctx.putImageData(fb.img,0,0);
+    fb.main.imageSmoothingEnabled=true;
+    fb.main.drawImage(fb.small,0,0,canvas.width,canvas.height);
+  }
+
+  // ============================================================
+  //  Main loop
+  // ============================================================
+  let last=0, tGlobal=0, raf=0, running=false;
+
+  function frame(now){
+    if (!running) return;
+    const nowS = now*0.001;
+    let dt = nowS - last; last = nowS;
+    if (dt > 0.05) dt = 0.05;      // clamp big gaps (tab switches)
+    if (dt < 0) dt = 0;
+    tGlobal += dt;
+
+    update(dt, tGlobal);
+    pack();
+    if (usingGL) renderGL(tGlobal);
+    else renderFallback();
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  function start(){
+    if (running) return;
+    running = true;
+    last = performance.now()*0.001;
+    raf = requestAnimationFrame(frame);
+  }
+  function stop(){ running=false; if (raf) cancelAnimationFrame(raf); }
+
+  // ============================================================
+  //  Boot
+  // ============================================================
+  function boot(){
+    let ok=false;
+    try { ok = initGL(); } catch(e){ usingGL=false; console.warn("WebGL init failed:", e); }
+    if (!ok){
+      // A canvas that already handed out a WebGL context can't also give a 2D one,
+      // so swap in a fresh clone (keeps id/class -> same CSS) before falling back.
+      if (gl){
+        const fresh = canvas.cloneNode(false);
+        canvas.parentNode.replaceChild(fresh, canvas);
+        canvas = fresh; gl = null;
+      }
+      try { ok = initFallback(); } catch(e){ console.warn("2D fallback failed:", e); }
+    }
+    if (!ok){
+      glass.innerHTML = '<div class="fallback-msg">Your browser could not start the lava lamp renderer.<br>Try a recent version of Chrome, Firefox, Safari or Edge.</div>';
+      glass.style.display='flex';
+      glass.style.alignItems='center';
+      glass.style.justifyContent='center';
+      return;
+    }
+    resize();
+    start();
+
+    if (window.ResizeObserver){
+      const ro = new ResizeObserver(()=> resize());
+      ro.observe(glass);
+    }
+    window.addEventListener('resize', resize);
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.hidden) stop();
+      else start();
+    });
+    // double-click for an immersive fullscreen view
+    document.getElementById('stage').addEventListener('dblclick', ()=>{
+      const el = document.documentElement;
+      if (!document.fullscreenElement){ (el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el); }
+      else { (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document); }
+    });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+</body>
+</html>

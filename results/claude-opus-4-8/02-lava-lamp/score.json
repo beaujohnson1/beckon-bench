@@ -1,0 +1,23 @@
+{
+  "model": "claude-opus-4-8",
+  "model_id": "claude-opus-4-8 (1M context, max effort, per Ruling #5)",
+  "provider": "Anthropic",
+  "test": "02-lava-lamp",
+  "gauntlet_version": "v1",
+  "date": "2026-07-16",
+  "harness": "Claude Code v2.1.211 in a Beckon terminal pane",
+  "one_shot": true,
+  "scores": {
+    "runs_first_try": 3,
+    "polish": 3,
+    "prompt_adherence": 2,
+    "wow_factor": 2
+  },
+  "total": 10,
+  "stats": {
+    "time_seconds": 1247,
+    "output_tokens": 180772,
+    "cost_usd": 4.52
+  },
+  "notes": "REVISED on re-review from 9 to 10 (wow 1→2), judged in a real browser alongside Kimi's re-review. WebGL lamp with molten wax that heats, rises, deforms and merges; the model verified its own render headlessly at t=4s and t=60s before declaring done. 20m 47s at max effort; cost_usd is the API-equivalent output cost (180.8k tokens at $25/1M, OpenRouter) — the run itself was on a flat-rate subscription."
+}

@@ -36,6 +36,28 @@ const tests = readdirSync(join(BENCH, 'prompts'))
     return { id, num: id.slice(0, 2), title, measures, prompt };
   });
 
+// Category layer — presentation only. v1 scoring and RULES.md stay frozen;
+// this groups the eight tests into named capability areas (AA-style) so the
+// leaderboard reads as "what is being tested", not opaque numbers. New axes
+// (security, refactoring, hallucination) are v2 tests, not v1 relabels.
+const CATEGORY_DEFS = [
+  ['Game dev', ['01']],
+  ['Creative coding', ['02', '04']],
+  ['UI & design', ['03', '05']],
+  ['Agentic', ['06', '08']],
+  ['Debugging', ['07']],
+];
+const CATS = CATEGORY_DEFS.map(([name, nums]) => ({ name, tests: tests.filter((t) => nums.includes(t.num)) }));
+{
+  const stray = tests.filter((t) => !CATS.some((c) => c.tests.includes(t)));
+  if (stray.length) CATS.push({ name: 'More', tests: stray });
+}
+const orderedTests = CATS.flatMap((c) => c.tests); // leaderboard column order: grouped by category
+const groupStarts = new Set(CATS.map((c) => c.tests[0]?.id));
+const catName = (t) => CATS.find((c) => c.tests.includes(t))?.name ?? '';
+const catScore = (m, c) => c.tests.reduce((s, t) => s + (m.runs[t.id]?.score?.total ?? 0), 0);
+const catScored = (m, c) => c.tests.filter((t) => m.runs[t.id]?.score).length;
+
 const models = readdirSync(join(BENCH, 'results'))
   .filter((d) => existsSync(join(BENCH, 'results', d, 'meta.json')))
   .map((slug) => {
@@ -66,13 +88,33 @@ const models = readdirSync(join(BENCH, 'results'))
   })
   .sort((a, b) => b.total - a.total || a.cost - b.cost); // cheaper wins ties, per RULES.md
 
-const shortName = (m) => (m.meta.model_id || m.slug).replace(/\s*\(([^)]+)\)/, ' $1');
+// Chart/table label: keep short parentheticals ("Sol Ultra", "Max effort"),
+// drop config boilerplate ("1M context, max effort, per Ruling #5"). The full
+// model_id stays on the model page — that's the receipt.
+const shortName = (m) => {
+  const id = m.meta.model_id || m.slug;
+  const paren = id.match(/\(([^)]+)\)/)?.[1] ?? '';
+  const base = id.replace(/\s*\([^)]*\)/, '');
+  return paren && paren.length <= 14 && !paren.includes(',') ? `${base} ${paren}` : base;
+};
 
 const comparisonsDir = join(BENCH, 'results', 'comparisons');
 const comparisons = existsSync(comparisonsDir) ? readdirSync(comparisonsDir).filter((f) => f.endsWith('.mp4')) : [];
 const comparisonFor = (testId) => comparisons.find((f) => f.startsWith(testId));
 // mtime query param so browsers refetch re-rendered videos instead of serving stale cache
 const vurl = (f, root = '') => `${root}videos/${esc(f)}?v=${Math.round(statSync(join(comparisonsDir, f)).mtimeMs)}`;
+
+// Panel Score records (v2 pilot): the judge panel rubric-scores artifacts
+// blind, median per dimension. Published next to — never mixed into — the
+// Human Score. arena-panel/scores/, written by arena.mjs score/scores.
+const panelScoresDir = join(BENCH, 'arena-panel', 'scores');
+const panelRecords = existsSync(panelScoresDir)
+  ? readdirSync(panelScoresDir)
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => readJSON(join(panelScoresDir, f)))
+      .filter((r) => r && !r.dry_run && !r.void && r.panel)
+  : [];
+const panelFor = (slug, testId) => panelRecords.find((r) => r.model === slug && r.test === testId);
 
 const elo = readJSON(join(BENCH, 'arena-panel', 'elo.json'));
 const matchesDir = join(BENCH, 'arena-panel', 'matches');
@@ -83,6 +125,60 @@ const matches = existsSync(matchesDir)
       .filter((m) => !m.dry_run && !m.void && m.winner)
       .sort((a, b) => b.date.localeCompare(a.date))
   : [];
+
+// ---------- people's vote (client) ----------
+
+const nameOfSlug = (slug) => {
+  const m = models.find((x) => x.slug === slug);
+  return m ? shortName(m) : slug;
+};
+
+// Vote row for a match card. Hidden until /api/vote answers, so pages are
+// byte-identical to the static story when the backend isn't provisioned.
+const voteBlock = (m) => `<div class="vote" data-match="${esc(m.id)}" data-a="${esc(m.model_a)}" data-b="${esc(m.model_b)}" hidden>
+  <span class="vote-label">People's vote</span>
+  <button class="votebtn" data-c="a">${esc(nameOfSlug(m.model_a))}</button>
+  <button class="votebtn" data-c="b">${esc(nameOfSlug(m.model_b))}</button>
+  <span class="vote-tally dim"></span>
+</div>`;
+
+// No backticks or ${} below — this string ships inside a template literal.
+const VOTE_SCRIPT = `<script>
+(async () => {
+  const blocks = Array.from(document.querySelectorAll('.vote'));
+  if (!blocks.length) return;
+  const api = '/api/vote';
+  let up = false;
+  try { up = (await fetch(api + '?ping=1')).ok; } catch {}
+  if (!up) return;
+  for (const el of blocks) {
+    const id = el.dataset.match;
+    const tally = el.querySelector('.vote-tally');
+    const refresh = async () => {
+      try {
+        const r = await fetch(api + '?match=' + encodeURIComponent(id));
+        if (!r.ok) return;
+        const t = await r.json();
+        tally.textContent = t.a + ' \\u2014 ' + t.b;
+      } catch {}
+    };
+    el.hidden = false;
+    refresh();
+    const done = () => { for (const b of el.querySelectorAll('.votebtn')) b.disabled = true; };
+    if (localStorage.getItem('vote:' + id)) done();
+    for (const btn of el.querySelectorAll('.votebtn')) {
+      btn.addEventListener('click', async () => {
+        done();
+        try {
+          await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ match: id, choice: btn.dataset.c }) });
+          localStorage.setItem('vote:' + id, btn.dataset.c);
+          refresh();
+        } catch {}
+      });
+    }
+  }
+})();
+</scr` + `ipt>`;
 
 // ---------- shared shell ----------
 
@@ -156,7 +252,7 @@ function columnChart({ items, hue, plotHeight = 150, fmt = (v) => String(v) }) {
   const cols = items
     .map((it) => {
       const h = Math.max(4, Math.round((it.value / max) * plotHeight));
-      return `<a class="col" href="${it.href}">
+      return `<a class="col" href="${it.href}" title="${esc(it.name)}">
   <span class="val">${esc(fmt(it.value))}</span>
   <span class="bar" style="height:${h}px;background:${hue}"></span>
   <span class="name">${esc(it.name)}</span>
@@ -181,15 +277,12 @@ ${columnChart({ items, hue, plotHeight: 110, fmt })}
 
 const scoredModels = models.filter((m) => m.testsScored > 0);
 
-const highlights = scoredModels.length
-  ? `<section class="hgrid">
-${highlightCard({
-      label: 'Human Score',
-      sub: 'Points this season. Higher is better.',
-      hue: HUES.gold,
-      items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
-      fmt: String,
-    })}
+// Efficiency at-a-glance cards — live inside the Efficiency section, next to
+// their table. (The old top-of-page "Human Score" card is gone on purpose:
+// the leaderboard chart says the same thing, and human scores are no longer
+// the site's headline.)
+const effCards = scoredModels.length
+  ? `<div class="hgrid">
 ${highlightCard({
       label: 'Token efficiency',
       sub: 'Output tokens per point. Lower is better.',
@@ -204,29 +297,72 @@ ${highlightCard({
       items: scoredModels.filter((m) => m.secs).map((m) => ({ name: shortName(m), value: m.secs, href: `model/${m.slug}.html` })),
       fmt: fmtMins,
     })}
-</section>`
+</div>`
   : '';
 
 function scoreChip(model, t) {
+  const cls = groupStarts.has(t.id) ? ' class="gstart"' : '';
   const run = model.runs[t.id];
-  if (!run) return '<td class="dim">·</td>';
-  if (!run.score) return `<td><a class="dim" href="test/${t.id}.html" title="run captured, scoring pending">◌</a></td>`;
-  return `<td><a class="chiplink" href="test/${t.id}.html"><span class="chip s${Math.min(10, run.score.total)}">${run.score.total}</span></a></td>`;
+  if (!run) return `<td${cls}><span class="dim">·</span></td>`;
+  if (!run.score) return `<td${cls}><a class="dim" href="test/${t.id}.html" title="run captured, scoring pending">◌</a></td>`;
+  return `<td${cls}><a class="chiplink" href="test/${t.id}.html"><span class="chip s${Math.min(10, run.score.total)}">${run.score.total}</span></a></td>`;
 }
 
 const leaderboardTable = `<div class="scroll"><table class="board">
-<thead><tr><th></th><th>Model</th>${tests.map((t) => `<th title="${esc(t.title)}">${t.num}</th>`).join('')}<th>Total</th></tr></thead>
-<tbody>${models
+<thead>
+<tr class="cats"><th rowspan="2"></th><th rowspan="2">Model</th>${CATS.map((c) => `<th class="gstart" colspan="${c.tests.length}">${esc(c.name)}</th>`).join('')}<th rowspan="2">Total</th></tr>
+<tr>${orderedTests.map((t) => `<th title="${esc(t.title)}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
+</thead>
+<tbody>${scoredModels
   .map(
     (m, i) => `<tr>
   <td class="rank">${i + 1}</td>
-  <td><a class="model" href="model/${esc(m.slug)}.html">${esc(m.meta.model_id || m.slug)}</a><div class="sub">${esc(m.meta.provider || '')}</div></td>
-  ${tests.map((t) => scoreChip(m, t)).join('\n  ')}
+  <td><a class="model" href="model/${esc(m.slug)}.html" title="${esc(m.meta.model_id || m.slug)}">${esc(shortName(m))}</a><div class="sub">${esc(m.meta.provider || '')}</div></td>
+  ${orderedTests.map((t) => scoreChip(m, t)).join('\n  ')}
   <td class="total">${m.total}<span class="dim">/${m.testsScored * 10}</span></td>
 </tr>`
   )
   .join('\n')}</tbody>
 </table></div>`;
+
+// Models with runs on disk but nothing scored yet: keep them off the ranked
+// board (dots outranking numbers reads as a zero score) and show them here.
+const benchModels = models.filter((m) => m.testsScored === 0);
+const benchStrip = benchModels.length
+  ? `<h3 class="bench-title">On the bench <span class="tag alt">scoring in progress</span></h3>
+<div class="bench">
+${benchModels
+      .map((m) => {
+        const captured = Object.keys(m.runs).length;
+        return `<a class="bench-card" href="model/${esc(m.slug)}.html"><b>${esc(shortName(m))}</b><span class="sub">${esc(m.meta.provider || '')}</span><span class="dim">${captured ? `${captured} of ${tests.length} runs captured · scoring pending` : 'awaiting first run'}</span></a>`;
+      })
+      .join('\n')}
+</div>`
+  : '';
+
+const categorySection = scoredModels.length
+  ? `<section class="reveal">
+  <h2>Category breakdown <span class="tag">same points, grouped</span></h2>
+  <p class="dim">The eight frozen tests, grouped by what they measure. Points are the human scores, unchanged — no category is scored separately.</p>
+  <div class="hgrid">
+${CATS.map((c) => {
+      const scored = scoredModels.filter((m) => catScored(m, c) > 0);
+      const chart = scored.length
+        ? columnChart({
+            items: scored.map((m) => ({ name: shortName(m), value: catScore(m, c), href: `model/${m.slug}.html` })),
+            hue: HUES.gold,
+            plotHeight: 90,
+          })
+        : '<p class="empty">Scoring pending.</p>';
+      return `<article class="hcard reveal">
+<p class="hlabel">${esc(c.name)}</p>
+<p class="hsub">Test${c.tests.length > 1 ? 's' : ''} ${c.tests.map((t) => `<a href="test/${t.id}.html" title="${esc(t.title)}">${t.num}</a>`).join(' · ')} — out of ${c.tests.length * 10}</p>
+${chart}
+</article>`;
+    }).join('\n')}
+  </div>
+</section>`
+  : '';
 
 const versus = tests
   .filter((t) => comparisonFor(t.id))
@@ -260,9 +396,45 @@ const versus = tests
 <video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(comparisonFor(t.id))}"></video>
 <p class="versus-line">${chips}<a class="more" href="test/${t.id}.html">Full result</a></p>
 ${verdict}
+${match ? voteBlock(match) : ''}
 </article>`;
   })
   .join('\n');
+
+const panelModels = models
+  .map((m) => {
+    const recs = tests.map((t) => panelFor(m.slug, t.id)).filter(Boolean);
+    return { m, recs, total: recs.reduce((s, r) => s + r.panel.total, 0) };
+  })
+  .filter((x) => x.recs.length)
+  .sort((a, b) => b.total - a.total);
+
+const panelChip = (slug, t) => {
+  const cls = groupStarts.has(t.id) ? ' class="gstart"' : '';
+  const r = panelFor(slug, t.id);
+  if (!r) return `<td${cls}><span class="dim">·</span></td>`;
+  return `<td${cls}><a class="chiplink" href="test/${t.id}.html" title="median of ${r.panel.judges_seated} judges"><span class="chip s${Math.min(10, r.panel.total)}">${r.panel.total}</span></a></td>`;
+};
+
+const panelBoard = panelModels.length
+  ? `<h3 class="bench-title">Panel Score <span class="tag alt">v2 pilot</span></h3>
+<p class="dim">Five cross-vendor judges score each artifact blind on the frozen v1 rubric, with render evidence where it exists; the median of each dimension is published. Runs beside the Human Score — the two never mix.</p>
+<div class="scroll"><table class="board">
+<thead>
+<tr class="cats"><th rowspan="2">Model</th>${CATS.map((c) => `<th class="gstart" colspan="${c.tests.length}">${esc(c.name)}</th>`).join('')}<th rowspan="2">Total</th></tr>
+<tr>${orderedTests.map((t) => `<th title="${esc(t.title)}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
+</thead>
+<tbody>${panelModels
+      .map(
+        ({ m, recs, total }) => `<tr>
+  <td><a class="model" href="model/${esc(m.slug)}.html" title="${esc(m.meta.model_id || m.slug)}">${esc(shortName(m))}</a><div class="sub">${esc(m.meta.provider || '')}</div></td>
+  ${orderedTests.map((t) => panelChip(m.slug, t)).join('\n  ')}
+  <td class="total">${total}<span class="dim">/${recs.length * 10}</span></td>
+</tr>`
+      )
+      .join('\n')}</tbody>
+</table></div>`
+  : '';
 
 const arenaLadder = elo?.ladder?.length
   ? `<table class="ladder">
@@ -288,13 +460,26 @@ const indexBody = `
       <a class="powered" href="https://heybeckon.ai">Runs live inside <b>Beckon</b></a>
     </div>
   </div>
+  <nav class="jump">${versus ? '<a href="#watch">Watch &amp; vote</a>' : ''}<a href="#arena">Arena</a><a href="#scores">Scoreboard</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
 </section>
 
-${highlights}
+${versus ? `<section class="reveal" id="watch">
+  <h2>Head-to-heads <span class="tag">watch &amp; vote</span></h2>
+  <p class="dim">Same prompt, same clock, side by side. Watch the runs and pick your winner.</p>
+  <div class="versus-grid">
+${versus}
+  </div>
+</section>` : ''}
 
-<section class="reveal">
-  <h2>Leaderboard <span class="tag">human, canonical</span></h2>
-  <p class="dim">Scored on camera: runs first try, polish, prompt adherence, wow factor. Ten points per test. Ties go to the cheaper run.</p>
+<section class="reveal" id="arena">
+  <h2>Arena <span class="tag alt">AI judge panel</span></h2>
+  ${arenaLadder}
+  ${panelBoard}
+</section>
+
+<section class="reveal" id="scores">
+  <h2>Scoreboard <span class="tag">human, season 1</span></h2>
+  <p class="dim">Season 1 was scored by hand, on camera: runs first try, polish, prompt adherence, wow factor. Ten points per test, ties to the cheaper run. From season 2 the judge panel and public votes take over.</p>
   ${scoredModels.length ? columnChart({
     items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
     hue: HUES.gold,
@@ -302,39 +487,32 @@ ${highlights}
   }) : ''}
   ${leaderboardTable}
   <p class="dim">◌ run captured, scoring pending. Chips open the full test result.</p>
+  ${benchStrip}
 </section>
 
-${versus ? `<section class="reveal">
-  <h2>Head-to-heads <span class="tag">watch the runs</span></h2>
-  <p class="dim">Same prompt, same clock, side by side.</p>
-  <div class="versus-grid">
-${versus}
-  </div>
-</section>` : ''}
+${categorySection}
 
-<section class="reveal">
+<section class="reveal" id="efficiency">
   <h2>Efficiency <span class="tag alt">recorded, never scored</span></h2>
+  ${effCards}
   <div class="scroll"><table class="board">
-  <thead><tr><th>Model</th><th>Points</th><th>Time</th><th>Output tokens</th><th>Tokens / point</th><th>Cost</th></tr></thead>
-  <tbody>${models
+  <thead><tr><th>Model</th><th>Points</th><th>Time</th><th>Output tokens</th><th>Tokens / point</th>${scoredModels.some((m) => m.hasCost) ? '<th>Cost</th>' : ''}</tr></thead>
+  <tbody>${scoredModels
     .map(
       (m) => `<tr>
-  <td><a class="model" href="model/${esc(m.slug)}.html">${esc(m.meta.model_id || m.slug)}</a></td>
+  <td><a class="model" href="model/${esc(m.slug)}.html" title="${esc(m.meta.model_id || m.slug)}">${esc(shortName(m))}</a></td>
   <td class="total">${m.total}</td>
   <td>${m.secs ? `${Math.floor(m.secs / 60)}m ${m.secs % 60}s` : '·'}</td>
   <td>${m.toks ? fmtTokens(m.toks) : '·'}</td>
   <td>${m.toks && m.total ? fmtTokens(Math.round(m.toks / m.total)) : '·'}</td>
-  <td>${m.hasCost ? `$${m.cost.toFixed(2)}` : '·'}</td>
+  ${scoredModels.some((x) => x.hasCost) ? `<td>${m.hasCost ? `$${m.cost.toFixed(2)}` : '·'}</td>` : ''}
 </tr>`
     )
     .join('\n')}</tbody>
   </table></div>
 </section>
 
-<section class="reveal">
-  <h2>Arena <span class="tag alt">AI judge panel</span></h2>
-  ${arenaLadder}
-</section>`;
+${matches.length ? VOTE_SCRIPT : ''}`;
 
 // ---------- per-test result pages ----------
 
@@ -346,12 +524,13 @@ function testPage(t) {
     .map((m) => {
       const run = m.runs[t.id];
       const s = run.score;
+      const pr = panelFor(m.slug, t.id);
       return `<article class="card reveal">
-<h3><a class="model" href="../model/${esc(m.slug)}.html">${esc(m.meta.model_id || m.slug)}</a> ${s ? `<span class="chip s${Math.min(10, s.total)}">${s.total}/10</span>` : '<span class="chip pending">pending</span>'}</h3>
+<h3><a class="model" href="../model/${esc(m.slug)}.html" title="${esc(m.meta.model_id || m.slug)}">${esc(shortName(m))}</a> ${s ? `<span class="chip s${Math.min(10, s.total)}">${s.total}/10</span>` : '<span class="chip pending">pending</span>'}</h3>
 ${artifactEmbed(m, t, run, '../')}
 <div class="cols">
 ${scoreTable(s)}
-${s ? `<div><p class="notes">${esc(s.notes || '')}</p><p class="dim">${s.stats?.time_seconds ? `${Math.round(s.stats.time_seconds / 60)}m. ` : ''}${s.stats?.output_tokens ? `${fmtTokens(s.stats.output_tokens)} output tokens.` : ''}</p></div>` : ''}
+<div>${pr ? `<p class="dim">AI panel: <b>${pr.panel.total}/10</b> — median of ${pr.panel.judges_seated} blind judges.</p>` : ''}${s ? `<p class="notes">${esc(s.notes || '')}</p><p class="dim">${s.stats?.time_seconds ? `${Math.round(s.stats.time_seconds / 60)}m. ` : ''}${s.stats?.output_tokens ? `${fmtTokens(s.stats.output_tokens)} output tokens.` : ''}</p>` : ''}</div>
 </div>
 </article>`;
     })
@@ -363,7 +542,7 @@ ${s ? `<div><p class="notes">${esc(s.notes || '')}</p><p class="dim">${s.stats?.
     depth: 1,
     body: `
 <section class="hero small">
-  <div class="season">TEST ${t.num} · GAUNTLET v1</div>
+  <div class="season">TEST ${t.num} · ${esc(catName(t).toUpperCase())} · GAUNTLET v1</div>
   <h1>${esc(t.title)}</h1>
   <p>Measures ${esc(t.measures.toLowerCase())}.</p>
 </section>
@@ -454,6 +633,7 @@ const matchCards = matches
 ${video ? `<video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(video)}"></video>` : ''}
 <p>Winner <b>${esc(m.winner)}</b> (${m.votes ? Object.values(m.votes).sort((a, b) => b - a).join(' to ') : ''}), ${esc(m.date?.slice(0, 10) ?? '')}.</p>
 <ul class="votes">${votes}</ul>
+${voteBlock(m)}
 </article>`;
   })
   .join('\n');
@@ -466,7 +646,8 @@ const matchesBody = `
 </section>
 <section class="reveal">
 ${matchCards || `<p class="empty">Season 1 matches have not been played yet. The first matchup, Claude Fable 5 Max vs GPT 5.6 Sol Ultra, lands after the filmed gauntlet run.</p>`}
-</section>`;
+</section>
+${matchCards ? VOTE_SCRIPT : ''}`;
 
 // ---------- tests explainer ----------
 
@@ -479,7 +660,7 @@ const testsBody = `
 ${tests
   .map(
     (t) => `<article class="card reveal">
-<h3><a class="model" href="test/${t.id}.html">${t.num} · ${esc(t.title)}</a></h3>
+<h3><a class="model" href="test/${t.id}.html">${t.num} · ${esc(t.title)}</a> <span class="tag">${esc(catName(t))}</span></h3>
 <p class="dim">Measures ${esc(t.measures.toLowerCase())}.</p>
 ${t.prompt ? `<pre>${esc(t.prompt)}</pre>` : '<p class="dim">Agentic test. Harness rules are in the repo.</p>'}
 </article>`

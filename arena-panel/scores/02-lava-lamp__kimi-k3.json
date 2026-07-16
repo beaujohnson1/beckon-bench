@@ -1,0 +1,92 @@
+{
+  "id": "1784225877351-score-02-lava-lamp-kimi-k3",
+  "date": "2026-07-16T18:17:57.351Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The simulation runs flawlessly and uses a highly effective off-screen metaball rendering technique to create organic, merging, and splitting blobs. The addition of glass reflections, ambient glow, and tiny drifting specks elevates the visual polish significantly.",
+      "cost_usd": 0.023688,
+      "latency_ms": 8260
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The frames show a fully working single-file lava lamp with organic metaball wax that deforms, merges, and splits while rising and sinking at a hypnotic pace inside a polished vessel with base, cap, and glow. It meets every requirement and exceeds them with temperature-colored cores, pool dynamics, and glass reflections.",
+      "cost_usd": 0.005626,
+      "latency_ms": 31889
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "A self-contained metaball-based lava lamp with temperature-driven buoyancy, deformation, merging/splitting, and a nicely rendered glass vessel with cap, base, and heat glow. The physics pacing and visual polish are strong and it should run flawlessly on first open.",
+      "cost_usd": 0.0108294,
+      "latency_ms": 4462
+    },
+    {
+      "judge": "minimax-m3",
+      "model_id": "minimax/minimax-m3",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "Self-contained HTML with a full metaball-based wax simulation including temperature-driven buoyancy, deformation, merging and splitting, plus glass vessel, cap/base, and ambient glow. Code is internally consistent and should run without external assets. Polish is high with reflections, heat shimmer, and color gradient; it clearly exceeds the basic ask with merging/splitting and visual frame.",
+      "cost_usd": 0.00223488,
+      "latency_ms": 2307
+    },
+    {
+      "judge": "deepseek-v4-pro",
+      "model_id": "deepseek/deepseek-v4-pro",
+      "scores": {
+        "runs_first_try": 3,
+        "polish": 3,
+        "prompt_adherence": 2,
+        "wow_factor": 2
+      },
+      "total": 10,
+      "reasoning": "The single-file code implements a full lava lamp with metaball wax that deforms, merges, and splits naturally, plus liquid specks and glass reflections. It meets every stated requirement and the aesthetic is polished and mesmerizing.",
+      "cost_usd": 0.00647582481,
+      "latency_ms": 13765
+    }
+  ],
+  "dry_run": false,
+  "panel": {
+    "scores": {
+      "runs_first_try": 3,
+      "polish": 3,
+      "prompt_adherence": 2,
+      "wow_factor": 2
+    },
+    "total": 10,
+    "judges_seated": 5,
+    "aggregation": "median per dimension"
+  },
+  "total_cost_usd": 0.0489
+}

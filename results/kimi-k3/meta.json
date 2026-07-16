@@ -1,0 +1,9 @@
+{
+  "model": "kimi-k3",
+  "model_id": "kimi-code/k3 (max effort — K3 is max-only, per Ruling #5)",
+  "provider": "Moonshot",
+  "harness": "Kimi Code CLI (kimi) v0.24.2 in a Beckon terminal pane (per Ruling #1: native flagship harness, shared Beckon environment)",
+  "run_date": "2026-07-16",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}

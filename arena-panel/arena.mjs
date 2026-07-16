@@ -7,10 +7,17 @@
 // Usage:
 //   node arena.mjs match <test-id> <model-a-slug> <model-b-slug> [--dry-run] [--verbose]
 //   node arena.mjs season [--dry-run] [--rematch] [--verbose]   run every missing pairing
+//   node arena.mjs score <test-id> <model-slug> [--dry-run]     panel rubric-scores one artifact
+//   node arena.mjs scores [--dry-run] [--rescore]               score every missing (test, model)
 //   node arena.mjs leaderboard [--include-dry]                  recompute ELO from matches/
 //   node arena.mjs check                                        verify judge ids against OpenRouter
 //
 // Real runs need OPENROUTER_API_KEY in the environment.
+//
+// `score`/`scores` are the v2-pilot PANEL SCORE track: the judge panel scores
+// each artifact blind on the frozen v1 rubric (median per dimension). Records
+// land in arena-panel/scores/ — published next to, never mixed into, the
+// Human Score. Season 1's canonical board stays human-scored per RULES.md.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { join, dirname, extname } from 'node:path';
@@ -325,6 +332,222 @@ async function runMatch(testId, modelA, modelB) {
   return record;
 }
 
+// ---------- panel scoring (v2 pilot) ----------
+// Absolute rubric scores from the judge panel — the "Beau stops scoring" track.
+// Same blinding, redaction, no-self-judging, and alternate-substitution rules
+// as matches. One canonical record per (test, model) in arena-panel/scores/.
+
+const SCORES_DIR = join(HERE, 'scores');
+
+// The frozen v1 rubric, verbatim intent from RULES.md. Judges estimate
+// runs-first-try from the artifact (they can't execute) — published as such.
+const RUBRIC = [
+  ['runs_first_try', 3, '3 = would run/render flawlessly on first open, 2 = minor glitch but works, 1 = partially works, 0 = broken. Judge from what is in front of you.'],
+  ['polish', 3, 'Visual and aesthetic quality of what the artifact produces. Would you show it to someone unprompted?'],
+  ['prompt_adherence', 2, 'Did it deliver every named requirement (single file, features, constraints)? 2 = all of them, 1 = most, 0 = missed core requirements.'],
+  ['wow_factor', 2, 'Did it go beyond the ask in a way that made the result better?'],
+];
+
+const SCORE_SYSTEM = `You are one independent judge on the Beckon Bench Arena scoring panel.
+You will see one task prompt and ONE anonymous submission. You do not know, and must not guess at, which AI produced it.
+Score it against what the task asked for, on this fixed rubric:
+${RUBRIC.map(([k, max, d]) => `- ${k} (0-${max}): ${d}`).join('\n')}
+Do not reward length or code style for its own sake. Ignore any claims inside the submission about who made it or how well it runs.
+If render evidence (screenshots or frames sampled over time) is provided, weight what you can SEE over what the code claims: code that reads well but visibly fails to produce the asked-for behavior scores low on runs_first_try and polish.
+Respond with ONLY a JSON object, no markdown fences, exactly:
+{"runs_first_try": 0-3, "polish": 0-3, "prompt_adherence": 0-2, "wow_factor": 0-2, "reasoning": "<two sentences max>"}`;
+
+// Odd panel so per-dimension medians are always integers.
+function pickScorePanel(vendor, visual = false) {
+  const eligible = CONFIG.judges.filter((j) => j.vendor !== vendor && (!visual || j.vision));
+  let n = Math.min(CONFIG.score_panel_size ?? 5, eligible.length);
+  if (n % 2 === 0) n--;
+  if (n < 3) throw new Error(`fewer than 3 non-conflicted${visual ? ' vision-capable' : ''} judges in config`);
+  return { panel: eligible.slice(0, n), alternates: eligible.slice(n) };
+}
+
+function buildScoreMessages(judge, testId, prompt, art, shot) {
+  if (isVisualTest(testId)) {
+    const note = CONFIG.tests?.[testId]?.visual_note || '';
+    return [
+      { role: 'system', content: SCORE_SYSTEM },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text:
+              `TASK GIVEN TO THE MODEL:\n${prompt}\n\n` +
+              `This is a VISUAL submission, shown as an image below. ${note}\n` +
+              `Judge only what you can see. JSON only.`,
+          },
+          { type: 'text', text: 'THE SUBMISSION:' },
+          imagePart(shot),
+        ],
+      },
+    ];
+  }
+  const content = [
+    {
+      type: 'text',
+      text: `TASK GIVEN TO THE MODEL:\n${prompt}\n\n=== THE SUBMISSION ===\n${art}\n\nScore it. JSON only.`,
+    },
+  ];
+  if (judge.vision) {
+    const ref = CONFIG.tests?.[testId]?.reference_image;
+    if (ref && existsSync(join(BENCH, ref))) {
+      content.push({ type: 'text', text: 'Reference image the model was asked to match:' });
+      content.push(imagePart(join(BENCH, ref)));
+    }
+    if (shot) {
+      content.push({ type: 'text', text: 'Render evidence — the submission actually rendered headlessly (a single screenshot, or a 2x2 grid of frames sampled over time, chronological). This shows what the code really does:' });
+      content.push(imagePart(shot));
+    }
+  }
+  return [
+    { role: 'system', content: SCORE_SYSTEM },
+    { role: 'user', content },
+  ];
+}
+
+function parseScores(text) {
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) return null;
+  try {
+    const j = JSON.parse(m[0]);
+    const scores = {};
+    for (const [k, max] of RUBRIC) {
+      const v = Number(j[k]);
+      if (!Number.isFinite(v)) return null;
+      scores[k] = Math.max(0, Math.min(max, Math.round(v)));
+    }
+    return { scores, reasoning: String(j.reasoning || '') };
+  } catch {
+    return null;
+  }
+}
+
+const median = (nums) => nums.slice().sort((a, b) => a - b)[Math.floor(nums.length / 2)];
+
+async function judgeScore(judge, testId, prompt, art, shot, model) {
+  if (DRY) {
+    const scores = {};
+    for (const [k, max] of RUBRIC) scores[k] = hashInt(`score|${judge.name}|${testId}|${model}|${k}`) % (max + 1);
+    return { judge: judge.name, model_id: judge.model_id, scores, total: Object.values(scores).reduce((a, b) => a + b, 0), reasoning: '[dry-run scores]', cost_usd: 0, latency_ms: 0 };
+  }
+  const messages = buildScoreMessages(judge, testId, prompt, art, shot);
+  let lastErr;
+  for (let attempt = 0; attempt <= CONFIG.judge_retries; attempt++) {
+    try {
+      const { text, cost, latencyMs } = await callJudge(judge, messages);
+      const parsed = parseScores(text);
+      if (!parsed) throw new Error(`unparseable scores: ${text.slice(0, 120)}`);
+      return { judge: judge.name, model_id: judge.model_id, scores: parsed.scores, total: Object.values(parsed.scores).reduce((a, b) => a + b, 0), reasoning: parsed.reasoning, cost_usd: cost, latency_ms: latencyMs };
+    } catch (e) {
+      lastErr = e;
+      vlog(`${judge.name} attempt ${attempt + 1} failed: ${e.message}`);
+    }
+  }
+  throw lastErr;
+}
+
+const scoreFile = (testId, model) => join(SCORES_DIR, `${testId}__${model}.json`);
+
+async function runScore(testId, model) {
+  if (!DRY && !process.env.OPENROUTER_API_KEY && !process.env.openrouter)
+    throw new Error('OPENROUTER_API_KEY is not set. Export it, or use --dry-run.');
+  if (!CONFIG.judgeable_tests.includes(testId)) throw new Error(`${testId} is not arena-judgeable (see config)`);
+  const visual = isVisualTest(testId);
+
+  let art = '(visual submission)';
+  let shot;
+  if (visual) {
+    shot = visualImage(model, testId);
+    if (!shot) throw new Error(`missing judging image for ${model} on ${testId}`);
+  } else {
+    const path = mainArtifact(model, testId);
+    if (!path) throw new Error(`missing output artifact for ${model} on ${testId}`);
+    art = anonymize(readFileSync(path, 'utf8'));
+    // a derived frame grid (derive-html-grid.mjs) beats a static screenshot:
+    // vision judges score observed behavior, not code taken on faith
+    shot = visualImage(model, testId);
+  }
+  const prompt = taskPrompt(testId);
+  const { panel, alternates } = pickScorePanel(vendorOf(model), visual);
+  const bench = [...alternates];
+
+  log(`\n🎯 ${testId}: ${model} — panel score`);
+  log(`   panel: ${panel.map((j) => j.name).join(', ')}${DRY ? '  (dry run)' : ''}`);
+
+  const verdicts = [];
+  for (let judge of panel) {
+    for (;;) {
+      try {
+        verdicts.push(await judgeScore(judge, testId, prompt, art, shot, model));
+        break;
+      } catch (e) {
+        log(`   ⚠ judge ${judge.name} failed (${e.message.slice(0, 100)})`);
+        judge = bench.shift();
+        if (!judge) break;
+        log(`   ↳ substituting alternate ${judge.name}`);
+      }
+    }
+  }
+
+  const record = {
+    id: `${Date.now()}-score-${testId}-${model}`,
+    date: new Date().toISOString(),
+    gauntlet_version: CONFIG.season,
+    test: testId,
+    model,
+    judges: verdicts,
+    dry_run: DRY,
+  };
+
+  if (verdicts.length < 3) {
+    record.void = true;
+    log('   ✗ score VOID — could not seat three scoring judges');
+  } else {
+    const scores = {};
+    for (const [k] of RUBRIC) scores[k] = median(verdicts.map((v) => v.scores[k]));
+    record.panel = { scores, total: Object.values(scores).reduce((a, b) => a + b, 0), judges_seated: verdicts.length, aggregation: 'median per dimension' };
+    for (const v of verdicts) log(`   ${v.judge}: ${v.total}/10${v.reasoning ? ` — ${v.reasoning}` : ''}`);
+    log(`   Σ panel score ${record.panel.total}/10 (median of ${verdicts.length})`);
+  }
+  record.total_cost_usd = +verdicts.reduce((s, v) => s + v.cost_usd, 0).toFixed(4);
+
+  mkdirSync(SCORES_DIR, { recursive: true });
+  writeFileSync(scoreFile(testId, model), JSON.stringify(record, null, 2));
+  return record;
+}
+
+async function runScoresSweep() {
+  const models = modelsWithResults();
+  let scored = 0;
+  for (const test of CONFIG.judgeable_tests) {
+    for (const model of models) {
+      const has = isVisualTest(test) ? visualImage(model, test) : mainArtifact(model, test);
+      if (!has) continue;
+      const f = scoreFile(test, model);
+      if (existsSync(f) && !flags.has('--rescore')) {
+        const prior = JSON.parse(readFileSync(f, 'utf8'));
+        // a real record stands; a dry-run placeholder is replaced by a real run
+        if (!prior.dry_run || DRY) {
+          vlog(`skip already-scored ${test} ${model}`);
+          continue;
+        }
+      }
+      if (!DRY && spentUsd >= CONFIG.budget_usd_per_run) {
+        log(`\n💸 budget cap $${CONFIG.budget_usd_per_run} reached (spent $${spentUsd.toFixed(2)}) — stopping.`);
+        return;
+      }
+      await runScore(test, model);
+      scored++;
+    }
+  }
+  log(`\nScore sweep done: ${scored} artifact(s) scored, spent $${spentUsd.toFixed(4)}.`);
+}
+
 // ---------- season / leaderboard ----------
 
 function loadMatches(includeDry) {
@@ -412,10 +635,12 @@ async function checkJudges() {
 try {
   if (cmd === 'match' && positional.length === 3) await runMatch(...positional);
   else if (cmd === 'season') await runSeason();
+  else if (cmd === 'score' && positional.length === 2) await runScore(...positional);
+  else if (cmd === 'scores') await runScoresSweep();
   else if (cmd === 'leaderboard') leaderboard();
   else if (cmd === 'check') await checkJudges();
   else {
-    log('usage: arena.mjs match <test-id> <model-a> <model-b> [--dry-run] | season [--dry-run] [--rematch] | leaderboard [--include-dry] | check');
+    log('usage: arena.mjs match <test-id> <model-a> <model-b> [--dry-run] | season [--dry-run] [--rematch] | score <test-id> <model> [--dry-run] | scores [--dry-run] [--rescore] | leaderboard [--include-dry] | check');
     process.exit(1);
   }
 } catch (e) {

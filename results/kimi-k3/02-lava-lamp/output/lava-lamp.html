@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lava Lamp</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; background: #060409; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="lamp"></canvas>
+<script>
+'use strict';
+(() => {
+
+const canvas = document.getElementById('lamp');
+const ctx = canvas.getContext('2d');
+// low-res offscreen buffer for the metaball field
+const fCan = document.createElement('canvas');
+const fCtx = fCan.getContext('2d');
+
+const TAU = Math.PI * 2;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (a = 1, b) => b === undefined ? Math.random() * a : a + Math.random() * (b - a);
+
+let cssW = 0, cssH = 0;
+let geo = null;
+let blobs = [];
+let pool = [];    // static-ish wax pool at the bottom
+let specks = [];  // tiny drifting particles in the liquid
+let time = 0;
+
+// metaball field grid (in lamp space, coarser than screen pixels)
+let cols = 0, rows = 0, cell = 2.6, ox = 0, oy = 0, fw = 0, fh = 0;
+let F = null, TW = null, img = null;
+const A_LO = 0.90, A_HI = 1.02;   // iso band for anti-aliased edges
+
+// ---------------------------------------------------------------- geometry
+
+function computeGeo() {
+  const vesselH = Math.min(cssH * 0.78, 940);
+  const capH = vesselH * 0.075;
+  const baseH = vesselH * 0.17;
+  const totalH = vesselH + capH + baseH + 8;
+  const startY = (cssH - totalH) / 2;
+  const cx = cssW / 2;
+  const hwTop = vesselH * 0.185;   // vessel is wider at the top, like a real lamp
+  const hwBot = hwTop * 0.78;
+  geo = { cx, vesselH, capH, baseH, topY: startY + capH + 2, hwTop, hwBot };
+  geo.yBot = geo.topY + vesselH;
+
+  cell = Math.max(2.2, vesselH / 330);
+  const pad = 10;
+  ox = cx - hwTop - pad; oy = geo.topY - pad;
+  fw = (hwTop + pad) * 2; fh = vesselH + pad * 2;
+  cols = Math.ceil(fw / cell); rows = Math.ceil(fh / cell);
+  F = new Float32Array(cols * rows);
+  TW = new Float32Array(cols * rows);
+  fCan.width = cols; fCan.height = rows;
+  img = fCtx.createImageData(cols, rows);
+}
+
+function halfWidthAt(y) {
+  const t = clamp((y - geo.topY) / geo.vesselH, 0, 1);
+  return lerp(geo.hwTop, geo.hwBot, t);
+}
+function ambientAt(y) {
+  const t = clamp((y - geo.topY) / geo.vesselH, 0, 1);
+  return 0.06 + 0.94 * t;   // hot at the bottom, cold at the top
+}
+
+// ---------------------------------------------------------------- world
+
+function makeBlob(x, y, r, T) {
+  return { x, y, r, T, vx: rnd(-4, 4), vy: rnd(-3, 3),
+    sx: 1, sy: 1, ang: 0, ph1: rnd(TAU), ph2: rnd(TAU),
+    noMerge: 0, noSplit: 0 };
+}
+
+function initWorld() {
+  blobs = []; pool = []; specks = [];
+  for (let i = 0; i < 13; i++) {
+    const y = rnd(geo.topY + geo.vesselH * 0.08, geo.yBot - geo.vesselH * 0.05);
+    const hw = halfWidthAt(y) * 0.55;
+    const r = 14 + Math.pow(Math.random(), 1.4) * 28;   // 14..42
+    blobs.push(makeBlob(geo.cx + rnd(-hw, hw), y, r,
+      clamp(ambientAt(y) + rnd(-0.15, 0.15), 0, 1)));
+  }
+  // a couple of hot blobs at the bottom so the lamp is alive immediately
+  for (let i = 0; i < 2; i++) {
+    const r = rnd(18, 26);
+    blobs.push(makeBlob(geo.cx + rnd(-geo.hwBot * 0.4, geo.hwBot * 0.4),
+      geo.yBot - r * 0.8, r, 0.85));
+  }
+  const pn = 6;
+  for (let i = 0; i < pn; i++) {
+    const fx = (i + 0.5) / pn * 2 - 1;
+    const p = { bx: geo.cx + fx * geo.hwBot * 0.72, x: 0, y: 0,
+      r: geo.hwBot * rnd(0.42, 0.55), sx: rnd(1.5, 1.9), sy: rnd(0.36, 0.46),
+      ang: 0, T: 1, ph: rnd(TAU) };
+    p.x = p.bx; p.y = geo.yBot + p.r * 0.10;
+    pool.push(p);
+  }
+  for (let i = 0; i < 22; i++) {
+    const y = rnd(geo.topY + 10, geo.yBot - 10);
+    specks.push({ x: geo.cx + rnd(-1, 1) * halfWidthAt(y) * 0.85, y,
+      vy: -(1.5 + Math.random() * 3.5), r: rnd(0.7, 1.9), a: rnd(0.04, 0.11) });
+  }
+}
+
+// ---------------------------------------------------------------- physics
+
+function step(dt) {
+  time += dt;
+  const g = geo;
+
+  for (const b of blobs) {
+    // temperature exchange with surroundings (boosted while touching the pool)
+    let k = 0.055;
+    if (b.y + b.r > g.yBot - 12) k *= 2.4;
+    b.T = clamp(b.T + (ambientAt(b.y) - b.T) * k * dt, 0, 1);
+
+    // buoyancy + drag
+    b.vy += -55 * (b.T - 0.5) * dt;
+    b.vy *= (1 - 0.55 * dt);
+    b.vx *= (1 - 1.3 * dt);
+    b.vx += Math.sin(time * 0.21 + b.ph1) * 5.5 * dt;   // gentle wander
+
+    // soft wall repulsion
+    const hw = halfWidthAt(b.y) - b.r * 0.55 - 3;
+    const dx = b.x - g.cx;
+    if (dx > hw) b.vx -= (dx - hw) * 28 * dt;
+    else if (dx < -hw) b.vx -= (dx + hw) * 28 * dt;
+
+    b.x += b.vx * dt; b.y += b.vy * dt;
+
+    // hard constraints
+    const hw2 = halfWidthAt(b.y) - b.r * 0.4;
+    b.x = clamp(b.x, g.cx - hw2, g.cx + hw2);
+    const minY = g.topY + b.r * 0.5 + 3;
+    const maxY = g.yBot - b.r * 0.35;
+    if (b.y < minY) { b.y = minY; if (b.vy < 0) b.vy *= -0.1; }
+    if (b.y > maxY) { b.y = maxY; if (b.vy > 0) b.vy *= -0.08; }
+    b.vy = clamp(b.vy, -48, 48);
+
+    // deformation: stretch along motion, flatten near the pool, plus wobble
+    const speed = Math.hypot(b.vx, b.vy);
+    let tSx = 1, tSy = 1, tAng = 0;
+    if (speed > 3) {
+      const s = clamp(speed / 55, 0, 0.36);
+      tSy = 1 + s; tSx = 1 / (1 + s * 0.75);
+      tAng = Math.atan2(-b.vx, b.vy);
+    }
+    if (b.y > g.yBot - b.r * 1.6) {
+      const w = clamp((b.y - (g.yBot - b.r * 1.6)) / (b.r * 1.2), 0, 1);
+      tSx = lerp(tSx, 1.32, w); tSy = lerp(tSy, 0.74, w); tAng = lerp(tAng, 0, w);
+    }
+    const ease = Math.min(1, 2.2 * dt);
+    b.sx += (tSx - b.sx) * ease; b.sy += (tSy - b.sy) * ease;
+    let da = tAng - b.ang;
+    while (da > Math.PI) da -= TAU; while (da < -Math.PI) da += TAU;
+    b.ang += da * ease;
+  }
+
+  // pairwise: soft repulsion, or merge when slow and deeply overlapping
+  for (let i = 0; i < blobs.length; i++) {
+    const a = blobs[i];
+    for (let j = i + 1; j < blobs.length; j++) {
+      const b = blobs[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy) || 0.001;
+      const rr = (a.r + b.r) * 0.92;
+      if (d >= rr) continue;
+      const relV = Math.hypot(b.vx - a.vx, b.vy - a.vy);
+      if (d < (a.r + b.r) * 0.60 && relV < 11 &&
+          time > a.noMerge && time > b.noMerge && blobs.length > 9) {
+        const va = a.r ** 3, vb = b.r ** 3, v = va + vb;
+        a.x = (a.x * va + b.x * vb) / v; a.y = (a.y * va + b.y * vb) / v;
+        a.vx = (a.vx * va + b.vx * vb) / v; a.vy = (a.vy * va + b.vy * vb) / v;
+        a.T = (a.T * va + b.T * vb) / v;
+        a.r = Math.cbrt(v);
+        a.noMerge = time + 3; a.noSplit = time + 18;
+        blobs.splice(j, 1); j--;
+        continue;
+      }
+      const nx = dx / d, ny = dy / d;
+      const push = (rr - d) / rr * 40;
+      const wa = b.r ** 3 / (a.r ** 3 + b.r ** 3), wb = 1 - wa;
+      a.vx -= nx * push * wa * dt; a.vy -= ny * push * wa * dt;
+      b.vx += nx * push * wb * dt; b.vy += ny * push * wb * dt;
+    }
+  }
+
+  // splits: big fast-moving blobs pinch into two
+  for (let i = 0; i < blobs.length; i++) {
+    const b = blobs[i];
+    const speed = Math.hypot(b.vx, b.vy);
+    if (b.r > 40 && speed > 9 && time > b.noSplit && blobs.length < 17 &&
+        Math.random() < 0.28 * dt) {
+      const u = rnd(0.36, 0.64);
+      const r1 = b.r * Math.cbrt(u), r2 = b.r * Math.cbrt(1 - u);
+      const ang = Math.atan2(b.vy, b.vx);   // separate along the direction of travel
+      const sep = (r1 + r2) * 0.75;
+      const ca = Math.cos(ang), sa = Math.sin(ang);
+      const b1 = makeBlob(b.x + ca * sep / 2, b.y + sa * sep / 2, r1, b.T);
+      const b2 = makeBlob(b.x - ca * sep / 2, b.y - sa * sep / 2, r2, b.T * rnd(0.85, 1));
+      b1.vx = b.vx + ca * 7; b1.vy = b.vy + sa * 7;
+      b2.vx = b.vx - ca * 7; b2.vy = b.vy - sa * 7;
+      b1.noMerge = b2.noMerge = time + 7;
+      b1.noSplit = b2.noSplit = time + 22;
+      b1.sx = b2.sx = b.sx; b1.sy = b2.sy = b.sy;
+      blobs.splice(i, 1, b1, b2); i++;
+    }
+  }
+
+  // wax resting in the pool slowly dissolves back into it
+  for (let i = blobs.length - 1; i >= 0; i--) {
+    const b = blobs[i];
+    if (b.y > g.yBot - b.r * 0.55 && Math.abs(b.vy) < 5 && blobs.length > 11) {
+      b.r -= 3.0 * dt;
+      b.T = Math.min(1, b.T + 0.2 * dt);
+      if (b.r < 12) blobs.splice(i, 1);
+    }
+  }
+  // ... and fresh wax pinches off the pool to keep the cycle going
+  if (blobs.length < 12 && Math.random() < 0.12 * dt) {
+    const r = rnd(15, 24);
+    const b = makeBlob(g.cx + rnd(-g.hwBot * 0.5, g.hwBot * 0.5), g.yBot - r * 0.7,
+      r, rnd(0.8, 0.95));
+    b.vy = -rnd(3, 7);
+    blobs.push(b);
+  }
+
+  for (const s of specks) {
+    s.y += s.vy * dt;
+    if (s.y < g.topY + 6) {
+      s.y = g.yBot - 8;
+      s.x = g.cx + rnd(-1, 1) * halfWidthAt(s.y) * 0.8;
+    }
+  }
+  for (const p of pool) {
+    p.x = p.bx + Math.sin(time * 0.13 + p.ph) * 3;
+    p.y = g.yBot + p.r * 0.10 + Math.sin(time * 0.27 + p.ph * 1.7) * 2.2;
+  }
+}
+
+// ---------------------------------------------------------------- metaballs
+
+function computeField() {
+  F.fill(0); TW.fill(0);
+  const all = blobs.concat(pool);
+  for (const b of all) {
+    const wob = b.ph2 !== undefined ? 0.10 * Math.sin(time * 0.5 + b.ph2) : 0;
+    const ang = (b.ang || 0) + wob;
+    const cos = Math.cos(ang), sin = Math.sin(ang);
+    const isx = 1 / b.sx, isy = 1 / b.sy;
+    const r2 = b.r * b.r;
+    const reach = b.r * 3.3;
+    const gx0 = clamp(Math.floor((b.x - reach - ox) / cell), 0, cols - 1);
+    const gx1 = clamp(Math.ceil((b.x + reach - ox) / cell), 0, cols - 1);
+    const gy0 = clamp(Math.floor((b.y - reach - oy) / cell), 0, rows - 1);
+    const gy1 = clamp(Math.ceil((b.y + reach - oy) / cell), 0, rows - 1);
+    const bT = b.T;
+    for (let gy = gy0; gy <= gy1; gy++) {
+      const py = oy + (gy + 0.5) * cell;
+      const dy = py - b.y;
+      let idx = gy * cols + gx0;
+      for (let gx = gx0; gx <= gx1; gx++, idx++) {
+        const px = ox + (gx + 0.5) * cell;
+        const dx = px - b.x;
+        const rx = dx * cos + dy * sin, ry = dy * cos - dx * sin;
+        const qx = rx * isx, qy = ry * isy;
+        const d2 = qx * qx + qy * qy;
+        if (d2 < r2 * 10.9) {
+          const f = r2 / (d2 + 1);
+          F[idx] += f; TW[idx] += f * bT;
+        }
+      }
+    }
+  }
+}
+
+function colorize() {
+  const d = img.data;
+  d.fill(0);
+  for (let idx = 0; idx < cols * rows; idx++) {
+    const f = F[idx];
+    if (f <= A_LO) continue;
+    const T = clamp(TW[idx] / f, 0, 1);
+    // cool crimson -> hot orange
+    let r = lerp(118, 255, T), gcol = lerp(26, 96, T), bcol = lerp(66, 54, T);
+    // brighter core where the field is dense (hot wax glows, cool wax stays deep red)
+    const k = clamp((f - 1.12) / (2.9 - 1.12), 0, 1) * 0.45 * (0.25 + 0.75 * T);
+    r = lerp(r, 255, k); gcol = lerp(gcol, 186, k); bcol = lerp(bcol, 118, k);
+    const a = clamp((f - A_LO) / (A_HI - A_LO), 0, 1);
+    const j = idx * 4;
+    d[j] = r; d[j + 1] = gcol; d[j + 2] = bcol; d[j + 3] = a * 255;
+  }
+  fCtx.putImageData(img, 0, 0);
+}
+
+// ---------------------------------------------------------------- drawing
+
+function vesselPath() {
+  const g = geo, p = new Path2D();
+  const cr = g.vesselH * 0.055;
+  p.moveTo(g.cx - g.hwTop, g.topY - 2);
+  p.lineTo(g.cx - g.hwBot * 1.03, g.yBot - cr);
+  p.quadraticCurveTo(g.cx - g.hwBot * 1.01, g.yBot + 2, g.cx - g.hwBot * 0.62, g.yBot + 3);
+  p.lineTo(g.cx + g.hwBot * 0.62, g.yBot + 3);
+  p.quadraticCurveTo(g.cx + g.hwBot * 1.01, g.yBot + 2, g.cx + g.hwBot * 1.03, g.yBot - cr);
+  p.lineTo(g.cx + g.hwTop, g.topY - 2);
+  p.closePath();
+  return p;
+}
+
+function drawCapBase() {
+  const g = geo;
+  // base (metal cone)
+  const by = g.yBot + 2, bh = g.baseH;
+  const bwT = g.hwBot * 0.80, bwB = g.hwBot * 1.55;
+  let grd = ctx.createLinearGradient(0, by, 0, by + bh);
+  grd.addColorStop(0, '#4b4f5c'); grd.addColorStop(0.35, '#33363f'); grd.addColorStop(1, '#101218');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.moveTo(g.cx - bwT, by); ctx.lineTo(g.cx - bwB, by + bh);
+  ctx.lineTo(g.cx + bwB, by + bh); ctx.lineTo(g.cx + bwT, by);
+  ctx.closePath(); ctx.fill();
+  grd = ctx.createLinearGradient(g.cx - bwB * 0.35, 0, g.cx + bwB * 0.1, 0);
+  grd.addColorStop(0, 'rgba(255,255,255,0)');
+  grd.addColorStop(0.5, 'rgba(255,255,255,0.10)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.moveTo(g.cx - bwT, by); ctx.lineTo(g.cx - bwB, by + bh);
+  ctx.lineTo(g.cx + bwB, by + bh); ctx.lineTo(g.cx + bwT, by);
+  ctx.closePath(); ctx.fill();
+
+  // cap
+  const cy = g.topY - 2, ch = g.capH;
+  const cwB = g.hwTop * 0.95, cwT = g.hwTop * 0.80;
+  grd = ctx.createLinearGradient(0, cy - ch, 0, cy);
+  grd.addColorStop(0, '#565a66'); grd.addColorStop(0.6, '#2c2f38'); grd.addColorStop(1, '#171920');
+  ctx.fillStyle = grd;
+  ctx.beginPath();
+  ctx.moveTo(g.cx - cwB, cy); ctx.lineTo(g.cx - cwT, cy - ch);
+  ctx.quadraticCurveTo(g.cx, cy - ch - 8, g.cx + cwT, cy - ch);
+  ctx.lineTo(g.cx + cwB, cy);
+  ctx.closePath(); ctx.fill();
+}
+
+function render() {
+  const g = geo;
+  ctx.fillStyle = '#060409';
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  // faint warm glow around the base
+  let rg = ctx.createRadialGradient(g.cx, g.yBot + g.baseH, 10,
+    g.cx, g.yBot + g.baseH, g.baseH * 4.5);
+  rg.addColorStop(0, 'rgba(255,90,40,0.07)'); rg.addColorStop(1, 'rgba(255,90,40,0)');
+  ctx.fillStyle = rg; ctx.fillRect(0, 0, cssW, cssH);
+
+  const vp = vesselPath();
+  ctx.save();
+  ctx.clip(vp);
+
+  // liquid
+  let lg = ctx.createLinearGradient(0, g.topY, 0, g.yBot);
+  lg.addColorStop(0, '#14092b'); lg.addColorStop(0.55, '#1c0a26'); lg.addColorStop(1, '#2a0d1e');
+  ctx.fillStyle = lg;
+  ctx.fillRect(g.cx - g.hwTop - 12, g.topY - 12, (g.hwTop + 12) * 2, g.vesselH + 24);
+
+  // bulb heat shimmer near the bottom
+  const glowA = 0.18 + 0.03 * Math.sin(time * 0.7);
+  rg = ctx.createRadialGradient(g.cx, g.yBot + 4, 4, g.cx, g.yBot + 4, g.hwBot * 2.1);
+  rg.addColorStop(0, `rgba(255,110,50,${glowA.toFixed(3)})`);
+  rg.addColorStop(1, 'rgba(255,110,50,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(g.cx - g.hwTop - 12, g.topY - 12, (g.hwTop + 12) * 2, g.vesselH + 24);
+
+  // drifting specks
+  ctx.fillStyle = '#ffd9a8';
+  for (const s of specks) {
+    ctx.globalAlpha = s.a;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // wax (metaball field, upscaled with smoothing)
+  computeField();
+  colorize();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(fCan, ox, oy, fw, fh);
+
+  // glass reflections
+  const sx1 = g.cx - g.hwTop * 0.55;
+  let sg = ctx.createLinearGradient(sx1 - 14, 0, sx1 + 16, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0)');
+  sg.addColorStop(0.5, 'rgba(255,255,255,0.075)');
+  sg.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(sx1 - 14, g.topY, 30, g.vesselH);
+  sg = ctx.createLinearGradient(g.cx + g.hwTop - 10, 0, g.cx + g.hwTop + 2, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0)');
+  sg.addColorStop(1, 'rgba(255,255,255,0.05)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(g.cx + g.hwTop - 10, g.topY, 12, g.vesselH);
+  ctx.fillStyle = 'rgba(200,170,255,0.10)';
+  ctx.fillRect(g.cx - g.hwTop, g.topY, g.hwTop * 2, 3);
+  ctx.restore();
+
+  ctx.strokeStyle = 'rgba(220,200,255,0.14)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke(vp);
+
+  drawCapBase();
+}
+
+// ---------------------------------------------------------------- main loop
+
+let last = -1, acc = 0;
+const H = 1 / 120;
+function frame(ts) {
+  requestAnimationFrame(frame);
+  if (last < 0) last = ts;
+  let dt = Math.min((ts - last) / 1000, 0.1);
+  last = ts;
+  acc += dt;
+  while (acc >= H) { step(H); acc -= H; }
+  render();
+}
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cssW = window.innerWidth; cssH = window.innerHeight;
+  canvas.width = Math.round(cssW * dpr); canvas.height = Math.round(cssH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const old = geo;
+  computeGeo();
+  if (old) {
+    const k = geo.vesselH / old.vesselH;
+    for (const b of blobs) {
+      const t = (b.y - old.topY) / old.vesselH;
+      b.y = geo.topY + t * geo.vesselH;
+      b.x = geo.cx + (b.x - old.cx) * k;
+      b.r *= k;
+    }
+    for (const p of pool) { p.bx = geo.cx + (p.bx - old.cx) * k; p.r *= k; }
+    for (const s of specks) {
+      s.y = geo.topY + ((s.y - old.topY) / old.vesselH) * geo.vesselH;
+      s.x = geo.cx + (s.x - old.cx) * k;
+    }
+  } else {
+    initWorld();
+  }
+}
+
+window.addEventListener('resize', resize);
+resize();
+requestAnimationFrame(frame);
+
+})();
+</script>
+</body>
+</html>
