@@ -36,6 +36,16 @@ const tests = readdirSync(join(BENCH, 'prompts'))
     return { id, num: id.slice(0, 2), title, measures, prompt };
   });
 
+// Landing-page framing (Beau, 2026-07-16): tests read as capabilities —
+// "create a game" — not artifact names. Full titles + verbatim prompts stay
+// on the tests/test pages; this map is index-display only.
+const CAPABILITY = {
+  '01': 'Create a game', '02': 'Create an animation', '03': 'Design a landing page',
+  '04': 'Draw a self-portrait', '05': 'Recreate a UI', '06': 'Produce a promo video',
+  '07': 'Fix seeded bugs', '08': 'Build a 3D scene',
+};
+const capTitle = (t) => CAPABILITY[t.num] || t.title;
+
 // Category layer — presentation only. v1 scoring and RULES.md stay frozen;
 // this groups the eight tests into named capability areas (AA-style) so the
 // leaderboard reads as "what is being tested", not opaque numbers. New axes
@@ -235,7 +245,7 @@ ${body}
 })();
 </script>
 <footer>
-  <p>Gauntlet v1, frozen 2026-07-10. Verdicts: the People's Vote and a cross-vendor AI judge panel; Human Scores through 2026-07-16 stand as history (Ruling #6). <a href="${root}tests.html">The protocol</a> is public.</p>
+  <p>One-shot tests, identical conditions, frozen prompts. Verdicts: the People's Vote and a cross-vendor AI judge panel; human scores through 2026-07-16 stand as history. <a href="${root}tests.html">The protocol</a> is public.</p>
   <p>Every run happens inside <a href="https://heybeckon.ai">Beckon</a>. Say the word. Your agents build.</p>
   <p class="dim"><a href="${root}exhibits/k3-redesign/">Exhibit: Kimi K3's one-shot redesign of this site</a> · <a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer">Join Discord</a></p>
 </footer>
@@ -311,7 +321,7 @@ function scoreChip(model, t) {
 const leaderboardTable = `<div class="scroll"><table class="board">
 <thead>
 <tr class="cats"><th rowspan="2"></th><th rowspan="2">Model</th>${CATS.map((c) => `<th class="gstart" colspan="${c.tests.length}">${esc(c.name)}</th>`).join('')}<th rowspan="2">Total</th></tr>
-<tr>${orderedTests.map((t) => `<th title="${esc(t.title)}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
+<tr>${orderedTests.map((t) => `<th title="${esc(capTitle(t))}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
 </thead>
 <tbody>${scoredModels
   .map(
@@ -356,7 +366,7 @@ ${CATS.map((c) => {
         : '<p class="empty">Scoring pending.</p>';
       return `<article class="hcard reveal">
 <p class="hlabel">${esc(c.name)}</p>
-<p class="hsub">Test${c.tests.length > 1 ? 's' : ''} ${c.tests.map((t) => `<a href="test/${t.id}.html" title="${esc(t.title)}">${t.num}</a>`).join(' · ')} — out of ${c.tests.length * 10}</p>
+<p class="hsub">Test${c.tests.length > 1 ? 's' : ''} ${c.tests.map((t) => `<a href="test/${t.id}.html" title="${esc(capTitle(t))}">${t.num}</a>`).join(' · ')} — out of ${c.tests.length * 10}</p>
 ${chart}
 </article>`;
     }).join('\n')}
@@ -392,7 +402,7 @@ const versus = tests
       verdict = `<p class="versus-line verdict${split ? ' split' : ''}"><span class="tag alt">AI panel</span> ${esc(winModel ? shortName(winModel) : match.winner)} <b>${tally}&ndash;${match.judges.length - tally}</b>${split ? ' <span class="dim">— the panel overturned the human verdict</span>' : ''}<a class="more" href="matches.html">Votes</a></p>${quote}`;
     }
     return `<article class="card reveal versus">
-<h3>${t.num} · ${esc(t.title)}</h3>
+<h3>${t.num} · ${esc(capTitle(t))}</h3>
 <video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(comparisonFor(t.id))}"></video>
 <p class="versus-line">${chips}<a class="more" href="test/${t.id}.html">Full result</a></p>
 ${verdict}
@@ -422,7 +432,7 @@ const panelBoard = panelModels.length
 <div class="scroll"><table class="board">
 <thead>
 <tr class="cats"><th rowspan="2">Model</th>${CATS.map((c) => `<th class="gstart" colspan="${c.tests.length}">${esc(c.name)}</th>`).join('')}<th rowspan="2">Total</th></tr>
-<tr>${orderedTests.map((t) => `<th title="${esc(t.title)}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
+<tr>${orderedTests.map((t) => `<th title="${esc(capTitle(t))}"${groupStarts.has(t.id) ? ' class="gstart"' : ''}>${t.num}</th>`).join('')}</tr>
 </thead>
 <tbody>${panelModels
       .map(
@@ -452,15 +462,24 @@ const arenaLadder = elo?.ladder?.length
 const indexBody = `
 <section class="hero">
   <div class="term">
-    <div class="term-bar"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="term-title">beckon-bench — season 1 — gauntlet v1</span></div>
+    <div class="term-bar"><span class="term-dot"></span><span class="term-dot"></span><span class="term-dot"></span><span class="term-title">beckon-bench — live results</span></div>
     <div class="term-body">
-      <div class="season">beckon run gauntlet --season 1 --tests 8</div>
+      <div class="season">beckon run bench --tests 8</div>
       <h1>The vibe coder's benchmark<span class="cursor"></span></h1>
-      <p>Eight one-shot tests, identical conditions. Every prompt, artifact, and score public.</p>
+      <p>Eight one-shot tests, identical conditions. Every prompt, artifact, and vote public.</p>
       <a class="powered" href="https://heybeckon.ai">Runs live inside <b>Beckon</b></a>
     </div>
   </div>
-  <nav class="jump">${versus ? '<a href="#watch">Watch &amp; vote</a>' : ''}<a href="#arena">Arena</a><a href="#scores">Scoreboard</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
+  <div id="scores">
+  ${scoredModels.length ? columnChart({
+    items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
+    hue: HUES.gold,
+    plotHeight: 190,
+  }) : ''}
+  ${leaderboardTable}
+  <p class="dim">Runs first try · polish · prompt adherence · wow factor — ten points per test, ties to the cheaper run. ◌ run captured, no score. New runs are decided by the People's Vote and the AI panel.</p>
+  </div>
+  <nav class="jump">${versus ? '<a href="#watch">Watch &amp; vote</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
 </section>
 
 ${versus ? `<section class="reveal" id="watch">
@@ -477,16 +496,7 @@ ${versus}
   ${panelBoard}
 </section>
 
-<section class="reveal" id="scores">
-  <h2>Scoreboard <span class="tag">human, season 1</span></h2>
-  <p class="dim">Season 1 was scored by hand, on camera: runs first try, polish, prompt adherence, wow factor. Ten points per test, ties to the cheaper run. From season 2 the judge panel and public votes take over.</p>
-  ${scoredModels.length ? columnChart({
-    items: scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `model/${m.slug}.html` })),
-    hue: HUES.gold,
-    plotHeight: 190,
-  }) : ''}
-  ${leaderboardTable}
-  <p class="dim">◌ run captured, scoring pending. Chips open the full test result.</p>
+<section class="reveal">
   ${benchStrip}
 </section>
 
@@ -542,7 +552,7 @@ ${scoreTable(s)}
     depth: 1,
     body: `
 <section class="hero small">
-  <div class="season">TEST ${t.num} · ${esc(catName(t).toUpperCase())} · GAUNTLET v1</div>
+  <div class="season">TEST ${t.num} · ${esc(catName(t).toUpperCase())}</div>
   <h1>${esc(t.title)}</h1>
   <p>Measures ${esc(t.measures.toLowerCase())}.</p>
 </section>
@@ -601,7 +611,7 @@ ${s ? `<div><p class="notes">${esc(s.notes || '')}</p><p class="dim">${s.stats?.
     .join('\n');
 
   const yt = m.meta.youtube_url
-    ? `<p><a class="btn" href="${esc(m.meta.youtube_url)}">Watch the gauntlet run</a></p>`
+    ? `<p><a class="btn" href="${esc(m.meta.youtube_url)}">Watch the run</a></p>`
     : '';
 
   return page({
@@ -645,7 +655,7 @@ const matchesBody = `
   <p>Two artifacts, same test, three AI judges from vendors with no horse in the race. Judges see anonymous submissions in randomized order and must pick a winner. Majority decides. Winners climb an ELO ladder. Every vote and every judge's reasoning is published. The Arena Score never touches the Human Score.</p>
 </section>
 <section class="reveal">
-${matchCards || `<p class="empty">Season 1 matches have not been played yet. The first matchup, Claude Fable 5 Max vs GPT 5.6 Sol Ultra, lands after the filmed gauntlet run.</p>`}
+${matchCards || `<p class="empty">No matches played yet — the first filmed matchup lands here.</p>`}
 </section>
 ${matchCards ? VOTE_SCRIPT : ''}`;
 
