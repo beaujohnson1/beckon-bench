@@ -1,4 +1,12 @@
 {
-  "buildCommand": "node site/build.mjs",
-  "outputDirectory": "site/dist"
+  "buildCommand": "cd web && npm install --no-audit --no-fund && npm run build",
+  "outputDirectory": "web/out",
+  "redirects": [
+    { "source": "/index.html", "destination": "/", "permanent": false },
+    { "source": "/matches.html", "destination": "/matches/", "permanent": false },
+    { "source": "/tests.html", "destination": "/tests/", "permanent": false },
+    { "source": "/vote.html", "destination": "/vote/", "permanent": false },
+    { "source": "/model/:slug.html", "destination": "/model/:slug/", "permanent": false },
+    { "source": "/test/:id.html", "destination": "/test/:id/", "permanent": false }
+  ]
 }

@@ -20,6 +20,10 @@ export function SiteFooter() {
         . Say the word. Your agents build.
       </p>
       <p className="mt-4 text-xs">
+        <a href="/exhibits/k3-redesign/" className="hover:text-primary">
+          Exhibit: Kimi K3&apos;s one-shot redesign of this site
+        </a>
+        {' · '}
         <a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer" className="hover:text-primary">
           Join Discord
         </a>

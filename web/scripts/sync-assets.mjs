@@ -13,6 +13,11 @@ const PUB = join(WEB, 'public');
 for (const f of ['favicon.png', 'apple-touch-icon.png', 'brand-hand.png', 'og.png'])
   if (existsSync(join(BENCH, 'site', f))) cpSync(join(BENCH, 'site', f), join(PUB, f));
 
+// exhibits: static one-shot artifacts shown as-is (e.g. K3's site redesign) —
+// same URLs as the classic site so published links keep working
+if (existsSync(join(BENCH, 'site', 'exhibits')))
+  cpSync(join(BENCH, 'site', 'exhibits'), join(PUB, 'exhibits'), { recursive: true });
+
 const comparisons = join(BENCH, 'results', 'comparisons');
 if (existsSync(comparisons)) {
   mkdirSync(join(PUB, 'videos'), { recursive: true });

@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beckon Bench — The vibe coder's benchmark</title>
+<style>
+/* ============================================================
+   Beckon Bench — single-file recreation
+   Dark terminal aesthetic, monospace type, green accent.
+   No external assets, fonts, scripts or network requests.
+   ============================================================ */
+
+:root{
+  --bg:        #0a0c10;
+  --panel:     #12151c;
+  --panel-2:   #0e1117;
+  --border:    #232834;
+  --border-2:  #1a1e28;
+
+  --text:      #e9ecf3;
+  --muted:     #8b93a5;
+  --faint:     #5d6478;
+
+  --green:     #2fe06f;
+  --green-ink: #04140a;
+  --green-dim: rgba(47,224,111,.10);
+  --green-bd:  rgba(47,224,111,.45);
+
+  --amber:     #d9a45b;
+  --amber-bd:  rgba(217,164,91,.45);
+  --amber-dim: rgba(217,164,91,.08);
+
+  --blue:      #7aa8d8;
+  --blue-bd:   rgba(122,168,216,.40);
+  --blue-dim:  rgba(122,168,216,.08);
+
+  --gold:      #cfc04a;
+  --gold-bd:   rgba(207,192,74,.50);
+  --gold-dim:  rgba(207,192,74,.07);
+
+  --red:       #f06060;
+  --red-bd:    rgba(240,96,96,.50);
+  --red-dim:   rgba(240,96,96,.07);
+
+  --gray:      #9aa3b2;
+  --gray-bd:   rgba(154,163,178,.40);
+  --gray-dim:  rgba(154,163,178,.06);
+
+  --yellow:    #e8c66a;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --serif: Georgia, "Times New Roman", serif;
+
+  --wrap: 1056px;
+  --sec-gap: 72px;
+  --radius: 5px;
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+
+html{ scroll-behavior:smooth; }
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--mono);
+  font-size:14px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+::selection{ background:var(--green); color:var(--green-ink); }
+
+.wrap{
+  max-width:var(--wrap);
+  margin-inline:auto;
+  padding-inline:24px;
+}
+
+section{ scroll-margin-top:84px; }
+
+a{ color:inherit; }
+
+/* ---------- skip link ---------- */
+.skip{
+  position:absolute; left:-9999px; top:0;
+  background:var(--green); color:var(--green-ink);
+  padding:8px 14px; font-weight:700; z-index:100;
+}
+.skip:focus{ left:8px; top:8px; }
+
+/* ============================================================
+   Header
+   ============================================================ */
+.site-header{
+  position:sticky; top:0; z-index:50;
+  background:rgba(10,12,16,.86);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border-2);
+}
+.site-header .wrap{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:24px; min-height:60px;
+}
+.brand{
+  display:flex; align-items:center; gap:9px;
+  font-weight:700; font-size:15px; text-decoration:none;
+  white-space:nowrap;
+}
+.brand svg{ display:block; }
+.brand .accent{ color:var(--green); }
+
+.main-nav{
+  display:flex; align-items:center; gap:26px;
+  overflow-x:auto; scrollbar-width:none;
+}
+.main-nav::-webkit-scrollbar{ display:none; }
+.main-nav a{
+  color:var(--muted); text-decoration:none; font-weight:600;
+  white-space:nowrap; padding:4px 0;
+}
+/* the CTA inside the nav must win over .main-nav a */
+.main-nav .btn{
+  color:var(--green-ink); font-weight:700; padding:9px 18px;
+}
+.main-nav a:hover{ color:var(--text); }
+.main-nav a.active{
+  color:var(--green);
+  text-decoration:underline;
+  text-underline-offset:7px;
+  text-decoration-thickness:2px;
+}
+
+.btn{
+  display:inline-block;
+  background:var(--green); color:var(--green-ink);
+  font-weight:700; text-decoration:none;
+  padding:9px 18px;
+  border:1px solid #0e3f21;
+  box-shadow:3px 3px 0 rgba(47,224,111,.35);
+  white-space:nowrap;
+}
+.btn:hover{ filter:brightness(1.07); }
+.btn:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(47,224,111,.35); }
+
+/* ============================================================
+   Hero — terminal window
+   ============================================================ */
+.hero{
+  padding:64px 0 8px;
+  background-image:
+    linear-gradient(rgba(140,160,190,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(140,160,190,.045) 1px, transparent 1px);
+  background-size:36px 36px;
+}
+
+.terminal{
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:0 24px 60px rgba(0,0,0,.45), 0 0 0 6px rgba(255,255,255,.015);
+  overflow:hidden;
+}
+.term-bar{
+  display:flex; align-items:center; gap:14px;
+  padding:13px 16px;
+  border-bottom:1px solid var(--border-2);
+  background:var(--panel);
+}
+.dots{ display:flex; gap:7px; }
+.dots i{ width:11px; height:11px; border-radius:2px; display:block; }
+.dots .r{ background:#ff5f56; } .dots .y{ background:#ffbd2e; } .dots .g{ background:#27c93f; }
+.term-title{ color:var(--muted); font-size:13px; }
+
+.term-body{ padding:30px 26px 34px; }
+.cmd{ font-weight:700; margin-bottom:22px; }
+.cmd .prompt{ color:var(--green); }
+.cmd .c{ color:var(--green); }
+
+.term-body h1{
+  font-size:clamp(28px, 4.4vw, 44px);
+  font-weight:700; letter-spacing:-.01em;
+  line-height:1.15; margin-bottom:18px;
+}
+.cursor{
+  display:inline-block;
+  width:.55em; height:1em;
+  margin-left:.08em;
+  background:var(--green);
+  vertical-align:-.13em;
+  box-shadow:0 0 18px rgba(47,224,111,.5);
+  animation:blink 1.15s steps(1) infinite;
+}
+@keyframes blink{ 50%{ opacity:0; } }
+
+.term-sub{ color:var(--muted); font-size:15px; max-width:620px; margin-bottom:26px; }
+
+.note{
+  display:inline-block;
+  border:1px solid var(--border);
+  background:var(--panel);
+  padding:10px 14px;
+  color:var(--muted); font-size:13px;
+}
+.note .g{ color:var(--green); font-weight:700; }
+
+/* anchor tag row */
+.tag-row{
+  display:flex; flex-wrap:wrap; gap:10px 26px;
+  padding:22px 2px 0;
+}
+.tag-row a{
+  color:var(--muted); text-decoration:none; font-weight:700; font-size:13px;
+}
+.tag-row a b{ color:var(--green); font-weight:700; margin-right:6px; }
+.tag-row a:hover{ color:var(--text); }
+
+/* ============================================================
+   Section headers — one consistent pattern
+   ============================================================ */
+.sec{ padding-top:var(--sec-gap); }
+.sec-head{ margin-bottom:26px; }
+.sec-title{
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+  font-size:20px; font-weight:700; margin-bottom:10px;
+}
+.sec-title .prompt{ color:var(--green); }
+.sec-sub{ color:var(--muted); max-width:760px; }
+
+/* badges */
+.badge{
+  display:inline-block;
+  font-size:10.5px; font-weight:700; letter-spacing:.08em;
+  padding:3px 8px;
+  border:1px solid;
+  vertical-align:middle;
+}
+.badge-green{ color:var(--green); border-color:var(--green-bd); background:var(--green-dim); }
+.badge-amber{ color:var(--amber); border-color:var(--amber-bd); background:var(--amber-dim); }
+.badge-blue { color:var(--blue);  border-color:var(--blue-bd);  background:var(--blue-dim); }
+
+/* ============================================================
+   Head-to-head match cards
+   ============================================================ */
+.match-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 470px), 1fr));
+  gap:20px;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.card > * + *{ border-top:1px solid var(--border-2); }
+
+.match-head{
+  display:flex; align-items:center; gap:10px;
+  padding:14px 18px;
+}
+.match-head .sq{ width:8px; height:8px; background:var(--green); flex:none; }
+.match-head h3{ font-size:15px; font-weight:700; }
+.match-head .dur{
+  margin-left:auto; color:var(--faint); font-size:12px; white-space:nowrap;
+}
+
+/* --- media placeholder (stands in for the embedded videos) --- */
+.media{ background:#0d1017; }
+.media-pair{
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  padding:14px 14px 10px;
+}
+.ph{
+  position:relative;
+  aspect-ratio:16/9;
+  border:1px solid var(--border-2);
+  background:
+    repeating-linear-gradient(135deg, rgba(140,160,190,.045) 0 10px, transparent 10px 20px),
+    linear-gradient(180deg, #12151d, #0b0e14);
+  display:flex; align-items:center; justify-content:center;
+}
+.ph .tag{
+  position:absolute; top:8px; left:8px;
+  background:#1c2230; border:1px solid var(--border);
+  color:#aeb6c6; font-size:11px; font-weight:700;
+  padding:2px 8px; border-radius:3px;
+}
+.ph .play{
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid var(--border);
+  background:rgba(10,12,16,.7);
+  display:flex; align-items:center; justify-content:center;
+}
+.ph .play::after{
+  content:""; display:block;
+  border-style:solid;
+  border-width:6px 0 6px 10px;
+  border-color:transparent transparent transparent var(--muted);
+  margin-left:3px;
+}
+.media-bar{
+  display:flex; align-items:center; gap:12px;
+  padding:0 14px 12px;
+  color:var(--faint); font-size:11.5px;
+}
+.media-bar .tri{
+  border-style:solid; border-width:5px 0 5px 8px;
+  border-color:transparent transparent transparent var(--muted);
+}
+.media-bar .track{
+  flex:1; height:3px; background:#252b38; border-radius:2px; position:relative;
+}
+.media-bar .track::before{
+  content:""; position:absolute; inset:0 auto 0 0; width:0%;
+  background:var(--muted); border-radius:2px;
+}
+.media-bar svg{ flex:none; opacity:.6; }
+
+/* --- result blocks inside a card --- */
+.block{ padding:16px 18px; }
+.block-label{
+  display:flex; align-items:center; gap:12px;
+  font-size:11px; font-weight:700; letter-spacing:.09em;
+  color:var(--faint); text-transform:uppercase;
+  margin-bottom:12px;
+}
+.block-label .link{ margin-left:auto; }
+
+.score-line{
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px 10px;
+  font-weight:700;
+}
+.score-line .model{ font-weight:700; }
+.score-line .entry{ white-space:nowrap; }
+.vs{ color:var(--faint); font-weight:400; }
+.score-line .link{ margin-left:auto; }
+
+.link{ color:var(--text); font-weight:700; font-size:13px; text-decoration:none; white-space:nowrap; }
+a.link:hover{ color:var(--green); }
+
+/* score chips */
+.chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:27px; height:27px; padding:0 5px;
+  border:1px solid; font-weight:700; font-size:13px;
+  background:none;
+}
+.c10{ color:var(--green); border-color:var(--green-bd); background:var(--green-dim); }
+.c8 { color:var(--gold);  border-color:var(--gold-bd);  background:var(--gold-dim); }
+.c6 { color:var(--gray);  border-color:var(--gray-bd);  background:var(--gray-dim); }
+.c4 { color:var(--red);   border-color:var(--red-bd);   background:var(--red-dim); }
+
+/* AI panel verdict */
+.panel-line{
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+  font-weight:700; margin-bottom:8px;
+}
+.panel-line .link{ margin-left:auto; }
+.overturn{ color:var(--muted); font-size:13px; margin-bottom:10px; }
+blockquote{
+  font-family:var(--serif); font-style:italic;
+  color:var(--muted); font-size:14.5px; line-height:1.6;
+}
+blockquote .who{ font-family:var(--mono); font-style:normal; font-size:12.5px; }
+
+/* people's vote */
+.vote-row{
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+}
+.vote-row + .vote-row{ margin-top:10px; }
+.vote-label{
+  font-size:11px; font-weight:700; letter-spacing:.09em;
+  color:var(--faint); text-transform:uppercase;
+}
+.vote-box{
+  border:1px solid var(--border); background:var(--panel-2);
+  padding:7px 12px; font-weight:700; font-size:13px;
+}
+.vote-score{ color:var(--faint); }
+
+/* ============================================================
+   Tables
+   ============================================================ */
+.table-scroll{ overflow-x:auto; }
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:var(--panel);
+  border:1px solid var(--border);
+  min-width:640px;
+}
+th, td{
+  border:1px solid var(--border-2);
+  padding:13px 16px;
+  text-align:center;
+  font-size:13.5px;
+}
+thead th{
+  color:var(--faint);
+  font-size:10.5px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  padding:10px 12px;
+}
+thead .tests th{ color:var(--muted); font-size:12px; letter-spacing:.02em; }
+td.model, th.model{ text-align:left; }
+td.model .mname{ font-weight:700; font-size:14.5px; display:block; }
+td.model .vendor{ color:var(--faint); font-size:12px; display:block; margin-top:2px; }
+td.rank{ color:var(--faint); width:44px; }
+td.total{ font-weight:700; font-size:15px; white-space:nowrap; }
+td .chip{ margin-inline:auto; }
+td .dot{ color:var(--faint); }
+
+.pending-dot{
+  display:inline-block; width:11px; height:11px;
+  border:2px dotted var(--faint); border-radius:50%;
+  vertical-align:middle;
+}
+
+.tbl-note{ color:var(--muted); margin-top:14px; font-size:13px; }
+.tbl-note .pending-dot{ margin-right:8px; }
+.tbl-note a{ color:var(--text); font-weight:700; text-decoration:none; border-bottom:1px solid var(--border); }
+.tbl-note a:hover{ color:var(--green); }
+
+/* ============================================================
+   Subsections within a section
+   ============================================================ */
+.subsec + .subsec{ margin-top:48px; }
+.subsec-title{
+  display:flex; align-items:center; flex-wrap:wrap; gap:12px;
+  font-size:17px; font-weight:700; margin-bottom:10px;
+}
+.subsec-title .prompt{ color:var(--green); }
+.subsec-sub{ color:var(--muted); max-width:820px; margin-bottom:22px; }
+
+/* ============================================================
+   Bar charts (pure CSS, segmented "battery" bars)
+   ============================================================ */
+.chart{
+  display:flex; align-items:flex-end; gap:clamp(20px, 5vw, 56px);
+  padding:26px 6px 0;
+}
+.bar{ display:flex; flex-direction:column; align-items:center; min-width:0; }
+.bar .v{ font-weight:700; font-size:15px; margin-bottom:8px; }
+.bar .c{
+  width:26px;
+  background:repeating-linear-gradient(0deg, var(--bar-c, var(--green)) 0 6px, transparent 6px 9px);
+}
+.bar .n{
+  margin-top:10px; padding-top:9px;
+  border-top:1px solid var(--border);
+  color:var(--muted); font-size:12px; line-height:1.35;
+  max-width:118px; text-align:center;
+}
+.chart-blue  { --bar-c:var(--blue); }
+.chart-yellow{ --bar-c:var(--yellow); }
+
+/* ============================================================
+   Category cards
+   ============================================================ */
+.cat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap:20px;
+}
+.cat-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 20px 20px;
+}
+.cat-card h3{ font-size:15.5px; font-weight:700; margin-bottom:4px; }
+.cat-card .tests-line{ color:var(--muted); font-size:12.5px; }
+.cat-card .tests-line b{ color:var(--text); }
+.cat-card .chart{ padding:20px 0 0; gap:26px; justify-content:flex-start; }
+.pending-box{
+  margin-top:18px;
+  border:1px dashed var(--border);
+  color:var(--faint);
+  padding:20px 16px;
+  font-size:13.5px;
+}
+
+/* ============================================================
+   Efficiency
+   ============================================================ */
+.eff-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%, 470px), 1fr));
+  gap:20px;
+  margin-bottom:20px;
+}
+.eff-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px 20px 22px;
+}
+.eff-card h3{
+  font-size:15.5px; font-weight:700; margin-bottom:4px;
+  display:flex; align-items:center; gap:9px;
+}
+.eff-card h3 .key{ width:10px; height:10px; flex:none; }
+.key-blue{ background:var(--blue); } .key-yellow{ background:var(--yellow); }
+.eff-card .eff-sub{ color:var(--muted); font-size:13px; }
+
+/* ============================================================
+   Footer
+   ============================================================ */
+.site-footer{
+  margin-top:96px;
+  border-top:1px solid var(--border-2);
+  padding:40px 0 64px;
+}
+.site-footer .dots i{ width:8px; height:8px; opacity:.55; }
+.site-footer .dots{ margin-bottom:22px; }
+.foot-grid{
+  display:grid;
+  grid-template-columns:minmax(0, 1.6fr) minmax(0, 1fr);
+  gap:32px;
+  align-items:start;
+}
+.foot-about p{ color:var(--muted); margin-bottom:14px; max-width:640px; }
+.foot-about b{ color:var(--text); }
+.ulink{
+  color:var(--text); font-weight:700;
+  border-bottom:1px solid var(--border);
+}
+.foot-cta{ display:flex; flex-direction:column; gap:14px; align-items:flex-start; }
+.foot-cta .hint{ color:var(--faint); font-size:12.5px; }
+
+/* ============================================================
+   Motion & small screens
+   ============================================================ */
+@media (prefers-reduced-motion: reduce){
+  html{ scroll-behavior:auto; }
+  .cursor{ animation:none; }
+}
+
+@media (max-width: 720px){
+  :root{ --sec-gap:56px; }
+  .site-header .wrap{ flex-wrap:wrap; gap:8px 16px; padding-block:10px; }
+  .main-nav{ gap:18px; order:3; width:100%; }
+  .foot-grid{ grid-template-columns:1fr; }
+  .term-body{ padding:24px 18px 26px; }
+}
+</style>
+</head>
+<body id="top">
+
+<a class="skip" href="#watch">Skip to content</a>
+
+<!-- ============================ Header ============================ -->
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Beckon Bench — home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 1.5c4.2 4.3 6.5 7.6 6.5 11.3a6.5 6.5 0 1 1-13 0C5.5 9.1 7.8 5.8 12 1.5z" fill="#e9ecf3"/>
+        <circle cx="10" cy="12.5" r="1.2" fill="#0a0c10"/>
+        <circle cx="14" cy="12.5" r="1.2" fill="#0a0c10"/>
+      </svg>
+      Beckon&nbsp;<span class="accent">Bench</span>
+    </a>
+    <nav class="main-nav" aria-label="Primary">
+      <a href="#scoreboard" class="active">Leaderboard</a>
+      <a href="#arena">Arena</a>
+      <a href="#tests">Tests</a>
+      <a href="#join">Join Discord</a>
+      <a href="#join" class="btn">Try Beckon</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================ Hero ============================ -->
+<section class="hero" aria-label="Introduction">
+  <div class="wrap">
+    <div class="terminal" role="img" aria-label="Terminal window: beckon run gauntlet, season 1, 8 tests. The vibe coder's benchmark. Eight one-shot tests, identical conditions. Every prompt, artifact, and score public.">
+      <div class="term-bar">
+        <span class="dots" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+        <span class="term-title">beckon-bench — season 1 — gauntlet v1</span>
+      </div>
+      <div class="term-body">
+        <p class="cmd" aria-hidden="true"><span class="prompt">$</span> <span class="c">beckon run gauntlet --season 1 --tests 8</span></p>
+        <h1 aria-hidden="true">The vibe coder's benchmark<span class="cursor"></span></h1>
+        <p class="term-sub" aria-hidden="true">Eight one-shot tests, identical conditions. Every prompt, artifact, and score public.</p>
+        <p class="note">Runs live inside <span class="g">Beckon</span></p>
+      </div>
+    </div>
+
+    <nav class="tag-row" aria-label="On this page">
+      <a href="#watch"><b>#</b>Watch &amp; vote</a>
+      <a href="#arena"><b>#</b>Arena</a>
+      <a href="#scoreboard"><b>#</b>Scoreboard</a>
+      <a href="#efficiency"><b>#</b>Efficiency</a>
+      <a href="#tests"><b>#</b>The 8 tests</a>
+    </nav>
+  </div>
+</section>
+
+<!-- ==================== Head-to-heads ==================== -->
+<section class="sec" id="watch" aria-labelledby="watch-h">
+  <div class="wrap">
+    <header class="sec-head">
+      <h2 class="sec-title" id="watch-h">
+        <span class="prompt" aria-hidden="true">❯</span> Head-to-heads
+        <span class="badge badge-green">WATCH &amp; VOTE</span>
+      </h2>
+      <p class="sec-sub">Same prompt, same clock, side by side. Watch the runs and pick your winner.</p>
+    </header>
+
+    <div class="match-grid">
+
+      <!-- 01 · Haunted Horror Game -->
+      <article class="card" aria-labelledby="m01">
+        <header class="match-head">
+          <span class="sq" aria-hidden="true"></span>
+          <h3 id="m01">01 · Haunted Horror Game</h3>
+          <span class="dur">0:20</span>
+        </header>
+
+        <div class="media">
+          <div class="media-pair">
+            <div class="ph" role="img" aria-label="Video placeholder: Sol Ultra run"><span class="tag">Sol Ultra</span><span class="play" aria-hidden="true"></span></div>
+            <div class="ph" role="img" aria-label="Video placeholder: Fable 5 Max run"><span class="tag">Fable 5 Max</span><span class="play" aria-hidden="true"></span></div>
+          </div>
+          <div class="media-bar" aria-hidden="true">
+            <span class="tri"></span><span>0:00 / 0:20</span>
+            <span class="track"></span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="block-label">Human score <a class="link" href="#tests">Full result</a></p>
+          <p class="score-line">
+            <span class="entry"><span class="model">gpt-5.6 Sol Ultra</span> <span class="chip c8">8</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-fable-5 Max effort</span> <span class="chip c4">4</span></span>
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="panel-line">
+            <span class="badge badge-amber">AI PANEL</span>
+            claude-fable-5 Max effort 2–1
+            <a class="link" href="#arena">Votes</a>
+          </p>
+          <p class="overturn">— the panel overturned the human verdict</p>
+          <blockquote>“It delivers denser atmosphere via a full torch-and-darkness system, battery management, multi-state AI hunter, richer Web Audio (drones, whispers, presence, stings), and stronger visual polish with grain, vignettes, and scare/win sequences.” <span class="who">— grok-4-5</span></blockquote>
+        </div>
+
+        <div class="block">
+          <div class="vote-row">
+            <span class="vote-label">People's vote</span>
+            <span class="vote-box">claude-fable-5 Max effort</span>
+          </div>
+          <div class="vote-row">
+            <span class="vote-box">gpt-5.6 Sol Ultra</span>
+            <span class="vote-score">0 – 0</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 02 · Lava Lamp -->
+      <article class="card" aria-labelledby="m02">
+        <header class="match-head">
+          <span class="sq" aria-hidden="true"></span>
+          <h3 id="m02">02 · Lava Lamp</h3>
+          <span class="dur">0:20</span>
+        </header>
+
+        <div class="media">
+          <div class="media-pair">
+            <div class="ph" role="img" aria-label="Video placeholder: Sol Ultra run"><span class="tag">Sol Ultra</span><span class="play" aria-hidden="true"></span></div>
+            <div class="ph" role="img" aria-label="Video placeholder: Fable 5 Max run"><span class="tag">Fable 5 Max</span><span class="play" aria-hidden="true"></span></div>
+          </div>
+          <div class="media-bar" aria-hidden="true">
+            <span class="tri"></span><span>0:00 / 0:20</span>
+            <span class="track"></span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="block-label">Human score <a class="link" href="#tests">Full result</a></p>
+          <p class="score-line">
+            <span class="entry"><span class="model">gpt-5.6 Sol Ultra</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">kimi-code/k3</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-opus-4-8</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-fable-5 Max effort</span> <span class="chip c6">6</span></span>
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="panel-line">
+            <span class="badge badge-amber">AI PANEL</span>
+            gpt-5.6 Sol Ultra 3–0
+            <a class="link" href="#arena">Votes</a>
+          </p>
+        </div>
+
+        <div class="block">
+          <div class="vote-row">
+            <span class="vote-label">People's vote</span>
+            <span class="vote-box">claude-fable-5 Max effort</span>
+          </div>
+          <div class="vote-row">
+            <span class="vote-box">gpt-5.6 Sol Ultra</span>
+            <span class="vote-score">0 – 0</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 04 · SVG Self-Portrait -->
+      <article class="card" aria-labelledby="m04">
+        <header class="match-head">
+          <span class="sq" aria-hidden="true"></span>
+          <h3 id="m04">04 · SVG Self-Portrait</h3>
+          <span class="dur">0:20</span>
+        </header>
+
+        <div class="media">
+          <div class="media-pair">
+            <div class="ph" role="img" aria-label="Video placeholder: Sol Ultra run"><span class="tag">Sol Ultra</span><span class="play" aria-hidden="true"></span></div>
+            <div class="ph" role="img" aria-label="Video placeholder: Fable 5 Max run"><span class="tag">Fable 5 Max</span><span class="play" aria-hidden="true"></span></div>
+          </div>
+          <div class="media-bar" aria-hidden="true">
+            <span class="tri"></span><span>0:00 / 0:20</span>
+            <span class="track"></span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="block-label">Human score <a class="link" href="#tests">Full result</a></p>
+          <p class="score-line">
+            <span class="entry"><span class="model">gpt-5.6 Sol Ultra</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-fable-5 Max effort</span> <span class="chip c4">4</span></span>
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="panel-line">
+            <span class="badge badge-amber">AI PANEL</span>
+            claude-fable-5 Max effort 3–0
+            <a class="link" href="#arena">Votes</a>
+          </p>
+          <p class="overturn">— the panel overturned the human verdict</p>
+          <blockquote>“It perfectly captures the essence of a language model with its brilliant conceptual design, using text paths and typography to represent the flow of prompts and tokens.” <span class="who">— gemini-3-1-pro</span></blockquote>
+        </div>
+
+        <div class="block">
+          <div class="vote-row">
+            <span class="vote-label">People's vote</span>
+            <span class="vote-box">claude-fable-5 Max effort</span>
+          </div>
+          <div class="vote-row">
+            <span class="vote-box">gpt-5.6 Sol Ultra</span>
+            <span class="vote-score">0 – 0</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 06 · Remotion Promo Video -->
+      <article class="card" aria-labelledby="m06">
+        <header class="match-head">
+          <span class="sq" aria-hidden="true"></span>
+          <h3 id="m06">06 · Remotion Promo Video</h3>
+          <span class="dur">0:20</span>
+        </header>
+
+        <div class="media">
+          <div class="media-pair">
+            <div class="ph" role="img" aria-label="Video placeholder: Sol Ultra run"><span class="tag">Sol Ultra</span><span class="play" aria-hidden="true"></span></div>
+            <div class="ph" role="img" aria-label="Video placeholder: Fable 5 Max run"><span class="tag">Fable 5 Max</span><span class="play" aria-hidden="true"></span></div>
+          </div>
+          <div class="media-bar" aria-hidden="true">
+            <span class="tri"></span><span>0:00 / 0:20</span>
+            <span class="track"></span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="block-label">Human score <a class="link" href="#tests">Full result</a></p>
+          <p class="score-line">
+            <span class="entry"><span class="model">gpt-5.6 Sol Ultra</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-fable-5 Max effort</span> <span class="chip c10">10</span></span>
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="panel-line">
+            <span class="badge badge-amber">AI PANEL</span>
+            gpt-5.6 Sol Ultra 2–1
+            <a class="link" href="#arena">Votes</a>
+          </p>
+        </div>
+
+        <div class="block">
+          <div class="vote-row">
+            <span class="vote-label">People's vote</span>
+            <span class="vote-box">claude-fable-5 Max effort</span>
+          </div>
+          <div class="vote-row">
+            <span class="vote-box">gpt-5.6 Sol Ultra</span>
+            <span class="vote-score">0 – 0</span>
+          </div>
+        </div>
+      </article>
+
+      <!-- 08 · The Blender Build (live) -->
+      <article class="card" aria-labelledby="m08">
+        <header class="match-head">
+          <span class="sq" aria-hidden="true"></span>
+          <h3 id="m08">08 · The Blender Build (live)</h3>
+          <span class="dur">0:10</span>
+        </header>
+
+        <div class="media">
+          <div class="media-pair">
+            <div class="ph" role="img" aria-label="Video placeholder: Sol Ultra run"><span class="tag">Sol Ultra</span><span class="play" aria-hidden="true"></span></div>
+            <div class="ph" role="img" aria-label="Video placeholder: Fable 5 Max run"><span class="tag">Fable 5 Max</span><span class="play" aria-hidden="true"></span></div>
+          </div>
+          <div class="media-bar" aria-hidden="true">
+            <span class="tri"></span><span>0:00 / 0:10</span>
+            <span class="track"></span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM22 9l-6 6M16 9l6 6"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#8b93a5" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="block-label">Human score <a class="link" href="#tests">Full result</a></p>
+          <p class="score-line">
+            <span class="entry"><span class="model">gpt-5.6 Sol Ultra</span> <span class="chip c10">10</span></span> <span class="vs">vs</span>
+            <span class="entry"><span class="model">claude-fable-5 Max effort</span> <span class="chip c10">10</span></span>
+          </p>
+        </div>
+
+        <div class="block">
+          <p class="panel-line">
+            <span class="badge badge-amber">AI PANEL</span>
+            claude-fable-5 Max effort 2–1
+            <a class="link" href="#arena">Votes</a>
+          </p>
+        </div>
+
+        <div class="block">
+          <div class="vote-row">
+            <span class="vote-label">People's vote</span>
+            <span class="vote-box">claude-fable-5 Max effort</span>
+          </div>
+          <div class="vote-row">
+            <span class="vote-box">gpt-5.6 Sol Ultra</span>
+            <span class="vote-score">0 – 0</span>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Arena ==================== -->
+<section class="sec" id="arena" aria-labelledby="arena-h">
+  <div class="wrap">
+    <header class="sec-head">
+      <h2 class="sec-title" id="arena-h">
+        <span class="prompt" aria-hidden="true">❯</span> Arena
+        <span class="badge badge-blue">AI JUDGE PANEL</span>
+      </h2>
+      <p class="sec-sub">Head-to-head battles judged by a cross-vendor AI panel. Elo updates after every match.</p>
+    </header>
+
+    <div class="table-scroll">
+      <table aria-label="Arena Elo standings">
+        <thead>
+          <tr>
+            <th scope="col" class="model" colspan="2">Model</th>
+            <th scope="col">Elo</th>
+            <th scope="col">Record</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rank">#1</td>
+            <td class="model"><span class="mname">claude-fable-5-max</span></td>
+            <td style="color:var(--green); font-weight:700;">1012</td>
+            <td>3W–2L</td>
+          </tr>
+          <tr>
+            <td class="rank">#2</td>
+            <td class="model"><span class="mname">gpt-5-6-sol-ultra</span></td>
+            <td style="color:var(--green); font-weight:700;">988</td>
+            <td>2W–3L</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tbl-note">5 matches. Every vote is public on the <a href="#arena">Arena page</a>.</p>
+  </div>
+</section>
+
+<!-- ==================== Scoreboard ==================== -->
+<section class="sec" id="scoreboard" aria-labelledby="scoreboard-h">
+  <div class="wrap">
+    <header class="sec-head">
+      <h2 class="sec-title" id="scoreboard-h">
+        <span class="prompt" aria-hidden="true">❯</span> Scoreboard
+      </h2>
+      <p class="sec-sub">Every model runs the full gauntlet under identical conditions. Judge panels are published, the rubric is frozen.</p>
+    </header>
+
+    <!-- Human score -->
+    <div class="subsec" aria-labelledby="human-h">
+      <h3 class="subsec-title" id="human-h">
+        <span class="prompt" aria-hidden="true">❯</span> Human Score
+        <span class="badge badge-green">V1 · FROZEN</span>
+      </h3>
+      <p class="subsec-sub">Scored on camera against the frozen v1 rubric — 50 points across the eight tests.</p>
+
+      <div class="chart" role="img" aria-label="Total human scores: gpt-5.6 Sol Ultra 48, claude-fable-5 Max effort 34, kimi-code/k3 10, claude-opus-4-8 10.">
+        <div class="bar"><span class="v">48</span><span class="c" style="height:192px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+        <div class="bar"><span class="v">34</span><span class="c" style="height:136px"></span><span class="n">claude-fable-5 Max effort</span></div>
+        <div class="bar"><span class="v">10</span><span class="c" style="height:40px"></span><span class="n">kimi-code/k3</span></div>
+        <div class="bar"><span class="v">10</span><span class="c" style="height:40px"></span><span class="n">claude-opus-4-8</span></div>
+      </div>
+
+      <div class="table-scroll" style="margin-top:32px;">
+        <table aria-label="Human score by test">
+          <thead>
+            <tr>
+              <th scope="col" colspan="2" class="model">Model</th>
+              <th scope="col">Game dev</th>
+              <th scope="col" colspan="2">Creative coding</th>
+              <th scope="col" colspan="2">UI &amp; design</th>
+              <th scope="col" colspan="2">Agentic</th>
+              <th scope="col">Debugging</th>
+              <th scope="col">Total</th>
+            </tr>
+            <tr class="tests">
+              <th scope="col" colspan="2"></th>
+              <th scope="col">01</th>
+              <th scope="col">02</th><th scope="col">04</th>
+              <th scope="col">03</th><th scope="col">05</th>
+              <th scope="col">06</th><th scope="col">08</th>
+              <th scope="col">07</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="rank">#1</td>
+              <td class="model"><span class="mname">gpt-5.6 Sol Ultra</span><span class="vendor">OpenAI</span></td>
+              <td><span class="chip c8">8</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">48/50</td>
+            </tr>
+            <tr>
+              <td class="rank">#2</td>
+              <td class="model"><span class="mname">claude-fable-5 Max effort</span><span class="vendor">Anthropic</span></td>
+              <td><span class="chip c4">4</span></td>
+              <td><span class="chip c6">6</span></td>
+              <td><span class="chip c4">4</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">34/50</td>
+            </tr>
+            <tr>
+              <td class="rank">#3</td>
+              <td class="model"><span class="mname">kimi-code/k3</span><span class="vendor">Moonshot</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="pending-dot" title="Run captured, scoring pending"></span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+            <tr>
+              <td class="rank">#4</td>
+              <td class="model"><span class="mname">claude-opus-4-8</span><span class="vendor">Anthropic</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="tbl-note"><span class="pending-dot" aria-hidden="true"></span> run captured, scoring pending. Chips open the full test result.</p>
+    </div>
+
+    <!-- Panel score -->
+    <div class="subsec" aria-labelledby="panel-h">
+      <h3 class="subsec-title" id="panel-h">
+        <span class="prompt" aria-hidden="true">❯</span> Panel Score
+        <span class="badge badge-blue">V2 PILOT</span>
+      </h3>
+      <p class="subsec-sub">Five cross-vendor judges score each artifact blind on the frozen v1 rubric, with render evidence where it exists; the median of each dimension is published. Runs beside the Human Score — the two never mix.</p>
+
+      <div class="table-scroll">
+        <table aria-label="Panel score by test">
+          <thead>
+            <tr>
+              <th scope="col" class="model">Model</th>
+              <th scope="col">Game dev</th>
+              <th scope="col" colspan="2">Creative coding</th>
+              <th scope="col" colspan="2">UI &amp; design</th>
+              <th scope="col" colspan="2">Agentic</th>
+              <th scope="col">Debugging</th>
+              <th scope="col">Total</th>
+            </tr>
+            <tr class="tests">
+              <th scope="col"></th>
+              <th scope="col">01</th>
+              <th scope="col">02</th><th scope="col">04</th>
+              <th scope="col">03</th><th scope="col">05</th>
+              <th scope="col">06</th><th scope="col">08</th>
+              <th scope="col">07</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="model"><span class="mname">gpt-5.6 Sol Ultra</span><span class="vendor">OpenAI</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+            <tr>
+              <td class="model"><span class="mname">claude-fable-5 Max effort</span><span class="vendor">Anthropic</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+            <tr>
+              <td class="model"><span class="mname">kimi-code/k3</span><span class="vendor">Moonshot</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+            <tr>
+              <td class="model"><span class="mname">claude-opus-4-8</span><span class="vendor">Anthropic</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="chip c10">10</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td><span class="dot">·</span></td>
+              <td class="total">10/10</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== The 8 tests ==================== -->
+<section class="sec" id="tests" aria-labelledby="tests-h">
+  <div class="wrap">
+    <header class="sec-head">
+      <h2 class="sec-title" id="tests-h">
+        <span class="prompt" aria-hidden="true">❯</span> The 8 tests
+      </h2>
+      <p class="sec-sub">Human scores grouped by capability category. Chips open the full test result.</p>
+    </header>
+
+    <div class="cat-grid">
+
+      <div class="cat-card">
+        <h3>Game dev</h3>
+        <p class="tests-line">Test <b>01</b> — out of 10</p>
+        <div class="chart" role="img" aria-label="Game dev scores: gpt-5.6 Sol Ultra 8, claude-fable-5 Max effort 4.">
+          <div class="bar"><span class="v">8</span><span class="c" style="height:96px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+          <div class="bar"><span class="v">4</span><span class="c" style="height:48px"></span><span class="n">claude-fable-5 Max effort</span></div>
+        </div>
+      </div>
+
+      <div class="cat-card">
+        <h3>Creative coding</h3>
+        <p class="tests-line">Tests <b>02</b> · <b>04</b> — out of 20</p>
+        <div class="chart" role="img" aria-label="Creative coding scores: gpt-5.6 Sol Ultra 20, claude-fable-5 Max effort 10, kimi-code/k3 10, claude-opus-4-8 10.">
+          <div class="bar"><span class="v">20</span><span class="c" style="height:96px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+          <div class="bar"><span class="v">10</span><span class="c" style="height:48px"></span><span class="n">claude-fable-5 Max effort</span></div>
+          <div class="bar"><span class="v">10</span><span class="c" style="height:48px"></span><span class="n">kimi-code/k3</span></div>
+          <div class="bar"><span class="v">10</span><span class="c" style="height:48px"></span><span class="n">claude-opus-4-8</span></div>
+        </div>
+      </div>
+
+      <div class="cat-card">
+        <h3>UI &amp; design</h3>
+        <p class="tests-line">Tests <b>03</b> · <b>05</b> — out of 20</p>
+        <p class="pending-box">// Scoring pending.</p>
+      </div>
+
+      <div class="cat-card">
+        <h3>Agentic</h3>
+        <p class="tests-line">Tests <b>06</b> · <b>08</b> — out of 20</p>
+        <div class="chart" role="img" aria-label="Agentic scores: gpt-5.6 Sol Ultra 20, claude-fable-5 Max effort 20.">
+          <div class="bar"><span class="v">20</span><span class="c" style="height:96px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+          <div class="bar"><span class="v">20</span><span class="c" style="height:96px"></span><span class="n">claude-fable-5 Max effort</span></div>
+        </div>
+      </div>
+
+      <div class="cat-card">
+        <h3>Debugging</h3>
+        <p class="tests-line">Test <b>07</b> — out of 10</p>
+        <p class="pending-box">// Scoring pending.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Efficiency ==================== -->
+<section class="sec" id="efficiency" aria-labelledby="eff-h">
+  <div class="wrap">
+    <header class="sec-head">
+      <h2 class="sec-title" id="eff-h">
+        <span class="prompt" aria-hidden="true">❯</span> Efficiency
+        <span class="badge badge-blue">RECORDED, NEVER SCORED</span>
+      </h2>
+    </header>
+
+    <div class="eff-grid">
+      <div class="eff-card">
+        <h3><span class="key key-blue" aria-hidden="true"></span> Token efficiency</h3>
+        <p class="eff-sub">Output tokens per point. Lower is better.</p>
+        <div class="chart chart-blue" role="img" aria-label="Output tokens per point: gpt-5.6 Sol Ultra 2.2k, claude-fable-5 Max effort 34.9k, claude-opus-4-8 18.1k.">
+          <div class="bar"><span class="v">2.2k</span><span class="c" style="height:8px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+          <div class="bar"><span class="v">34.9k</span><span class="c" style="height:120px"></span><span class="n">claude-fable-5 Max effort</span></div>
+          <div class="bar"><span class="v">18.1k</span><span class="c" style="height:62px"></span><span class="n">claude-opus-4-8</span></div>
+        </div>
+      </div>
+
+      <div class="eff-card">
+        <h3><span class="key key-yellow" aria-hidden="true"></span> Time on the bench</h3>
+        <p class="eff-sub">Wall clock across scored tests. Lower is better.</p>
+        <div class="chart chart-yellow" role="img" aria-label="Wall clock across scored tests: gpt-5.6 Sol Ultra 73 minutes, claude-fable-5 Max effort 125 minutes, kimi-code/k3 15 minutes, claude-opus-4-8 21 minutes.">
+          <div class="bar"><span class="v">73m</span><span class="c" style="height:70px"></span><span class="n">gpt-5.6 Sol Ultra</span></div>
+          <div class="bar"><span class="v">125m</span><span class="c" style="height:120px"></span><span class="n">claude-fable-5 Max effort</span></div>
+          <div class="bar"><span class="v">15m</span><span class="c" style="height:14px"></span><span class="n">kimi-code/k3</span></div>
+          <div class="bar"><span class="v">21m</span><span class="c" style="height:20px"></span><span class="n">claude-opus-4-8</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-scroll">
+      <table aria-label="Efficiency by model">
+        <thead>
+          <tr>
+            <th scope="col" class="model">Model</th>
+            <th scope="col">Points</th>
+            <th scope="col">Time</th>
+            <th scope="col">Output tokens</th>
+            <th scope="col">Tokens / point</th>
+            <th scope="col">Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="model"><span class="mname">gpt-5.6 Sol Ultra</span></td>
+            <td style="font-weight:700;">48</td>
+            <td>72m 33s</td>
+            <td>107k</td>
+            <td>2.2k</td>
+            <td><span class="dot">·</span></td>
+          </tr>
+          <tr>
+            <td class="model"><span class="mname">claude-fable-5 Max effort</span></td>
+            <td style="font-weight:700;">34</td>
+            <td>125m 9s</td>
+            <td>1186k</td>
+            <td>34.9k</td>
+            <td><span class="dot">·</span></td>
+          </tr>
+          <tr>
+            <td class="model"><span class="mname">kimi-code/k3</span></td>
+            <td style="font-weight:700;">10</td>
+            <td>14m 55s</td>
+            <td><span class="dot">·</span></td>
+            <td><span class="dot">·</span></td>
+            <td><span class="dot">·</span></td>
+          </tr>
+          <tr>
+            <td class="model"><span class="mname">claude-opus-4-8</span></td>
+            <td style="font-weight:700;">10</td>
+            <td>20m 47s</td>
+            <td>181k</td>
+            <td>18.1k</td>
+            <td>$4.52</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============================ Footer ============================ -->
+<footer class="site-footer">
+  <div class="wrap">
+    <span class="dots" aria-hidden="true"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+    <div class="foot-grid">
+      <div class="foot-about">
+        <p><b>Gauntlet v1, frozen 2026-07-10.</b> Human scores by Beau, on camera. Arena scores by a cross-vendor AI judge panel. <span class="ulink">The protocol</span> is public.</p>
+        <p>Every run happens inside <span class="ulink">Beckon</span>. Say the word. Your agents build.</p>
+      </div>
+      <div class="foot-cta" id="join">
+        <a class="btn" href="#join">Join Discord</a>
+        <span class="hint">Season 1 runs are public — prompts, artifacts, scores.</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
