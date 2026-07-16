@@ -422,7 +422,6 @@ const versus = comparisons
 <video class="artifact" controls muted loop playsinline preload="metadata" src="${vurl(f)}"></video>
 <p class="versus-line">${chips}<a class="more" href="test/${t.id}.html">Full result</a></p>
 ${verdict}
-${match ? voteBlock(match) : ''}
 </article>`;
   })
   .join('\n');
@@ -495,12 +494,27 @@ const indexBody = `
   ${leaderboardTable}
   <p class="dim">Runs first try · polish · prompt adherence · wow factor — ten points per test, ties to the cheaper run. ◌ run captured, no score. New runs are decided by the People's Vote and the AI panel.</p>
   </div>
-  <nav class="jump">${versus ? '<a href="#watch">Watch &amp; vote</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
+  <nav class="jump">${matches.length ? '<a href="#vote">Cast your votes</a>' : ''}${versus ? '<a href="#watch">Head-to-heads</a>' : ''}<a href="#arena">Arena</a><a href="#efficiency">Efficiency</a><a href="tests.html">The 8 tests</a></nav>
 </section>
 
+${matches.length ? `<section class="reveal" id="vote">
+  <h2>Cast your votes <span class="tag">people's vote</span></h2>
+  <p class="dim">Blind head-to-heads, decided by you. Watch the artifacts, pick your winner — every vote is logged publicly.</p>
+  <div class="versus-grid ballots">
+${matches.map((m) => {
+  const t = tests.find((x) => x.id === m.test);
+  return `<article class="card ballot">
+<h3>${t ? `${t.num} · ${esc(capTitle(t))}` : esc(m.test)}</h3>
+<p class="versus-line">${esc(nameOfSlug(m.model_a))} <span class="dim">vs</span> ${esc(nameOfSlug(m.model_b))}<a class="more" href="test/${esc(m.test)}.html">Watch</a></p>
+${voteBlock(m)}
+</article>`;
+}).join('\n')}
+  </div>
+</section>` : ''}
+
 ${versus ? `<section class="reveal" id="watch">
-  <h2>Head-to-heads <span class="tag">watch &amp; vote</span></h2>
-  <p class="dim">Same prompt, same clock, side by side. Watch the runs and pick your winner.</p>
+  <h2>Head-to-heads <span class="tag">side by side</span></h2>
+  <p class="dim">Same prompt, same clock, side by side.</p>
   <div class="versus-grid">
 ${versus}
   </div>

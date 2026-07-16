@@ -310,3 +310,9 @@ html { scroll-behavior: smooth; }
 /* ---------- brand mark ---------- */
 .brand { display: inline-flex; align-items: center; gap: .55rem; }
 .brandmark { height: 26px; width: auto; display: block; }
+
+/* ballots — "Cast your votes" section (compact vote cards) */
+.ballots { grid-template-columns: repeat(auto-fill, minmax(min(19rem, 100%), 1fr)); gap: 0.9rem; }
+.card.ballot { padding: 0.85rem 1rem; }
+.card.ballot h3 { font-size: 0.85rem; margin: 0 0 0.35rem; }
+.card.ballot .versus-line { font-size: 0.8rem; margin: 0 0 0.45rem; }

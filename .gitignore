@@ -26,3 +26,5 @@ site/dist/
 .env
 .vercel
 .env*
+# rendered video archive (large MP4s; site-published comparisons live in results/comparisons/)
+recordings/
