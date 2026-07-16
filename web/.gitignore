@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+# synced from results/ + site/ by scripts/sync-assets.mjs — never hand-edit
+public/a/
+public/videos/
+public/favicon.png
+public/apple-touch-icon.png
+public/brand-hand.png
+public/og.png
