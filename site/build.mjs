@@ -235,9 +235,9 @@ ${body}
 })();
 </script>
 <footer>
-  <p>Gauntlet v1, frozen 2026-07-10. Human scores by Beau, on camera. Arena scores by a cross-vendor AI judge panel. <a href="${root}tests.html">The protocol</a> is public.</p>
+  <p>Gauntlet v1, frozen 2026-07-10. Verdicts: the People's Vote and a cross-vendor AI judge panel; Human Scores through 2026-07-16 stand as history (Ruling #6). <a href="${root}tests.html">The protocol</a> is public.</p>
   <p>Every run happens inside <a href="https://heybeckon.ai">Beckon</a>. Say the word. Your agents build.</p>
-  <p class="dim"><a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer">Join Discord</a></p>
+  <p class="dim"><a href="${root}exhibits/k3-redesign/">Exhibit: Kimi K3's one-shot redesign of this site</a> · <a href="https://discord.gg/5C8Gwj3MVa" target="_blank" rel="noopener noreferrer">Join Discord</a></p>
 </footer>
 </body>
 </html>`;
@@ -692,6 +692,10 @@ else console.warn('WARN: site/og.png missing; social cards will 404 until it exi
 
 for (const f of ['favicon.png', 'apple-touch-icon.png', 'brand-hand.png'])
   if (existsSync(join(HERE, f))) cpSync(join(HERE, f), join(DIST, f));
+
+// exhibits: static one-shot artifacts shown as-is ("here was the redesign"),
+// never wired into the live data — see exhibition/ provenance in the repo
+if (existsSync(join(HERE, 'exhibits'))) cpSync(join(HERE, 'exhibits'), join(DIST, 'exhibits'), { recursive: true });
 
 writeFileSync(join(DIST, 'style.css'), readFileSync(join(HERE, 'style.css')));
 writeFileSync(join(DIST, 'index.html'), page({ title: 'Leaderboard', active: 'Leaderboard', body: indexBody }));
