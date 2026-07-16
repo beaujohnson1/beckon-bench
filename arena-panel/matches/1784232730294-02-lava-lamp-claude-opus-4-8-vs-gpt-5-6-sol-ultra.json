@@ -1,0 +1,44 @@
+{
+  "id": "1784232730294-02-lava-lamp-claude-opus-4-8-vs-gpt-5-6-sol-ultra",
+  "date": "2026-07-16T20:12:10.294Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model_a": "claude-opus-4-8",
+  "model_b": "gpt-5-6-sol-ultra",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": false,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "Model B delivers an incredibly polished, fully shader-rendered scene with stunning lighting, reflections, and glass effects. It also explicitly models the stretching and deformation of the wax blobs based on velocity and stress, making the physics feel much more realistic and hypnotic than standard circular metaballs.",
+      "cost_usd": 0.050478,
+      "latency_ms": 10027
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "A delivers a more complete, photorealistic lamp with full glass vessel, metallic base/cap, and metaball wax that deforms, merges, and cycles with convincing heat-driven buoyancy and slow hypnotic pacing. B is solid but simpler in vessel detail and blob physics, with less organic stretch/split behavior.",
+      "cost_usd": 0.037162,
+      "latency_ms": 2516
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": true,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "Model A delivers a far more polished and realistic lava lamp: a full WebGL2 shader renders the glass, liquid, wax, metallic base/cap/collar with specular lighting, temperature-driven color, heater glow, vignette, and tone mapping, while the physics includes thermal exchange, viscosity, stress-based anisotropic stretching for convincing merge/split deformation. Model B is solid but visually simpler and less hypnotic.",
+      "cost_usd": 0.0073764342,
+      "latency_ms": 9685
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-opus-4-8": 0,
+    "gpt-5-6-sol-ultra": 3
+  },
+  "winner": "gpt-5-6-sol-ultra",
+  "total_cost_usd": 0.095
+}

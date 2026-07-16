@@ -1,0 +1,44 @@
+{
+  "id": "1784232708061-02-lava-lamp-claude-fable-5-max-vs-kimi-k3",
+  "date": "2026-07-16T20:11:48.061Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model_a": "claude-fable-5-max",
+  "model_b": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A uses a brilliant WebGL shader to calculate metaball gradients for 3D-like normal mapping and specular highlights, resulting in incredibly realistic, volumetric wax. The physics simulation is highly sophisticated, perfectly capturing the hypnotic pacing and fluid dynamics requested.",
+      "cost_usd": 0.0276518,
+      "latency_ms": 8253
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers superior polish with a realistic lamp vessel, WebGL metaballs that stretch/deform/merge with temperature-based shading and glass effects, plus a carefully tuned slow physics sim that feels hypnotic. It fully meets the single-file, no-external, wax-like blob requirements while adding wow via interactive stir and warm-start.",
+      "cost_usd": 0.032398,
+      "latency_ms": 1917
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers superior visual polish with a WebGL metaball shader featuring velocity-based stretching, temperature-weighted coloring, and normal-based lighting, plus a detailed CSS lamp housing and a Canvas2D fallback. The physics model is more sophisticated with inter-blob heat conduction, lane systems, and a warm-up phase ensuring immediate action.",
+      "cost_usd": 0.022791,
+      "latency_ms": 4669
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 3,
+    "kimi-k3": 0
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.0828
+}

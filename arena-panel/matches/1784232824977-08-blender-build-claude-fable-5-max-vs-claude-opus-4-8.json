@@ -1,0 +1,44 @@
+{
+  "id": "1784232824977-08-blender-build-claude-fable-5-max-vs-claude-opus-4-8",
+  "date": "2026-07-16T20:13:44.977Z",
+  "gauntlet_version": "v1",
+  "test": "08-blender-build",
+  "model_a": "claude-fable-5-max",
+  "model_b": "claude-opus-4-8",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": true,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model B delivers a much more realistic and appetizing result, particularly with the soft dough texture which looks baked rather than rocky like Model A. The lighting, depth of field, and glossy icing reflections in Model B also show a higher level of polish and aesthetic quality.",
+      "cost_usd": 0.011616,
+      "latency_ms": 13995
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more appetizing composition with denser multicolored sprinkles, realistic glossy icing drips, soft dough texture, and a convincing wooden table surface under soft lighting. Model B has a flatter background, fewer sprinkles, and less detailed dough, making A superior in polish and prompt adherence for the classic delicious donut scene.",
+      "cost_usd": 0.009666,
+      "latency_ms": 7758
+    },
+    {
+      "judge": "qwen3-vl-235b",
+      "model_id": "qwen/qwen3-vl-235b-a22b-instruct",
+      "swapped": true,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model A’s render has superior material realism—notice the detailed dough texture, natural icing drip, and wood grain—plus more dynamic lighting that enhances appetizing appeal. Model B’s donut appears overly smooth and plastic-like, with flat lighting and a less convincing table surface.",
+      "cost_usd": 0.00107273,
+      "latency_ms": 21134
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 2,
+    "claude-opus-4-8": 1
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.0224
+}

@@ -11,7 +11,7 @@ exhibition/
 .cursor/
 .mcp.json
 # internal production docs
-RUNSHEET.md
+RUNSHEET*.md
 V2-IDEAS.md
 ARENA.md
 # producer tooling (capture/render pipeline)

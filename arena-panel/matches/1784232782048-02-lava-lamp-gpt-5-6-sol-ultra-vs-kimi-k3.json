@@ -1,0 +1,44 @@
+{
+  "id": "1784232782048-02-lava-lamp-gpt-5-6-sol-ultra-vs-kimi-k3",
+  "date": "2026-07-16T20:13:02.048Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model_a": "gpt-5-6-sol-ultra",
+  "model_b": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": true,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "Model B uses a WebGL shader to create an incredibly realistic, beautifully lit simulation with glass reflections, specular highlights, and smooth metaball merging. The visual polish and hypnotic pacing perfectly capture the mesmerizing feel of a real lava lamp, far exceeding the basic 2D canvas approach of Model A.",
+      "cost_usd": 0.046356,
+      "latency_ms": 9630
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "kimi-k3",
+      "reasoning": "Model A fully meets the deform/merge/split requirement with explicit blob physics, a bottom pool that regenerates wax, and slow hypnotic pacing that stays alive for a full minute, all in plain canvas so it works by simply opening the file. Model B’s WebGL look is prettier but its particles only soft-attract without true merge/split and it can fail entirely without WebGL 2.",
+      "cost_usd": 0.034482,
+      "latency_ms": 2085
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "gpt-5-6-sol-ultra",
+      "reasoning": "Model A leverages a WebGL2 fragment shader with GPU-computed metaballs, proper surface normals, specular highlights, and temperature-based coloring, producing a far more realistic and visually polished lava lamp with detailed glass, base, and cap geometry. Model B's CPU metaball approach with Canvas 2D is competent and includes explicit merge/split logic, but its visual quality and lighting fall short of A's hypnotic, photoreal rendering.",
+      "cost_usd": 0.00547148655,
+      "latency_ms": 12597
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "gpt-5-6-sol-ultra": 2,
+    "kimi-k3": 1
+  },
+  "winner": "gpt-5-6-sol-ultra",
+  "total_cost_usd": 0.0863
+}

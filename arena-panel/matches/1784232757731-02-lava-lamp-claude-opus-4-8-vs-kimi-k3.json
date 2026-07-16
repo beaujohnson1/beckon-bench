@@ -1,0 +1,44 @@
+{
+  "id": "1784232757731-02-lava-lamp-claude-opus-4-8-vs-kimi-k3",
+  "date": "2026-07-16T20:12:37.731Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model_a": "claude-opus-4-8",
+  "model_b": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": false,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model A delivers an incredibly polished visual experience by using a WebGL shader to calculate metaballs with 3D lighting and specular highlights. The CSS-based lamp casing is highly realistic, and the fluid dynamics perfectly capture the slow, hypnotic pacing requested.",
+      "cost_usd": 0.046084,
+      "latency_ms": 12228
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "claude-opus-4-8",
+      "reasoning": "B delivers superior polish with a realistic metallic lamp frame, glass sheen, and WebGL metaballs that produce smooth, organic wax deformation, merging, and temperature-based color with proper lighting. Both meet the single-file and physics requirements, but B's hypnotic pacing, pool interaction, and visual fidelity create a more mesmerizing result.",
+      "cost_usd": 0.031376,
+      "latency_ms": 2033
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model A's WebGL shader produces smoother, higher-quality metaball surfaces with proper lighting and specular highlights, and its CSS lamp body (metallic cap, glass sheen, base) is more visually polished. Model B has solid merge/split physics but its coarse Canvas2D grid yields lower visual fidelity.",
+      "cost_usd": 0.0168233,
+      "latency_ms": 13173
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-opus-4-8": 3,
+    "kimi-k3": 0
+  },
+  "winner": "claude-opus-4-8",
+  "total_cost_usd": 0.0943
+}

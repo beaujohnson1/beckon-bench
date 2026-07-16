@@ -1,0 +1,44 @@
+{
+  "id": "1784232853572-08-blender-build-claude-fable-5-max-vs-kimi-k3",
+  "date": "2026-07-16T20:14:13.572Z",
+  "gauntlet_version": "v1",
+  "test": "08-blender-build",
+  "model_a": "claude-fable-5-max",
+  "model_b": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a highly polished, realistic render with excellent materials, lighting, and depth of field that perfectly captures the requested aesthetic. Model B suffers from basic materials, spherical sprinkles, and an incomplete background.",
+      "cost_usd": 0.010696,
+      "latency_ms": 20497
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more polished, appetizing render with realistic rod-shaped sprinkles, glossy icing drips, soft dough texture, and natural lighting on a wooden surface that better matches the classic beginner scene. Model B's spherical sprinkles and harsher lighting look less convincing and less delicious overall.",
+      "cost_usd": 0.009618,
+      "latency_ms": 3747
+    },
+    {
+      "judge": "qwen3-vl-235b",
+      "model_id": "qwen/qwen3-vl-235b-a22b-instruct",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A’s render has superior polish with realistic glossy icing, natural sprinkle distribution, and warm, appetizing lighting on a wood-textured table. Model B’s scene feels flat with artificial lighting, less convincing materials, and a distracting black background.",
+      "cost_usd": 0.00123266,
+      "latency_ms": 4328
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 3,
+    "kimi-k3": 0
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.0215
+}

@@ -1,0 +1,44 @@
+{
+  "id": "1784232580649-02-lava-lamp-claude-fable-5-max-vs-claude-opus-4-8",
+  "date": "2026-07-16T20:09:40.649Z",
+  "gauntlet_version": "v1",
+  "test": "02-lava-lamp",
+  "model_a": "claude-fable-5-max",
+  "model_b": "claude-opus-4-8",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a highly realistic, classic lava lamp shape with exceptional fluid physics and metaball shading. It even pre-warms the simulation so the mesmerizing action is ready the second you open the file, perfectly capturing the requested pacing and aesthetic.",
+      "cost_usd": 0.046928,
+      "latency_ms": 9706
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model A delivers superior polish with a full metallic lamp fixture, glass sheen, and high-quality metaball shading that produces organic deforming/merging wax, plus a robust WebGL+fallback path. Its denser blob population and thermal cycle better achieve the required slow hypnotic pacing and realistic non-rigid behavior over a full minute.",
+      "cost_usd": 0.035168,
+      "latency_ms": 2472
+    },
+    {
+      "judge": "glm-5-2",
+      "model_id": "z-ai/glm-5.2",
+      "swapped": false,
+      "vote": "claude-fable-5-max",
+      "reasoning": "Model A delivers a more realistic lava lamp vessel shape (tapered glass, classic cone base) and its shader includes velocity-based blob stretching, glass streaks, and rim lighting for superior visual polish. Model B's rectangular glass body looks less like a real lava lamp, undercutting the realism the task asked for.",
+      "cost_usd": 0.022945518,
+      "latency_ms": 13768
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-fable-5-max": 2,
+    "claude-opus-4-8": 1
+  },
+  "winner": "claude-fable-5-max",
+  "total_cost_usd": 0.105
+}

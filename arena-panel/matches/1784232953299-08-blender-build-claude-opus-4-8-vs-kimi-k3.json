@@ -1,0 +1,44 @@
+{
+  "id": "1784232953299-08-blender-build-claude-opus-4-8-vs-kimi-k3",
+  "date": "2026-07-16T20:15:53.299Z",
+  "gauntlet_version": "v1",
+  "test": "08-blender-build",
+  "model_a": "claude-opus-4-8",
+  "model_b": "kimi-k3",
+  "judges": [
+    {
+      "judge": "gemini-3-1-pro",
+      "model_id": "google/gemini-3.1-pro-preview",
+      "swapped": true,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model B features a much more realistic dough texture and uses the classic cylindrical sprinkles, whereas Model A uses spheres and has a noticeable error with the plate floating above the table. Model B's lighting and depth of field also create a more appetizing and polished final composition.",
+      "cost_usd": 0.010984,
+      "latency_ms": 24555
+    },
+    {
+      "judge": "grok-4-5",
+      "model_id": "x-ai/grok-4.5",
+      "swapped": true,
+      "vote": "claude-opus-4-8",
+      "reasoning": "Model B delivers superior polish with realistic rod-shaped sprinkles, textured soft dough, glossy icing drips, and a ceramic plate under soft lighting for a more appetizing composition. Model A uses less convincing spherical sprinkles and a flatter wood table with harsher lighting, making B the stronger visual match overall.",
+      "cost_usd": 0.00963,
+      "latency_ms": 8260
+    },
+    {
+      "judge": "qwen3-vl-235b",
+      "model_id": "qwen/qwen3-vl-235b-a22b-instruct",
+      "swapped": true,
+      "vote": "kimi-k3",
+      "reasoning": "Model A’s render has more realistic lighting and shadowing, with a richer wood texture and more natural icing drips, making the scene more appetizing and visually grounded. The sprinkles are varied and scattered more naturally, enhancing the overall wow factor.",
+      "cost_usd": 0.00106323,
+      "latency_ms": 17843
+    }
+  ],
+  "dry_run": false,
+  "votes": {
+    "claude-opus-4-8": 2,
+    "kimi-k3": 1
+  },
+  "winner": "claude-opus-4-8",
+  "total_cost_usd": 0.0217
+}
