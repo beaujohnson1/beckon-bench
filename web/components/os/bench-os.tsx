@@ -12,7 +12,7 @@ import { useDrag } from './use-drag';
 import { BootScreen } from './boot';
 import { StartMenu, type MenuData } from './start-menu';
 import { BenchAmp } from './benchamp';
-import { BSOD } from './bsod';
+import { BSOD, type Crash } from './bsod';
 
 const LEFT_RAIL = [
   { href: '/', icon: 'leaderboard', label: 'Leaderboard' },
@@ -74,7 +74,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
   const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
   const [start, setStart] = useState(false);
   const [amp, setAmp] = useState<'closed' | 'open' | 'min'>('closed');
-  const [bsod, setBsod] = useState(false);
+  const [bsod, setBsod] = useState<Crash | null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reset(); setWin('open'); setStart(false); }, [path]);
 
@@ -135,7 +135,8 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
             <DesktopIcon key={it.label} {...it} active={false} external={'external' in it && it.external} />
           ))}
           <DesktopIcon icon="amp" label="BenchAmp" onClick={() => setAmp('open')} />
-          <DesktopIcon icon="bin" label="Recycle Bin" onClick={() => setBsod(true)} />
+          <DesktopIcon icon="bonsai" label="Bonsai Buddy" onClick={() => setBsod('bonsai')} />
+          <DesktopIcon icon="bin" label="Recycle Bin" onClick={() => setBsod('bin')} />
         </nav>
       </div>
 
@@ -176,7 +177,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
       {amp !== 'closed' && (
         <BenchAmp state={amp} onMin={() => setAmp('min')} onClose={() => setAmp('closed')} />
       )}
-      {bsod && <BSOD onWake={() => setBsod(false)} />}
+      {bsod && <BSOD crash={bsod} onWake={() => setBsod(null)} />}
     </div>
   );
 }

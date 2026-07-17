@@ -60,6 +60,13 @@ const ICONS: Record<string, Px[]> = {
     [9, 5, 3, 7, N], [10, 6, 1, 5, T],
     [11, 2, 1, 4, K], [10, 2, 3, 1, K],
   ],
+  // bonsai buddy — do not click. (a literal bonsai; any resemblance to
+  // helpful purple animals is your own traumatic memory)
+  bonsai: [
+    [6, 1, 5, 3, GR], [4, 2, 4, 3, GR], [9, 3, 4, 3, GR], [3, 3, 3, 2, '#1d6b43'], [10, 2, 2, 2, '#1d6b43'],
+    [7, 4, 2, 2, GDD], [6, 6, 2, 1, GDD], [8, 7, 2, 1, GDD], [7, 5, 2, 3, GDD],
+    [4, 8, 8, 1, K], [5, 9, 6, 3, R], [5, 9, 6, 1, '#8a1a12'], [4, 12, 8, 1, K],
+  ],
   // recycle bin — where voided runs go
   bin: [
     [4, 2, 8, 1, G], [3, 3, 10, 1, K],
