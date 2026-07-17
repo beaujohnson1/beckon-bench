@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CATS, orderedTests, groupStarts, capTitle, shortName, scoredModels, panelFor, type Model } from '@/lib/data';
 import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/ui/table';
 import { ScoreChip } from '@/components/score-chip';
+import { ProviderLogo } from '@/components/provider-logo';
 import { cn } from '@/lib/utils';
 
 // Shared board chrome so every table on the site reads identically.
@@ -41,7 +42,9 @@ function ModelCell({ m, rank }: { m: Model; rank?: number }) {
           <Link href={`/model/${m.slug}/`} title={m.meta.model_id || m.slug} className="font-semibold hover:text-primary">
             {shortName(m)}
           </Link>
-          <div className="text-xs text-muted-foreground">{m.meta.provider || ''}</div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <ProviderLogo provider={m.meta.provider} /> {m.meta.provider || ''}
+          </div>
         </div>
       </div>
     </TableCell>
