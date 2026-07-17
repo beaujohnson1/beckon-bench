@@ -13,46 +13,71 @@ export type MenuData = {
   stats: { leader: string; elo: number | null; ballots: number };
 };
 
-// Original modem-handshake impression via WebAudio: dial tone, DTMF digits,
-// answer tone, warble, noise burst. ~2.6s. No samples, no copyrights.
+// Synthesized V.90-style handshake, following the real sequence everyone's
+// ear remembers: dial tone → digits → ring → 2100Hz answer tone → FSK
+// warble → the two loud "DIING" bongs → two waves of training static, the
+// second louder. ~8s. No samples, no copyrights — just physics nostalgia.
 function playDialup(onDone: () => void) {
   const Ctx = window.AudioContext || (window as any).webkitAudioContext;
   const ctx = new Ctx();
   const master = ctx.createGain();
-  master.gain.value = 0.14;
+  master.gain.value = 0.15;
   master.connect(ctx.destination);
   const tone = (freqs: number[], t0: number, dur: number, gain = 1) => {
     freqs.forEach((f) => {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.frequency.value = f;
-      g.gain.setValueAtTime(gain / freqs.length, ctx.currentTime + t0);
-      g.gain.setValueAtTime(0.0001, ctx.currentTime + t0 + dur);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime + t0);
+      g.gain.linearRampToValueAtTime(gain / freqs.length, ctx.currentTime + t0 + 0.01);
+      g.gain.setValueAtTime(gain / freqs.length, ctx.currentTime + t0 + dur - 0.01);
+      g.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + t0 + dur);
       o.connect(g).connect(master);
       o.start(ctx.currentTime + t0);
       o.stop(ctx.currentTime + t0 + dur + 0.02);
     });
   };
-  // dial tone, then seven DTMF-ish digits
-  tone([350, 440], 0, 0.45);
+  const noise = (t0: number, dur: number, gain: number, freq: number, q: number, type: BiquadFilterType = 'bandpass') => {
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    const fadeIn = Math.floor(len * 0.03), fadeOut = Math.floor(len * 0.15);
+    for (let i = 0; i < len; i++) {
+      let env = 1;
+      if (i < fadeIn) env = i / fadeIn;
+      if (i > len - fadeOut) env = (len - i) / fadeOut;
+      d[i] = (Math.random() * 2 - 1) * env;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const f = ctx.createBiquadFilter();
+    f.type = type; f.frequency.value = freq; f.Q.value = q;
+    const g = ctx.createGain(); g.gain.value = gain;
+    src.connect(f).connect(g).connect(master);
+    src.start(ctx.currentTime + t0);
+  };
+
+  // 0.0  dial tone
+  tone([350, 440], 0, 0.7, 0.9);
+  // 0.8  seven DTMF digits
   const dtmf = [[697, 1209], [770, 1336], [852, 1477], [697, 1336], [941, 1209], [770, 1477], [852, 1336]];
-  dtmf.forEach((pair, i) => tone(pair, 0.55 + i * 0.11, 0.08));
-  // answer tone + carrier warble
-  tone([2100], 1.5, 0.35, 0.8);
-  tone([980], 1.9, 0.12); tone([1180], 2.02, 0.12); tone([980], 2.14, 0.12); tone([1650], 2.26, 0.14);
-  // noise burst (the screech)
-  const len = Math.floor(ctx.sampleRate * 0.5);
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const bp = ctx.createBiquadFilter();
-  bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.8;
-  const ng = ctx.createGain(); ng.gain.value = 0.5;
-  src.connect(bp).connect(ng).connect(master);
-  src.start(ctx.currentTime + 2.4);
-  setTimeout(() => { ctx.close(); onDone(); }, 3000);
+  dtmf.forEach((pair, i) => tone(pair, 0.8 + i * 0.12, 0.09));
+  // 1.9  one ringback
+  tone([440, 480], 1.9, 0.9, 0.7);
+  // 3.1  answer tone: 2100Hz with the characteristic phase-reversal gaps
+  tone([2100], 3.1, 0.42, 0.65); tone([2100], 3.56, 0.42, 0.65); tone([2100], 4.02, 0.3, 0.65);
+  // 4.4  V.21-ish FSK warble — fast alternating chirps, low and high channel
+  const fsk = [980, 1180, 980, 1650, 1850, 1180, 1650, 980, 1850, 1180];
+  fsk.forEach((f, i) => tone([f], 4.4 + i * 0.065, 0.06, 0.5));
+  // 5.15 the two loud bongs
+  tone([1150, 2250], 5.15, 0.22, 1.1);
+  tone([1150, 2250], 5.55, 0.22, 1.1);
+  // 5.9  training static, wave one (narrower, quieter)
+  noise(5.9, 0.85, 0.4, 1700, 1.2);
+  // 6.9  wave two — broadband, louder, rides out to the connect
+  noise(6.9, 1.5, 0.6, 900, 0.4, 'highpass');
+  tone([2750], 6.9, 0.1, 0.3); // little squeal on top, as tradition demands
+  setTimeout(() => { ctx.close(); onDone(); }, 8600);
 }
 
 function ConnectDialog({ onClose }: { onClose: () => void }) {
@@ -60,10 +85,12 @@ function ConnectDialog({ onClose }: { onClose: () => void }) {
   const done = useRef(false);
   useEffect(() => {
     playDialup(() => { done.current = true; });
-    const t1 = setTimeout(() => setStatus('Verifying receipts…'), 1400);
-    const t2 = setTimeout(() => setStatus('CONNECT 56000 bps — welcome to the bench.'), 2900);
-    const t3 = setTimeout(onClose, 5200);
-    return () => [t1, t2, t3].forEach(clearTimeout);
+    const t1 = setTimeout(() => setStatus('Ringing…'), 1900);
+    const t2 = setTimeout(() => setStatus('Handshaking…'), 3200);
+    const t3 = setTimeout(() => setStatus('Training… verifying receipts…'), 6000);
+    const t4 = setTimeout(() => setStatus('CONNECT 56000 bps — welcome to the bench.'), 8500);
+    const t5 = setTimeout(onClose, 11000);
+    return () => [t1, t2, t3, t4, t5].forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return (
