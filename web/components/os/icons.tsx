@@ -60,6 +60,12 @@ const ICONS: Record<string, Px[]> = {
     [9, 5, 3, 7, N], [10, 6, 1, 5, T],
     [11, 2, 1, 4, K], [10, 2, 3, 1, K],
   ],
+  // messenger — two buddies, one conversation
+  msn: [
+    [2, 4, 5, 5, K], [3, 5, 3, 3, GR], [3, 10, 3, 4, GR], [2, 10, 1, 4, K], [6, 10, 1, 4, K],
+    [9, 4, 5, 5, K], [10, 5, 3, 3, N], [10, 10, 3, 4, N], [9, 10, 1, 4, K], [13, 10, 1, 4, K],
+    [6, 2, 4, 1, W], [5, 3, 2, 1, W], [9, 3, 2, 1, W],
+  ],
   // bonsai buddy — do not click. (a literal bonsai; any resemblance to
   // helpful purple animals is your own traumatic memory)
   bonsai: [

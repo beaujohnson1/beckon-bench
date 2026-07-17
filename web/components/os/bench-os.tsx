@@ -12,6 +12,7 @@ import { useDrag } from './use-drag';
 import { BootScreen } from './boot';
 import { StartMenu, type MenuData } from './start-menu';
 import { BenchAmp } from './benchamp';
+import { Messenger } from './messenger';
 import { BSOD, type Crash } from './bsod';
 
 const LEFT_RAIL = [
@@ -74,6 +75,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
   const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
   const [start, setStart] = useState(false);
   const [amp, setAmp] = useState<'closed' | 'open' | 'min'>('closed');
+  const [msn, setMsn] = useState<'closed' | 'open' | 'min'>('closed');
   const [bsod, setBsod] = useState<Crash | null>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reset(); setWin('open'); setStart(false); }, [path]);
@@ -135,6 +137,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
             <DesktopIcon key={it.label} {...it} active={false} external={'external' in it && it.external} />
           ))}
           <DesktopIcon icon="amp" label="BenchAmp" onClick={() => setAmp('open')} />
+          <DesktopIcon icon="msn" label="Messenger" onClick={() => setMsn('open')} />
           <DesktopIcon icon="bonsai" label="Bonsai Buddy" onClick={() => setBsod('bonsai')} />
           <DesktopIcon icon="bin" label="Recycle Bin" onClick={() => setBsod('bin')} />
         </nav>
@@ -170,12 +173,25 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
             <span className="hidden sm:inline">BenchAmp</span>
           </button>
         )}
+        {msn !== 'closed' && (
+          <button
+            onClick={() => setMsn(msn === 'open' ? 'min' : 'open')}
+            className={`flex items-center gap-1.5 px-2 py-0.5 font-mono text-sm ${msn === 'open' ? 'bevel-in bg-muted font-bold' : 'bevel-out bg-background'}`}
+            title={msn === 'open' ? 'Minimize Messenger' : 'Restore Messenger'}
+          >
+            <PixelIcon name="msn" size={14} />
+            <span className="hidden sm:inline">Messenger</span>
+          </button>
+        )}
         <span className="bevel-in ml-auto flex items-center gap-2 px-3 py-0.5 text-sm">
           <Clock />
         </span>
       </div>
       {amp !== 'closed' && (
         <BenchAmp state={amp} onMin={() => setAmp('min')} onClose={() => setAmp('closed')} />
+      )}
+      {msn !== 'closed' && (
+        <Messenger state={msn} onMin={() => setMsn('min')} onClose={() => setMsn('closed')} />
       )}
       {bsod && <BSOD crash={bsod} onWake={() => setBsod(null)} />}
     </div>
