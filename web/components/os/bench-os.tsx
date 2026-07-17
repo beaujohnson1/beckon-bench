@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PixelIcon } from './icons';
+import { useDrag } from './use-drag';
+import { BootScreen } from './boot';
 
 const LEFT_RAIL = [
   { href: '/', icon: 'leaderboard', label: 'Leaderboard' },
@@ -63,9 +65,13 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href.replace(/\/$/, '')));
   const title = windowTitle(path);
+  const { pos, reset, handlers } = useDrag();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => reset(), [path]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-desktop">
+      <BootScreen />
       <div className="flex min-h-0 flex-1 gap-2 p-3 sm:gap-4">
         {/* left rail */}
         <nav className="hidden shrink-0 flex-col gap-3 pt-2 sm:flex">
@@ -74,9 +80,12 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* the window */}
-        <div className="bevel-out flex min-h-0 min-w-0 flex-1 flex-col bg-background p-1">
-          <div className="os-titlebar flex items-center gap-2 px-2 py-1">
+        {/* the window — draggable by its title bar, double-click to snap back */}
+        <div
+          className="bevel-out flex min-h-0 min-w-0 flex-1 flex-col bg-background p-1"
+          style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+        >
+          <div className="os-titlebar flex cursor-default select-none items-center gap-2 px-2 py-1" {...handlers}>
             <PixelIcon name="beckon" size={16} />
             <span className="text-sm font-bold tracking-wide">{title}</span>
             <span className="ml-auto flex gap-0.5">

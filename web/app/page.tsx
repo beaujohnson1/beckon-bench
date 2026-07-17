@@ -6,8 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableRow } from '@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart } from '@/components/bar-chart';
 import { Scoreboard, PanelBoard, boardShell, boardTh } from '@/components/boards';
-import { ScoreChip } from '@/components/score-chip';
-import { VoteRow } from '@/components/vote-row';
+import { Theater } from '@/components/theater';
 import {
   tests, models, scoredModels, benchModels, matches, elo, comparisons, pairOf, vurl,
   shortName, nameOfSlug, capTitle, CATS, catScore, catScored, fmtTokens, fmtMins, fmtTime,
@@ -31,21 +30,44 @@ export default function Home() {
   const effItems = scoredModels.filter((m) => m.toks && m.total);
   const anyCost = scoredModels.some((m) => m.hasCost);
 
-  const versusCards = comparisons
-    .map((f) => {
-      const t = tests.find((x) => f.startsWith(x.id));
-      const pair = pairOf(f);
-      if (!t || !pair) return null;
-      const pairModels = pair.map((slug) => models.find((m) => m.slug === slug)).filter(Boolean);
-      const scored = pairModels
-        .filter((m) => m!.runs[t.id]?.score)
-        .sort((a, b) => b!.runs[t.id].score.total - a!.runs[t.id].score.total);
-      const match = matches.find(
-        (x) => x.test === t.id && pair.includes(x.model_a) && pair.includes(x.model_b)
-      );
-      return { f, t, pairModels, scored, match };
+  // Theater data: one tab per capability, one stage pairing per comparison video.
+  const dealias = (s: string) => s.replace(/\bModel [AB]\b/g, 'it').replace(/^it\b/, 'It');
+  const theaterTests = tests
+    .map((t) => {
+      const pairings = comparisons
+        .filter((f) => f.startsWith(t.id))
+        .map((f) => {
+          const pair = pairOf(f);
+          if (!pair) return null;
+          const pms = pair.map((slug) => models.find((m) => m.slug === slug)).filter(Boolean) as any[];
+          const match = matches.find(
+            (x) => x.test === t.id && pair.includes(x.model_a) && pair.includes(x.model_b)
+          );
+          let matchData = null;
+          if (match) {
+            const tally = match.judges.filter((j: any) => j.vote === match.winner).length;
+            const quoteSrc = match.judges.find((j: any) => j.vote === match.winner && j.reasoning);
+            matchData = {
+              id: match.id, aSlug: match.model_a, bSlug: match.model_b,
+              aName: nameOfSlug(match.model_a), bName: nameOfSlug(match.model_b),
+              winner: nameOfSlug(match.winner),
+              tally: `${tally}–${match.judges.length - tally}`,
+              quote: quoteSrc ? dealias(String(quoteSrc.reasoning).split(/(?<=[.!?])\s/)[0]) : undefined,
+              judge: quoteSrc?.judge,
+            };
+          }
+          return {
+            video: vurl(f),
+            models: pms
+              .map((m) => ({ slug: m.slug, name: shortName(m), score: m.runs[t.id]?.score?.total ?? null }))
+              .sort((a, b) => (b.score ?? -1) - (a.score ?? -1)),
+            match: matchData,
+          };
+        })
+        .filter(Boolean);
+      return { id: t.id, num: t.num, title: capTitle(t), pairings };
     })
-    .filter(Boolean) as any[];
+    .filter((t) => t.pairings.length) as any[];
 
   return (
     <>
@@ -173,67 +195,20 @@ export default function Home() {
         <Scoreboard />
         <nav className="mt-4 flex flex-wrap gap-4 font-mono text-xs font-semibold">
           {matches.length > 0 && <Link className="text-muted-foreground hover:text-primary" href="/vote/"><span className="text-primary"># </span>Cast your votes</Link>}
-          {versusCards.length > 0 && <a className="text-muted-foreground hover:text-primary" href="#watch"><span className="text-primary"># </span>Head-to-heads</a>}
+          {theaterTests.length > 0 && <a className="text-muted-foreground hover:text-primary" href="#watch"><span className="text-primary"># </span>The Theater</a>}
           <a className="text-muted-foreground hover:text-primary" href="#arena"><span className="text-primary"># </span>Arena</a>
           <a className="text-muted-foreground hover:text-primary" href="#efficiency"><span className="text-primary"># </span>Efficiency</a>
           <Link className="text-muted-foreground hover:text-primary" href="/tests/"><span className="text-primary"># </span>The 8 tests</Link>
         </nav>
 
-        {/* head-to-heads */}
-        {versusCards.length > 0 && (
+        {/* head-to-heads: the theater */}
+        {theaterTests.length > 0 && (
           <>
-            <SectionTitle id="watch" badge="side by side">Head-to-heads</SectionTitle>
-            <p className="mb-4 text-sm text-muted-foreground">Same prompt, same clock, side by side.</p>
-            <div className="grid gap-5 lg:grid-cols-2">
-              {versusCards.map(({ f, t, pairModels, scored, match }: any) => {
-                const tally = match ? match.judges.filter((j: any) => j.vote === match.winner).length : 0;
-                return (
-                  <Card key={f} className="overflow-hidden">
-                    <CardHeader>
-                      <CardTitle>
-                        <span className="text-muted-foreground">{t.num} ·</span> {capTitle(t)}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <video
-                        className="block w-full rounded-lg border border-border bg-black"
-                        controls muted loop playsInline preload="metadata"
-                        src={vurl(f)}
-                      />
-                      <p className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                        {(scored.length ? scored : pairModels).map((m: any, i: number) => (
-                          <span key={m.slug} className="flex items-center gap-2">
-                            {i > 0 && <span className="text-muted-foreground">vs</span>}
-                            <span className="font-semibold">{shortName(m)}</span>
-                            {m.runs[t.id]?.score && <ScoreChip score={m.runs[t.id].score.total} />}
-                          </span>
-                        ))}
-                        <Link href={`/test/${t.id}/`} className="ml-auto font-mono text-xs text-muted-foreground hover:text-primary">
-                          Full result →
-                        </Link>
-                      </p>
-                      {match && (
-                        <p className="mt-3 flex items-center gap-2 border-t border-border pt-3 text-sm">
-                          <Badge variant="info">AI panel</Badge>
-                          <span className="font-semibold">{nameOfSlug(match.winner)}</span>
-                          <b className="font-mono tabular-nums">{tally}–{match.judges.length - tally}</b>
-                          <Link href="/matches/" className="ml-auto font-mono text-xs text-muted-foreground hover:text-primary">
-                            Votes →
-                          </Link>
-                        </p>
-                      )}
-                      {match && (
-                        <VoteRow
-                          matchId={match.id}
-                          aSlug={match.model_a} bSlug={match.model_b}
-                          aName={nameOfSlug(match.model_a)} bName={nameOfSlug(match.model_b)}
-                        />
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+            <SectionTitle id="watch" badge="watch & vote">The Theater</SectionTitle>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Same prompt, same clock, side by side. Pick a capability, watch the runs, cast your vote.
+            </p>
+            <Theater tests={theaterTests} />
           </>
         )}
 

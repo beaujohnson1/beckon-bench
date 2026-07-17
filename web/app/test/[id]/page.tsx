@@ -3,6 +3,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScoreChip, PendingChip } from '@/components/score-chip';
 import { Artifact } from '@/components/artifact';
+import { NotepadButton } from '@/components/os/notepad';
 import { tests, models, comparisons, vurl, shortName, capTitle, catName, panelFor, fmtTokens } from '@/lib/data';
 
 export function generateStaticParams() {
@@ -42,7 +43,10 @@ export default async function TestPage({ params }: any) {
           <CardHeader><CardTitle>The prompt, verbatim</CardTitle></CardHeader>
           <CardContent>
             {t.prompt ? (
-              <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-border bg-black p-4 font-mono text-xs leading-relaxed text-foreground/90">{t.prompt}</pre>
+              <>
+                <pre className="overflow-x-auto whitespace-pre-wrap border border-border bg-[#fffef5] p-4 font-mono text-xs leading-relaxed">{t.prompt}</pre>
+                <div className="mt-2"><NotepadButton file={`${t.id}.txt`} content={t.prompt} /></div>
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">Agentic test. Harness rules are in the repo.</p>
             )}
@@ -94,6 +98,7 @@ export default async function TestPage({ params }: any) {
                             {s.stats?.time_seconds ? `${Math.round(s.stats.time_seconds / 60)}m. ` : ''}
                             {s.stats?.output_tokens ? `${fmtTokens(s.stats.output_tokens)} output tokens.` : ''}
                           </p>
+                          <div className="mt-1"><NotepadButton file="score.json" content={JSON.stringify(s, null, 2)} label={`${m.slug} — score.json`} /></div>
                         </>
                       )}
                     </div>

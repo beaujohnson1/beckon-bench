@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { NotepadButton } from '@/components/os/notepad';
 import { tests, capTitle, catName } from '@/lib/data';
 
 export const metadata = { title: 'Tests' };
@@ -32,9 +33,7 @@ export default function TestsPage() {
               </CardHeader>
               <CardContent>
                 {t.prompt ? (
-                  <pre className="overflow-x-auto whitespace-pre-wrap rounded-lg border border-border bg-black p-4 font-mono text-xs leading-relaxed text-foreground/90">
-                    {t.prompt}
-                  </pre>
+                  <NotepadButton file={`${t.id}.txt`} content={t.prompt} label={`${t.id}.txt — the prompt, verbatim`} />
                 ) : (
                   <p className="text-sm text-muted-foreground">Agentic test. Harness rules are in the repo.</p>
                 )}

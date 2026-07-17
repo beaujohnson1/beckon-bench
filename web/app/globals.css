@@ -121,6 +121,48 @@
 .os-icon.active .os-icon-label { background: #000080; text-shadow: none; }
 .os-icon:hover .os-icon-label { text-decoration: underline; }
 
+/* ---------- Win95 scrollbars (webkit) ---------- */
+::-webkit-scrollbar { width: 16px; height: 16px; }
+::-webkit-scrollbar-track {
+  background-color: #dfdfdf;
+  background-image: repeating-conic-gradient(#fff 0% 25%, #dfdfdf 0% 50%);
+  background-size: 2px 2px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #fff,
+              inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+}
+::-webkit-scrollbar-corner { background: #c0c0c0; }
+
+/* ---------- the theater stage (PostHog's tabbed demo, Win95 dress) ---------- */
+.stage { border: 3px solid #000080; background: #fff; }
+.stage-side { border-left: 3px solid #000080; }
+@media (max-width: 1023px) { .stage-side { border-left: none; border-top: 3px solid #000080; } }
+
+/* ---------- dialogs, notepad, menubar ---------- */
+.menubar { display: flex; gap: 2px; padding: 1px 2px; font-size: 13px; }
+.menubar > span { padding: 1px 7px; }
+.menubar > span:hover { background: #000080; color: #fff; }
+.groupbox {
+  border: 1px solid #808080;
+  box-shadow: 1px 1px 0 #fff, inset 1px 1px 0 #fff;
+  padding: 14px 12px 10px;
+  position: relative;
+}
+.groupbox > legend, .groupbox-label {
+  position: absolute; top: -9px; left: 8px; background: #c0c0c0; padding: 0 4px; font-size: 12px;
+}
+
+/* ---------- boot screen ---------- */
+.boot {
+  position: fixed; inset: 0; z-index: 100; background: #000;
+  color: #c8c8c8; font-family: var(--font-mono); font-size: 14px; line-height: 1.7;
+  padding: 3rem; cursor: pointer;
+}
+.boot.done { opacity: 0; pointer-events: none; transition: opacity .45s ease; }
+.boot .ok { color: #22f284; }
+
 /* DOS prompt cursor */
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 .cursor-blink {
