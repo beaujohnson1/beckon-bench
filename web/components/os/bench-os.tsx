@@ -20,6 +20,7 @@ const LEFT_RAIL = [
   { href: '/vote/', icon: 'vote', label: 'Vote' },
   { href: '/matches/', icon: 'arena', label: 'Arena' },
   { href: '/tests/', icon: 'tests', label: 'The 8 Tests' },
+  { href: '/blog/', icon: 'news', label: 'Gazette' },
 ] as const;
 
 const RIGHT_RAIL = [
@@ -28,6 +29,7 @@ const RIGHT_RAIL = [
 ] as const;
 
 function windowTitle(path: string): string {
+  if (path.startsWith('/blog')) return 'Bench Gazette';
   if (path.startsWith('/vote')) return 'Voting Booth';
   if (path.startsWith('/matches')) return 'Arena — Models Judging Models';
   if (path.startsWith('/tests')) return 'The 8 Tests';

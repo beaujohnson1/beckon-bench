@@ -195,6 +195,7 @@ export function StartMenu({ data, onClose }: { data: MenuData; onClose: () => vo
     { name: 'Voting Booth', href: '/vote/' },
     { name: 'Arena', href: '/matches/' },
     { name: 'The 8 Tests', href: '/tests/' },
+    { name: 'Bench Gazette', href: '/blog/' },
   ];
 
   return (

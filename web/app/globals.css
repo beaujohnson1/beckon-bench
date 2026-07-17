@@ -154,6 +154,24 @@
   position: absolute; top: -9px; left: 8px; background: #c0c0c0; padding: 0 4px; font-size: 12px;
 }
 
+/* ---------- gazette prose ---------- */
+.prose { font-size: 1rem; line-height: 1.75; max-width: 65ch; }
+.prose p { margin: 0.9em 0; }
+.prose h2 { font-family: var(--font-mono); font-weight: 700; font-size: 1.35rem; margin: 1.8em 0 0.5em; }
+.prose h2::before { content: "❯ "; color: var(--color-primary); }
+.prose a { color: #000080; text-decoration: underline; text-underline-offset: 3px; }
+.prose a:hover { background: #000080; color: #fff; }
+.prose strong { font-weight: 700; }
+.prose blockquote {
+  margin: 1.2em 0; padding: 0.6em 1em; border-left: 4px solid var(--color-primary);
+  background: #f4f9f6; font-style: italic;
+}
+.prose blockquote p { margin: 0; }
+.prose video, .prose img { width: 100%; border: 1px solid var(--color-border); margin: 1.2em 0; display: block; background: #000; }
+.prose ul, .prose ol { margin: 0.9em 0; padding-left: 1.4em; }
+.prose li { margin: 0.3em 0; }
+.prose em { font-style: italic; }
+
 /* ---------- boot screen ---------- */
 .boot {
   position: fixed; inset: 0; z-index: 100; background: #000;

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { models, tests, matches } from '@/lib/data';
+import { posts } from '@/lib/blog';
 
 export const dynamic = 'force-static';
 
@@ -26,6 +27,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: `${BASE}/test/${t.id}/`,
       lastModified: newestMatch,
       changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    })),
+    { url: `${BASE}/blog/`, lastModified: newestMatch, changeFrequency: 'weekly' as const, priority: 0.8 },
+    ...posts.map((p) => ({
+      url: `${BASE}/blog/${p.slug}/`,
+      lastModified: p.date ? new Date(p.date) : newestMatch,
+      changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
   ];
