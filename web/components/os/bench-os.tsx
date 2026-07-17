@@ -6,7 +6,7 @@
 // pages render unchanged inside the window.
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PixelIcon } from './icons';
 import { useDrag } from './use-drag';
 import { BootScreen } from './boot';
@@ -81,6 +81,26 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
   // 'open' | 'min' (taskbar button restores) | 'closed' (desktop only —
   // clicking any icon brings the window back)
   const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
+  // null = maximized (fluid, fills the desktop). A size means the user grabbed
+  // the corner grip; □ restores fluid.
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const winRef = useRef<HTMLDivElement>(null);
+  const grip = useRef<{ px: number; py: number; w: number; h: number } | null>(null);
+  const onGripDown = (e: React.PointerEvent) => {
+    const r = winRef.current!.getBoundingClientRect();
+    grip.current = { px: e.clientX, py: e.clientY, w: r.width, h: r.height };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  const onGripMove = (e: React.PointerEvent) => {
+    if (!grip.current) return;
+    const clamp = (lo: number, v: number, hi: number) => Math.max(lo, Math.min(hi, v));
+    setSize({
+      w: clamp(420, grip.current.w + e.clientX - grip.current.px, window.innerWidth - 60),
+      h: clamp(300, grip.current.h + e.clientY - grip.current.py, window.innerHeight - 70),
+    });
+  };
+  const onGripUp = () => { grip.current = null; };
   const [start, setStart] = useState(false);
   const [amp, setAmp] = useState<'closed' | 'open' | 'min'>('closed');
   const [msn, setMsn] = useState<'closed' | 'open' | 'min'>('closed');
@@ -107,19 +127,25 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
           ))}
         </nav>
 
-        {/* the window — draggable by its title bar, double-click to snap back.
-            Hidden (not unmounted) when minimized/closed so scroll and vote
-            state survive a trip to the taskbar. */}
+        {/* the window — draggable by its title bar (double-click snaps back),
+            resizable by the corner grip, □ maximizes. z-[2] keeps it above the
+            desktop icons while dragging, as an OS demands. Hidden (not
+            unmounted) when minimized/closed so scroll and vote state survive
+            a trip to the taskbar. */}
         <div
-          className={`bevel-out min-h-0 min-w-0 flex-1 flex-col bg-background p-1 ${win === 'open' ? 'flex' : 'hidden'}`}
-          style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
+          ref={winRef}
+          className={`bevel-out relative z-[2] min-h-0 min-w-0 flex-col bg-background p-1 ${win === 'open' ? 'flex' : 'hidden'} ${size ? '' : 'flex-1'}`}
+          style={{
+            transform: `translate(${pos.x}px, ${pos.y}px)`,
+            ...(size ? { width: size.w, height: size.h, flex: 'none' } : {}),
+          }}
         >
           <div className="os-titlebar flex cursor-default select-none items-center gap-2 px-2 py-1" {...handlers}>
             <PixelIcon name="beckon" size={16} />
             <span className="text-sm font-bold tracking-wide">{title}</span>
             <span className="ml-auto flex gap-0.5">
               <button className="os-titlebar-btn" title="Minimize" onClick={() => setWin('min')}>_</button>
-              <span className="os-titlebar-btn" aria-hidden>□</span>
+              <button className="os-titlebar-btn" title="Maximize" onClick={() => { setSize(null); reset(); }}>□</button>
               <button className="os-titlebar-btn" title="Close" onClick={() => setWin('closed')}>✕</button>
             </span>
           </div>
@@ -134,10 +160,23 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
           <div className="bevel-field mx-1 mb-1 mt-1 min-h-0 flex-1 overflow-y-auto">
             {children}
           </div>
+          {/* the corner grip — classic diagonal ridges */}
+          <div
+            onPointerDown={onGripDown}
+            onPointerMove={onGripMove}
+            onPointerUp={onGripUp}
+            className="absolute bottom-1 right-1 z-[3] h-4 w-4 cursor-nwse-resize"
+            style={{
+              touchAction: 'none',
+              backgroundImage:
+                'repeating-linear-gradient(135deg, transparent 0 3px, #808080 3px 4px, #fff 4px 5px)',
+            }}
+            title="Resize"
+          />
         </div>
 
-        {/* keeps the rails at the screen edges while the window is away */}
-        {win !== 'open' && <div className="min-w-0 flex-1" />}
+        {/* keeps the rails at the screen edges while the window is away or resized */}
+        {(win !== 'open' || size) && <div className="min-w-0 flex-1" />}
 
         {/* right rail */}
         <nav className="relative z-[1] hidden shrink-0 flex-col gap-3 pt-2 lg:flex">
