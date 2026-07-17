@@ -75,9 +75,17 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-desktop">
       <BootScreen />
+      {/* Beckon — the mascot. Lives on the desktop, bottom right, behind the
+          window: close, minimize, or drag the window and there he is. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/beckon-mascot.png"
+        alt="Beckon, the Bench OS mascot"
+        className="pointer-events-none fixed bottom-12 right-8 z-0 hidden w-52 select-none lg:block"
+      />
       <div className="flex min-h-0 flex-1 gap-2 p-3 sm:gap-4">
         {/* left rail */}
-        <nav className="hidden shrink-0 flex-col gap-3 pt-2 sm:flex" onClickCapture={() => setWin('open')}>
+        <nav className="relative z-[1] hidden shrink-0 flex-col gap-3 pt-2 sm:flex" onClickCapture={() => setWin('open')}>
           {LEFT_RAIL.map((it) => (
             <DesktopIcon key={it.label} {...it} active={isActive(it.href)} />
           ))}
@@ -116,7 +124,7 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
         {win !== 'open' && <div className="min-w-0 flex-1" />}
 
         {/* right rail */}
-        <nav className="hidden shrink-0 flex-col gap-3 pt-2 lg:flex" onClickCapture={() => setWin('open')}>
+        <nav className="relative z-[1] hidden shrink-0 flex-col gap-3 pt-2 lg:flex" onClickCapture={() => setWin('open')}>
           {RIGHT_RAIL.map((it) => (
             <DesktopIcon key={it.label} {...it} active={false} external={'external' in it && it.external} />
           ))}
