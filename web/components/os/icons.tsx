@@ -72,11 +72,14 @@ const ICONS: Record<string, Px[]> = {
     [4, 7, 3, 1, G], [4, 9, 3, 1, G], [4, 11, 3, 1, G],
     [8, 7, 4, 5, S], [8, 7, 4, 1, G], [9, 8, 2, 3, T],
   ],
-  // messenger — two buddies, one conversation
+  // messenger — a friendly flower in the ICQ-era language, but ours: green
+  // petals, one gold, six not eight. Everyone online is a petal.
   msn: [
-    [2, 4, 5, 5, K], [3, 5, 3, 3, GR], [3, 10, 3, 4, GR], [2, 10, 1, 4, K], [6, 10, 1, 4, K],
-    [9, 4, 5, 5, K], [10, 5, 3, 3, N], [10, 10, 3, 4, N], [9, 10, 1, 4, K], [13, 10, 1, 4, K],
-    [6, 2, 4, 1, W], [5, 3, 2, 1, W], [9, 3, 2, 1, W],
+    [6, 1, 4, 3, GR], [6, 12, 4, 3, GR],
+    [1, 6, 3, 4, GR], [12, 6, 3, 4, GD],
+    [2, 2, 3, 3, '#1d6b43'], [11, 2, 3, 3, GR],
+    [2, 11, 3, 3, GR], [11, 11, 3, 3, '#1d6b43'],
+    [5, 5, 6, 6, K], [6, 6, 4, 4, W], [7, 7, 2, 2, T],
   ],
   // bonsai buddy — do not click. (a literal bonsai; any resemblance to
   // helpful purple animals is your own traumatic memory)

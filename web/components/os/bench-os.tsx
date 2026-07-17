@@ -25,7 +25,8 @@ const LEFT_RAIL = [
 
 const RIGHT_RAIL = [
   { href: 'https://discord.gg/5C8Gwj3MVa', icon: 'discord', label: 'Discord', external: true },
-  { href: 'https://heybeckon.ai', icon: 'beckon', label: 'Try Beckon', external: true },
+  // the official Beckon hand mark, not a pixel stand-in — brand is brand
+  { href: 'https://heybeckon.ai', img: '/brand-hand.png', label: 'Try Beckon', external: true },
 ] as const;
 
 function windowTitle(path: string): string {
