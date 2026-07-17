@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { PixelIcon } from './icons';
 import { useDrag } from './use-drag';
 import { BootScreen } from './boot';
+import { StartMenu, type MenuData } from './start-menu';
 
 const LEFT_RAIL = [
   { href: '/', icon: 'leaderboard', label: 'Leaderboard' },
@@ -61,7 +62,7 @@ function DesktopIcon({ href, icon, label, active = false, external = false }: {
   );
 }
 
-export function BenchOS({ children }: { children: React.ReactNode }) {
+export function BenchOS({ children, menu }: { children: React.ReactNode; menu: MenuData }) {
   const path = usePathname();
   const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href.replace(/\/$/, '')));
   const title = windowTitle(path);
@@ -69,8 +70,9 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
   // 'open' | 'min' (taskbar button restores) | 'closed' (desktop only —
   // clicking any icon brings the window back)
   const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
+  const [start, setStart] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { reset(); setWin('open'); }, [path]);
+  useEffect(() => { reset(); setWin('open'); setStart(false); }, [path]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-desktop">
@@ -133,10 +135,14 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
 
       {/* taskbar */}
       <div className="bevel-out relative z-10 flex shrink-0 items-center gap-2 bg-background px-1 py-1">
-        <a href="https://heybeckon.ai" className="bevel-out flex items-center gap-1.5 px-2 py-0.5 text-sm font-bold active:bevel-in">
+        {start && <StartMenu data={menu} onClose={() => setStart(false)} />}
+        <button
+          onClick={() => setStart((s) => !s)}
+          className={`flex items-center gap-1.5 px-2 py-0.5 text-sm font-bold ${start ? 'bevel-in bg-muted' : 'bevel-out'}`}
+        >
           <PixelIcon name="beckon" size={16} />
-          beckon
-        </a>
+          Start
+        </button>
         {win !== 'closed' && (
           <button
             onClick={() => setWin(win === 'open' ? 'min' : 'open')}
