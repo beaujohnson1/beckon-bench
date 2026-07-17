@@ -12,6 +12,13 @@ import {
   shortName, nameOfSlug, capTitle, CATS, catScore, catScored, fmtTokens, fmtMins, fmtTime,
 } from '@/lib/data';
 
+export const metadata = {
+  title: 'Beckon Bench — the vibe coder’s AI model benchmark',
+  description:
+    'Live leaderboard for AI coding models: eight one-shot tests, identical conditions, human-scored season one, AI judge panel, and a public vote. Every prompt, artifact, and ballot is public.',
+  alternates: { canonical: '/' },
+};
+
 function SectionTitle({ children, badge, badgeVariant = 'soft', id }: {
   children: React.ReactNode; badge?: string; badgeVariant?: 'soft' | 'info'; id?: string;
 }) {

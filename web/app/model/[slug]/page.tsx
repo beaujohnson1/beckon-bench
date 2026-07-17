@@ -14,7 +14,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: any) {
   const { slug } = await params;
   const m = models.find((x) => x.slug === slug);
-  return { title: m ? m.meta.model_id || m.slug : 'Model' };
+  if (!m) return { title: 'Model' };
+  return {
+    title: `${shortName(m)} benchmark results`,
+    description: `${m.meta.model_id || m.slug} on Beckon Bench: ${m.total} points across ${m.testsScored} scored tests, with playable artifacts, run stats, and AI judge verdicts.`,
+    alternates: { canonical: `/model/${slug}/` },
+  };
 }
 
 export default async function ModelPage({ params }: any) {

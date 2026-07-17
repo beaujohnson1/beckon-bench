@@ -40,9 +40,45 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     ballots: matches.length,
   };
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebSite',
+        name: 'Beckon Bench',
+        url: 'https://www.beckonbench.com/',
+        description:
+          "The vibe coder's benchmark: AI coding models run eight one-shot tests under identical conditions. Every prompt, artifact, and vote is public.",
+        publisher: { '@id': 'https://heybeckon.ai/#org' },
+      },
+      {
+        '@type': 'Organization',
+        '@id': 'https://heybeckon.ai/#org',
+        name: 'Beckon',
+        url: 'https://heybeckon.ai/',
+        logo: 'https://www.beckonbench.com/brand-hand.png',
+      },
+      {
+        '@type': 'Dataset',
+        name: 'Beckon Bench results',
+        description:
+          'Benchmark results for AI coding models: per-test scores, AI judge panel verdicts, public vote tallies, and raw artifacts for eight one-shot coding tests.',
+        url: 'https://www.beckonbench.com/',
+        creator: { '@id': 'https://heybeckon.ai/#org' },
+        isAccessibleForFree: true,
+        distribution: {
+          '@type': 'DataDownload',
+          encodingFormat: 'application/json',
+          contentUrl: 'https://github.com/beaujohnson1/beckon-bench',
+        },
+      },
+    ],
+  };
+
   return (
     <html lang="en">
       <body>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <BenchOS menu={{ games, recent, stats }}>{children}</BenchOS>
       </body>
     </html>

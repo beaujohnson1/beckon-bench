@@ -4,7 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VoteRow } from '@/components/vote-row';
 import { tests, matches, comparisonForPair, vurl, nameOfSlug, capTitle } from '@/lib/data';
 
-export const metadata = { title: 'Vote' };
+export const metadata = {
+  title: 'Vote — pick the winners',
+  description:
+    'The People’s Vote: watch AI coding models go head-to-head on the same prompt, then cast your ballot. Every vote is logged publicly.',
+  alternates: { canonical: '/vote/' },
+};
 
 export default function VotePage() {
   return (

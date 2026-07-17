@@ -13,7 +13,12 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: any) {
   const { id } = await params;
   const t = tests.find((x) => x.id === id);
-  return { title: t ? `${t.num} ${capTitle(t)}` : 'Test' };
+  if (!t) return { title: 'Test' };
+  return {
+    title: `Test ${t.num}: ${capTitle(t)}`,
+    description: `How AI coding models handle "${capTitle(t).toLowerCase()}" — one-shot artifacts, scores, and judge verdicts. Measures ${t.measures.toLowerCase()}.`,
+    alternates: { canonical: `/test/${id}/` },
+  };
 }
 
 export default async function TestPage({ params }: any) {

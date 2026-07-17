@@ -5,7 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NotepadButton } from '@/components/os/notepad';
 import { tests, capTitle, catName } from '@/lib/data';
 
-export const metadata = { title: 'Tests' };
+export const metadata = {
+  title: 'The 8 Tests — every prompt, verbatim',
+  description:
+    'The eight frozen one-shot tests AI coding models face on Beckon Bench: build a game, animate a lava lamp, design a landing page, fix seeded bugs, and more — prompts published in full.',
+  alternates: { canonical: '/tests/' },
+};
 
 export default function TestsPage() {
   return (

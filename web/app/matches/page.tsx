@@ -4,7 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { VoteRow } from '@/components/vote-row';
 import { matches, comparisonForPair, vurl, nameOfSlug } from '@/lib/data';
 
-export const metadata = { title: 'Arena' };
+export const metadata = {
+  title: 'Arena — models judging models',
+  description:
+    'Blind head-to-head matches judged by a cross-vendor AI panel. Majority verdicts, an ELO ladder, and every judge’s reasoning published in full.',
+  alternates: { canonical: '/matches/' },
+};
 
 export default function MatchesPage() {
   return (
