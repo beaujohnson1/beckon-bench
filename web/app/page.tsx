@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -50,35 +49,34 @@ export default function Home() {
 
   return (
     <>
-      <SiteHeader active="Leaderboard" />
       <main className="hero-glow mx-auto max-w-6xl px-5 pb-16">
         {/* hero */}
         <section className="grid gap-6 py-12 lg:grid-cols-[1.6fr_1fr]">
-          <div className="reveal-in overflow-hidden rounded-xl border border-border bg-card shadow-[8px_8px_0_rgba(0,0,0,0.5)]">
-            <div className="flex items-center gap-1.5 border-b border-border bg-muted px-4 py-2.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-bad" />
-              <span className="h-2.5 w-2.5 rounded-full bg-warn" />
-              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-              <span className="ml-2 font-mono text-xs tracking-wider text-muted-foreground">
-                beckon-bench — live results
+          <div className="reveal-in bevel-out bg-background p-1">
+            <div className="os-titlebar flex items-center gap-2 px-2 py-1">
+              <span className="font-mono text-xs font-bold">C:\</span>
+              <span className="text-sm font-bold tracking-wide">MS-DOS Prompt — beckon</span>
+              <span className="ml-auto flex gap-0.5">
+                <span className="os-titlebar-btn" aria-hidden>_</span>
+                <span className="os-titlebar-btn" aria-hidden>✕</span>
               </span>
             </div>
-            <div className="p-7">
-              <p className="font-mono text-xs font-bold tracking-[0.15em] text-primary">
-                <span className="text-muted-foreground">$ </span>beckon run bench --tests 8
+            <div className="bg-black p-7">
+              <p className="font-mono text-xs font-bold tracking-[0.15em] text-[#22f284]">
+                <span className="text-[#8f8f9a]">C:\&gt; </span>beckon run bench --tests 8
               </p>
-              <h1 className="mt-2 font-mono text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
-                The vibe coder&apos;s benchmark
+              <h1 className="mt-3 font-mono text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl">
+                The <span className="hl text-[#04140b]">vibe coder&apos;s</span> benchmark
                 <span className="cursor-blink" />
               </h1>
-              <p className="mt-3 max-w-xl text-muted-foreground">
+              <p className="mt-3 max-w-xl text-[#b9b9c0]">
                 Eight one-shot tests, identical conditions. Every prompt, artifact, and vote public.
               </p>
               <a
                 href="https://heybeckon.ai"
-                className="mt-5 inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-1.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+                className="mt-5 inline-flex items-center gap-2 border border-[#3a3a42] px-3.5 py-1.5 font-mono text-xs text-[#b9b9c0] transition-colors hover:border-[#22f284] hover:text-white"
               >
-                Runs live inside <b className="text-primary">Beckon</b>
+                Runs live inside <b className="text-[#22f284]">Beckon</b>
               </a>
             </div>
           </div>
@@ -116,13 +114,13 @@ export default function Home() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 bg-primary" /> Score
+                  <span className="h-2.5 w-2.5 bg-good" /> Score
                 </CardTitle>
                 <CardDescription>Season points, ten per scored test · higher is better</CardDescription>
               </CardHeader>
               <CardContent>
                 <BarChart
-                  color="var(--color-primary)"
+                  color="var(--color-good)"
                   plotHeight={100}
                   items={scoredModels.map((m) => ({ name: shortName(m), value: m.total, href: `/model/${m.slug}/` }))}
                 />

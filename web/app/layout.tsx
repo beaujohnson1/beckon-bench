@@ -18,10 +18,14 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.png', apple: '/apple-touch-icon.png' },
 };
 
+import { BenchOS } from '@/components/os/bench-os';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <BenchOS>{children}</BenchOS>
+      </body>
     </html>
   );
 }

@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScoreChip, PendingChip } from '@/components/score-chip';
@@ -26,7 +25,6 @@ export default async function TestPage({ params }: any) {
 
   return (
     <>
-      <SiteHeader active="Leaderboard" />
       <main className="hero-glow mx-auto max-w-4xl px-5 pb-16">
         <section className="py-12">
           <p className="font-mono text-xs font-bold tracking-[0.2em] text-primary">
