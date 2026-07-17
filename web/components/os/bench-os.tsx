@@ -48,12 +48,17 @@ function Clock() {
   return <span className="tabular-nums">{now ?? '--:--'}</span>;
 }
 
-function DesktopIcon({ href, icon, label, active = false, external = false, onClick }: {
-  href?: string; icon: string; label: string; active?: boolean; external?: boolean; onClick?: () => void;
+function DesktopIcon({ href, icon, img, label, active = false, external = false, onClick }: {
+  href?: string; icon?: string; img?: string; label: string; active?: boolean; external?: boolean; onClick?: () => void;
 }) {
   const inner = (
     <span className={`os-icon flex w-20 flex-col items-center gap-1 py-1 ${active ? 'active' : ''}`}>
-      <PixelIcon name={icon} />
+      {img ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={img} alt="" className="h-10 w-10 object-contain [image-rendering:pixelated]" />
+      ) : (
+        <PixelIcon name={icon!} />
+      )}
       <span className={`os-icon-label px-1 ${active ? 'bg-primary' : ''}`}>{label}</span>
     </span>
   );
@@ -138,7 +143,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
           ))}
           <DesktopIcon icon="amp" label="BenchAmp" onClick={() => setAmp('open')} />
           <DesktopIcon icon="msn" label="Messenger" onClick={() => setMsn('open')} />
-          <DesktopIcon icon="bonsai" label="Bonsai Buddy" onClick={() => setBsod('bonsai')} />
+          <DesktopIcon img="/bonsai-buddy.png" label="Bonsai Buddy" onClick={() => setBsod('bonsai')} />
           <DesktopIcon icon="bin" label="Recycle Bin" onClick={() => setBsod('bin')} />
         </nav>
       </div>

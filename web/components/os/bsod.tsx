@@ -20,7 +20,7 @@ const CRASHES: Record<Crash, { at: string; lines: string[] }> = {
     lines: [
       'BONSAI.EXE attempted to become your best friend without consent.',
       'It wanted to read your email aloud, tell you a fact about Antarctica, and install four toolbars. This behavior has been blocked since 1999.',
-      'Your benchmark has been protected. No purple animals were installed.',
+      'Your benchmark has been protected. Exactly one (1) purple animal was installed anyway. It is on the desktop. It is watching.',
       '*  Press any key to return to the desktop.',
       '*  Do not click Bonsai Buddy again. (You will click Bonsai Buddy again.)',
     ],
