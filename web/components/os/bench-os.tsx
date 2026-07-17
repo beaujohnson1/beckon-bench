@@ -11,6 +11,8 @@ import { PixelIcon } from './icons';
 import { useDrag } from './use-drag';
 import { BootScreen } from './boot';
 import { StartMenu, type MenuData } from './start-menu';
+import { BenchAmp } from './benchamp';
+import { BSOD } from './bsod';
 
 const LEFT_RAIL = [
   { href: '/', icon: 'leaderboard', label: 'Leaderboard' },
@@ -22,7 +24,6 @@ const LEFT_RAIL = [
 const RIGHT_RAIL = [
   { href: 'https://discord.gg/5C8Gwj3MVa', icon: 'discord', label: 'Discord', external: true },
   { href: 'https://heybeckon.ai', icon: 'beckon', label: 'Try Beckon', external: true },
-  { href: '/tests/', icon: 'bin', label: 'Recycle Bin' },
 ] as const;
 
 function windowTitle(path: string): string {
@@ -46,8 +47,8 @@ function Clock() {
   return <span className="tabular-nums">{now ?? '--:--'}</span>;
 }
 
-function DesktopIcon({ href, icon, label, active = false, external = false }: {
-  href: string; icon: string; label: string; active?: boolean; external?: boolean;
+function DesktopIcon({ href, icon, label, active = false, external = false, onClick }: {
+  href?: string; icon: string; label: string; active?: boolean; external?: boolean; onClick?: () => void;
 }) {
   const inner = (
     <span className={`os-icon flex w-20 flex-col items-center gap-1 py-1 ${active ? 'active' : ''}`}>
@@ -55,10 +56,11 @@ function DesktopIcon({ href, icon, label, active = false, external = false }: {
       <span className={`os-icon-label px-1 ${active ? 'bg-primary' : ''}`}>{label}</span>
     </span>
   );
+  if (onClick) return <button onClick={onClick}>{inner}</button>;
   return external ? (
     <a href={href} target="_blank" rel="noopener noreferrer">{inner}</a>
   ) : (
-    <Link href={href}>{inner}</Link>
+    <Link href={href!}>{inner}</Link>
   );
 }
 
@@ -71,6 +73,8 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
   // clicking any icon brings the window back)
   const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
   const [start, setStart] = useState(false);
+  const [amp, setAmp] = useState<'closed' | 'open' | 'min'>('closed');
+  const [bsod, setBsod] = useState(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { reset(); setWin('open'); setStart(false); }, [path]);
 
@@ -126,10 +130,12 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
         {win !== 'open' && <div className="min-w-0 flex-1" />}
 
         {/* right rail */}
-        <nav className="relative z-[1] hidden shrink-0 flex-col gap-3 pt-2 lg:flex" onClickCapture={() => setWin('open')}>
+        <nav className="relative z-[1] hidden shrink-0 flex-col gap-3 pt-2 lg:flex">
           {RIGHT_RAIL.map((it) => (
             <DesktopIcon key={it.label} {...it} active={false} external={'external' in it && it.external} />
           ))}
+          <DesktopIcon icon="amp" label="BenchAmp" onClick={() => setAmp('open')} />
+          <DesktopIcon icon="bin" label="Recycle Bin" onClick={() => setBsod(true)} />
         </nav>
       </div>
 
@@ -153,10 +159,24 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
             <span className="max-w-40 truncate sm:max-w-none">{title}</span>
           </button>
         )}
+        {amp !== 'closed' && (
+          <button
+            onClick={() => setAmp(amp === 'open' ? 'min' : 'open')}
+            className={`flex items-center gap-1.5 px-2 py-0.5 font-mono text-sm ${amp === 'open' ? 'bevel-in bg-muted font-bold' : 'bevel-out bg-background'}`}
+            title={amp === 'open' ? 'Minimize BenchAmp' : 'Restore BenchAmp'}
+          >
+            <PixelIcon name="amp" size={14} />
+            <span className="hidden sm:inline">BenchAmp</span>
+          </button>
+        )}
         <span className="bevel-in ml-auto flex items-center gap-2 px-3 py-0.5 text-sm">
           <Clock />
         </span>
       </div>
+      {amp !== 'closed' && (
+        <BenchAmp state={amp} onMin={() => setAmp('min')} onClose={() => setAmp('closed')} />
+      )}
+      {bsod && <BSOD onWake={() => setBsod(false)} />}
     </div>
   );
 }
