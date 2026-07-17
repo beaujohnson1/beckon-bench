@@ -66,32 +66,37 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
   const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href.replace(/\/$/, '')));
   const title = windowTitle(path);
   const { pos, reset, handlers } = useDrag();
+  // 'open' | 'min' (taskbar button restores) | 'closed' (desktop only —
+  // clicking any icon brings the window back)
+  const [win, setWin] = useState<'open' | 'min' | 'closed'>('open');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => reset(), [path]);
+  useEffect(() => { reset(); setWin('open'); }, [path]);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-desktop">
       <BootScreen />
       <div className="flex min-h-0 flex-1 gap-2 p-3 sm:gap-4">
         {/* left rail */}
-        <nav className="hidden shrink-0 flex-col gap-3 pt-2 sm:flex">
+        <nav className="hidden shrink-0 flex-col gap-3 pt-2 sm:flex" onClickCapture={() => setWin('open')}>
           {LEFT_RAIL.map((it) => (
             <DesktopIcon key={it.label} {...it} active={isActive(it.href)} />
           ))}
         </nav>
 
-        {/* the window — draggable by its title bar, double-click to snap back */}
+        {/* the window — draggable by its title bar, double-click to snap back.
+            Hidden (not unmounted) when minimized/closed so scroll and vote
+            state survive a trip to the taskbar. */}
         <div
-          className="bevel-out flex min-h-0 min-w-0 flex-1 flex-col bg-background p-1"
+          className={`bevel-out min-h-0 min-w-0 flex-1 flex-col bg-background p-1 ${win === 'open' ? 'flex' : 'hidden'}`}
           style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
         >
           <div className="os-titlebar flex cursor-default select-none items-center gap-2 px-2 py-1" {...handlers}>
             <PixelIcon name="beckon" size={16} />
             <span className="text-sm font-bold tracking-wide">{title}</span>
             <span className="ml-auto flex gap-0.5">
-              <span className="os-titlebar-btn" aria-hidden>_</span>
+              <button className="os-titlebar-btn" title="Minimize" onClick={() => setWin('min')}>_</button>
               <span className="os-titlebar-btn" aria-hidden>□</span>
-              <Link href="/" className="os-titlebar-btn" title="Close">✕</Link>
+              <button className="os-titlebar-btn" title="Close" onClick={() => setWin('closed')}>✕</button>
             </span>
           </div>
           {/* mobile nav strip (rails hide on small screens) */}
@@ -107,8 +112,11 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        {/* keeps the rails at the screen edges while the window is away */}
+        {win !== 'open' && <div className="min-w-0 flex-1" />}
+
         {/* right rail */}
-        <nav className="hidden shrink-0 flex-col gap-3 pt-2 lg:flex">
+        <nav className="hidden shrink-0 flex-col gap-3 pt-2 lg:flex" onClickCapture={() => setWin('open')}>
           {RIGHT_RAIL.map((it) => (
             <DesktopIcon key={it.label} {...it} active={false} external={'external' in it && it.external} />
           ))}
@@ -121,10 +129,16 @@ export function BenchOS({ children }: { children: React.ReactNode }) {
           <PixelIcon name="beckon" size={16} />
           beckon
         </a>
-        <span className="bevel-in hidden items-center gap-1.5 px-2 py-0.5 text-sm sm:flex">
-          <PixelIcon name="leaderboard" size={14} />
-          {title}
-        </span>
+        {win !== 'closed' && (
+          <button
+            onClick={() => setWin(win === 'open' ? 'min' : 'open')}
+            className={`flex items-center gap-1.5 px-2 py-0.5 text-sm ${win === 'open' ? 'bevel-in bg-muted font-bold' : 'bevel-out bg-background'}`}
+            title={win === 'open' ? 'Minimize' : 'Restore'}
+          >
+            <PixelIcon name="leaderboard" size={14} />
+            <span className="max-w-40 truncate sm:max-w-none">{title}</span>
+          </button>
+        )}
         <span className="bevel-in ml-auto flex items-center gap-2 px-3 py-0.5 text-sm">
           <Clock />
         </span>
