@@ -9,11 +9,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useDrag } from './use-drag';
 import { PixelIcon } from './icons';
 
-type Track = { name: string; bpm: number; bass: (number | null)[]; lead: (number | null)[]; hat: number[] };
+type Track = {
+  name: string;
+  src?: string; // real audio file — routed through the same analyser
+  bpm?: number; bass?: (number | null)[]; lead?: (number | null)[]; hat?: number[];
+};
 const hz = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
-// three original loops (midi notes, 16 steps)
+// Beau's track first, then three original chiptune loops (midi notes, 16 steps)
 const TRACKS: Track[] = [
+  { name: 'lock in, it’s time to get sht done.mp3', src: '/music/lock-in.mp3' },
   {
     name: 'phosphor dreams.mod', bpm: 100,
     bass: [45, null, 45, null, 48, null, 45, null, 43, null, 43, null, 45, null, 52, null],
@@ -65,10 +70,10 @@ class Engine {
     s.connect(hp).connect(g).connect(this.master); s.start(t);
   }
   scheduleBar(t0: number) {
-    const step = 60 / this.track.bpm / 2;
-    this.track.bass.forEach((m, i) => m != null && this.note('triangle', m, t0 + i * step, step * 1.8, 0.5));
-    this.track.lead.forEach((m, i) => m != null && this.note('square', m, t0 + i * step, step * 0.9, 0.18));
-    this.track.hat.forEach((h, i) => h && this.hat(t0 + i * step));
+    const step = 60 / (this.track.bpm ?? 100) / 2;
+    this.track.bass?.forEach((m, i) => m != null && this.note('triangle', m, t0 + i * step, step * 1.8, 0.5));
+    this.track.lead?.forEach((m, i) => m != null && this.note('square', m, t0 + i * step, step * 0.9, 0.18));
+    this.track.hat?.forEach((h, i) => h && this.hat(t0 + i * step));
     return 16 * step;
   }
   play(track: Track) {
@@ -89,19 +94,45 @@ export function BenchAmp({ state, onMin, onClose }: {
 }) {
   const { pos, handlers } = useDrag();
   const engine = useRef<Engine | null>(null);
+  const audio = useRef<HTMLAudioElement | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [vol, setVol] = useState(0.16);
 
-  const ensure = () => (engine.current ??= new Engine());
+  const ensure = () => {
+    if (!engine.current) {
+      engine.current = new Engine();
+      // one <audio> element, routed through the same master + analyser so
+      // real files light up the spectrum exactly like the chiptunes
+      const el = new Audio();
+      el.loop = true;
+      el.crossOrigin = 'anonymous';
+      engine.current.ctx.createMediaElementSource(el).connect(engine.current.master);
+      audio.current = el;
+    }
+    return engine.current;
+  };
 
-  const play = (i = idx) => { ensure().play(TRACKS[i]); setPlaying(true); };
+  const play = (i = idx) => {
+    const en = ensure();
+    const t = TRACKS[i];
+    en.ctx.resume();
+    if (t.src) {
+      en.stopLoop();
+      if (audio.current!.src !== new URL(t.src, location.href).href) audio.current!.src = t.src;
+      audio.current!.play();
+    } else {
+      audio.current?.pause();
+      en.play(t);
+    }
+    setPlaying(true);
+  };
   const pause = () => { engine.current?.ctx.suspend(); setPlaying(false); };
   const resume = () => { engine.current ? (engine.current.ctx.resume(), setPlaying(true)) : play(); };
   const pick = (i: number) => { setIdx(i); play(i); };
 
-  useEffect(() => () => engine.current?.destroy(), []);
+  useEffect(() => () => { audio.current?.pause(); engine.current?.destroy(); }, []);
   useEffect(() => { if (engine.current) engine.current.master.gain.value = vol; }, [vol]);
 
   // spectrum bars
@@ -147,8 +178,11 @@ export function BenchAmp({ state, onMin, onClose }: {
         <div className="m-0.5 bg-[#040c06] p-2">
           <div className="overflow-hidden whitespace-nowrap font-mono text-[11px] text-[#22f284]">
             <span className="inline-block animate-[marquee_9s_linear_infinite]">
-              ♪ {TRACKS[idx].name} — original chiptune · beckon bench · {TRACKS[idx].bpm} BPM &nbsp;&nbsp;&nbsp;
-              ♪ {TRACKS[idx].name} — original chiptune · beckon bench · {TRACKS[idx].bpm} BPM
+              {[0, 1].map((n) => (
+                <span key={n}>
+                  ♪ {TRACKS[idx].name} — {TRACKS[idx].src ? 'beckon bench radio' : `original chiptune · ${TRACKS[idx].bpm} BPM`} &nbsp;&nbsp;&nbsp;
+                </span>
+              ))}
             </span>
           </div>
           <canvas ref={canvas} width={256} height={40} className="mt-1 w-full" />
