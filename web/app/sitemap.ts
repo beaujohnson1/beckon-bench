@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/vote/`, lastModified: newestMatch, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/matches/`, lastModified: newestMatch, changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE}/tests/`, lastModified: newestMatch, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${BASE}/faq/`, lastModified: newestMatch, changeFrequency: 'monthly', priority: 0.6 },
     ...models.map((m) => ({
       url: `${BASE}/model/${m.slug}/`,
       lastModified: modelDate(m),

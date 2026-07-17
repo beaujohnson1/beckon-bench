@@ -220,6 +220,16 @@ export function StartMenu({ data, onClose }: { data: MenuData; onClose: () => vo
           <Item icon="discord" onClick={() => { window.open('https://discord.gg/5C8Gwj3MVa', '_blank', 'noopener'); onClose(); }}>Discord</Item>
           <Item icon="beckon" onClick={() => { window.open('https://heybeckon.ai', '_blank', 'noopener'); onClose(); }}>Try Beckon</Item>
           <li className="mx-2 my-1 border-t border-border shadow-[0_1px_0_#fff]" />
+          <li>
+            <Link
+              href="/faq/"
+              onClick={onClose}
+              className="flex w-full items-center gap-2.5 px-3 py-1.5 text-sm hover:bg-primary hover:text-primary-foreground"
+            >
+              <PixelIcon name="help" size={22} />
+              <span className="flex-1">Help</span>
+            </Link>
+          </li>
           <Item icon="vote" onClick={() => setConnect(true)}>Connect to the Internet</Item>
           <Item icon="bin" onClick={() => setOff(true)}>Shut Down…</Item>
         </ul>

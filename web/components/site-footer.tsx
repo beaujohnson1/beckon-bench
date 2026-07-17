@@ -20,6 +20,8 @@ export function SiteFooter() {
         . Say the word. Your agents build.
       </p>
       <p className="mt-4 text-xs">
+        <Link href="/faq/" className="hover:text-primary">How the bench works</Link>
+        {' · '}
         <a href="/exhibits/k3-redesign/" className="hover:text-primary">
           Exhibit: Kimi K3&apos;s one-shot redesign of this site
         </a>

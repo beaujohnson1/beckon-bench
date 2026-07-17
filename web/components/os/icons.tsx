@@ -60,6 +60,11 @@ const ICONS: Record<string, Px[]> = {
     [9, 5, 3, 7, N], [10, 6, 1, 5, T],
     [11, 2, 1, 4, K], [10, 2, 3, 1, K],
   ],
+  // help — the book of answers
+  help: [
+    [2, 2, 12, 12, K], [3, 3, 10, 10, W],
+    [6, 4, 4, 2, N], [9, 5, 2, 3, N], [7, 8, 2, 2, N], [7, 11, 2, 2, N],
+  ],
   // the gazette — a folded broadsheet
   news: [
     [2, 2, 12, 12, K], [3, 3, 10, 10, W],

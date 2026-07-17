@@ -29,6 +29,7 @@ const RIGHT_RAIL = [
 ] as const;
 
 function windowTitle(path: string): string {
+  if (path.startsWith('/faq')) return 'Help — How the Bench Works';
   if (path.startsWith('/blog')) return 'Bench Gazette';
   if (path.startsWith('/vote')) return 'Voting Booth';
   if (path.startsWith('/matches')) return 'Arena — Models Judging Models';
