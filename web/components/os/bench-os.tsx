@@ -196,7 +196,7 @@ export function BenchOS({ children, menu }: { children: React.ReactNode; menu: M
         <BenchAmp state={amp} onMin={() => setAmp('min')} onClose={() => setAmp('closed')} />
       )}
       {msn !== 'closed' && (
-        <Messenger state={msn} onMin={() => setMsn('min')} onClose={() => setMsn('closed')} />
+        <Messenger state={msn} stats={menu.stats} onMin={() => setMsn('min')} onClose={() => setMsn('closed')} />
       )}
       {bsod && <BSOD crash={bsod} onWake={() => setBsod(null)} />}
     </div>

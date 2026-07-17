@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 };
 
 import { BenchOS } from '@/components/os/bench-os';
-import { models, shortName } from '@/lib/data';
+import { models, shortName, nameOfSlug, elo, matches } from '@/lib/data';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   // Start-menu data, computed at build time from the receipts.
@@ -32,11 +32,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     })
     .filter(Boolean) as { name: string; href: string }[];
   const recent = models.map((m) => ({ name: shortName(m), href: `/model/${m.slug}/` }));
+  // live bench facts for Beckon's IM small talk
+  const top = elo?.ladder?.[0];
+  const stats = {
+    leader: top ? nameOfSlug(top.model) : '',
+    elo: top?.elo ?? null,
+    ballots: matches.length,
+  };
 
   return (
     <html lang="en">
       <body>
-        <BenchOS menu={{ games, recent }}>{children}</BenchOS>
+        <BenchOS menu={{ games, recent, stats }}>{children}</BenchOS>
       </body>
     </html>
   );

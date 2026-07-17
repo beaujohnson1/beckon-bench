@@ -10,6 +10,7 @@ import { PixelIcon } from './icons';
 export type MenuData = {
   games: { name: string; href: string }[];
   recent: { name: string; href: string }[];
+  stats: { leader: string; elo: number | null; ballots: number };
 };
 
 // Original modem-handshake impression via WebAudio: dial tone, DTMF digits,
