@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   },
   twitter: { card: 'summary_large_image', description: DESCRIPTION, images: ['/og.png'] },
   icons: { icon: '/favicon.png', apple: '/apple-touch-icon.png' },
+  verification: { google: 'hhRwgAqSmaROVmVK27X9ZJzBCvK5gxnrWgzM-k8JCTo' },
 };
 
 import { BenchOS } from '@/components/os/bench-os';
