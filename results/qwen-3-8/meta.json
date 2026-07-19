@@ -1,0 +1,9 @@
+{
+  "model": "qwen-3-8",
+  "model_id": "qwen3.8-max-preview",
+  "provider": "Alibaba",
+  "harness": "TBD at run time per Ruling #1 — Alibaba's flagship agentic coding tool (Qoder / QoderWork / qwen-code CLI), exact tool + version to be recorded before test 1",
+  "run_date": "2026-07-19",
+  "gauntlet_version": "v1",
+  "youtube_url": null
+}
